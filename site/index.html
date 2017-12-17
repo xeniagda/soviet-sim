@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title> Rougelike </title>
+        <style>
+body {
+  color: white;
+  font-family: arial;
+  flex-direction: column;
+  background-color: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+        </style>
+    </head>
+    <body>
+        <canvas id="rougelike"></canvas>
+    </body>
+    <script>
+        var width = 40;
+        var height = 30;
+        var squaresize = 20;
+
+        var canvas = document.getElementById("rougelike");
+        var ctx = canvas.getContext("2d");
+
+        canvas.width = width * squaresize;
+        canvas.height = height * squaresize;
+        ctx.textAlign = "center";
+        ctx.font = (squaresize * 0.8 | 0) + "px monospace";
+
+        var LOG_BUF = "";
+        amount = 0;
+
+        fetch("rougelike.wasm")
+            .then(response => response.arrayBuffer())
+            .then(bytes => WebAssembly.instantiate(bytes, {
+                env: {
+                    u_put_char: (x, y, ch, r, g, b) => {
+                        if (amount < 100) {
+                            console.log(r + " " + g + " " + b);
+                            amount += 1
+                        }
+                        ctx.fillStyle = `rgb(${r & 255},${g & 255},${b & 255})`;
+                        ctx.clearRect(x*squaresize, y*squaresize, squaresize, squaresize);
+                        ctx.fillText(String.fromCharCode(ch), (x + 0.5) * squaresize, (y + 1) * squaresize);
+                    },
+                    u_log: ch => {
+                        if (ch == 10) {
+                            console.log(LOG_BUF);
+                            LOG_BUF = "";
+                        }
+                        else {
+                            LOG_BUF += String.fromCharCode(ch);
+                        }
+                    },
+                    u_rand: () => {
+                        return Math.random();
+                    },
+                }
+            }))
+            .then(result => {
+                result.instance.exports.start(width, height);
+                document.body.addEventListener("keydown", event => {
+                    result.instance.exports.key_down(event.keyCode);
+                });
+                document.body.addEventListener("keyup", event => {
+                    result.instance.exports.key_up(event.keyCode);
+                });
+                setInterval(result.instance.exports.tick, 1000 / 60);
+            })
+    </script>
+</html>

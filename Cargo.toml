@@ -1,0 +1,10 @@
+[package]
+name = "rougelike"
+version = "0.1.0"
+authors = ["loovjo <jonathan.loov@gmail.com>"]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+lazy_static = "1.0.0"
