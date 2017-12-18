@@ -2,7 +2,7 @@ use std::os::raw::c_char;
 
 extern {
     // Unsafe, use `put_char`
-    fn u_put_char(x: u16, y: u16, ch: usize, r: u8, g: u8, b: u8);
+    fn u_put_char(x: u16, y: u16, ch: usize, fr: u8, fg: u8, fb: u8, br: u8, bg: u8, bb: u8);
     fn u_log(msg: c_char);
     fn u_rand() -> f64;
 }
@@ -19,9 +19,9 @@ pub fn log(x: &str) {
     }
 }
 
-pub fn put_char(pos: (u16, u16), ch: char, rgb: (u8, u8, u8)) {
+pub fn put_char(pos: (u16, u16), ch: char, fg: (u8, u8, u8), bg: (u8, u8, u8)) {
     unsafe {
-        u_put_char(pos.0, pos.1, ch as usize, rgb.0, rgb.1, rgb.2);
+        u_put_char(pos.0, pos.1, ch as usize, fg.0, fg.1, fg.2, bg.0, bg.1, bg.2);
     }
 }
 

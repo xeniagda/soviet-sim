@@ -8,6 +8,7 @@ mod key;
 mod world;
 mod controls;
 mod block;
+mod entity;
 
 use world::*;
 use ext::log;
@@ -21,8 +22,12 @@ struct Rougelike {
 lazy_static! {
     static ref ROUGE: Mutex<Rougelike> = Mutex::new(Rougelike {
         world: World::new(
-            vec![], (2, 2)
-        ),
+                   vec![], 
+                   vec![
+                       entity::EntityWrapper::WPlayer(entity::Player{pos: (0, 0)}),
+                       entity::EntityWrapper::WJosef(entity::Josef{pos: (0, 0)}),
+                   ],
+                   ),
         keys_down: vec![]
     });
 }
