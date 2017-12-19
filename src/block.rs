@@ -5,7 +5,7 @@ use shape::Shape;
 
 lazy_static! {
     pub static ref BLOCK_FUNCS: Mutex<Vec<fn(&mut World) -> bool>>
-        = Mutex::new(vec![]);
+        = Mutex::new(vec![|_| { false }]);
 }
 
 pub struct Block {
