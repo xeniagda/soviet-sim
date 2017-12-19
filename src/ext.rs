@@ -1,4 +1,7 @@
 use std::os::raw::c_char;
+use std::sync::Mutex;
+
+use shape::Shape;
 
 extern {
     // Unsafe, use `put_char`
@@ -19,9 +22,25 @@ pub fn log(x: &str) {
     }
 }
 
-pub fn put_char(pos: (u16, u16), ch: char, fg: (u8, u8, u8), bg: (u8, u8, u8)) {
-    unsafe {
-        u_put_char(pos.0, pos.1, ch as usize, fg.0, fg.1, fg.2, bg.0, bg.1, bg.2);
+lazy_static! {
+    static ref SCREEN: Mutex<Vec<Vec<Shape>>> = Mutex::new(vec![]);
+}
+
+pub fn put_char(pos: (u16, u16), shape: &Shape) {
+    let mut screen = SCREEN.lock().unwrap();
+
+    while screen.len() <= pos.0 as usize {
+        screen.push(vec![]);
+    }
+    while screen[pos.0 as usize].len() <= pos.1 as usize {
+        screen[pos.0 as usize].push(Shape::new(' ', (0,0,0), (0,0,0)));
+    }
+
+    if screen[pos.0 as usize][pos.1 as usize] != *shape {
+        screen[pos.0 as usize][pos.1 as usize] = *shape;
+        unsafe {
+            u_put_char(pos.0, pos.1, shape.ch as usize, shape.col.0, shape.col.1, shape.col.2, shape.bg.0, shape.bg.1, shape.bg.2);
+        }
     }
 }
 

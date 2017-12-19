@@ -13,7 +13,7 @@ impl Shape {
     }
 
     pub fn draw(&self, pos: (u16, u16)) {
-        put_char(pos, self.ch, self.col, self.bg);
+        put_char(pos, &self);
     }
 }
 
