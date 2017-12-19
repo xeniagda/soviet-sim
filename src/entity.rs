@@ -1,4 +1,5 @@
 use world::World;
+use shape::Shape;
 
 pub trait Entity {
 
@@ -8,35 +9,35 @@ pub trait Entity {
     fn get_pos(&self) -> (u16, u16);
     fn get_pos_mut(&mut self) -> &mut (u16, u16);
 
+    fn get_shape(&self) -> Shape;
+
     fn on_collision<E: Entity>(&mut self, other: &mut E, world: &mut World) {}
-
-    fn move_dir(&mut self, dir: (i8, i8), world: &mut World) {
-        let pos = self.get_pos_mut();
-        pos.0 += dir.0 as u16;
-        pos.1 += dir.1 as u16;
-    }
-
 }
 
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct Player {
-    pub pos: (u16, u16)
+    pub pos: (u16, u16),
+    pub shape: Shape
 }
 
 impl Entity for Player {
     fn get_pos(&self) -> (u16, u16) { self.pos }
     fn get_pos_mut(&mut self) -> &mut (u16, u16) { &mut self.pos }
+
+    fn get_shape(&self) -> Shape { self.shape }
 }
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct Josef {
-    pub pos: (u16, u16)
+    pub pos: (u16, u16),
+    pub shape: Shape
 }
 
 impl Entity for Josef {
     fn get_pos(&self) -> (u16, u16) { self.pos }
     fn get_pos_mut(&mut self) -> &mut (u16, u16) { &mut self.pos }
+    fn get_shape(&self) -> Shape { self.shape }
 }
 
 #[derive(PartialEq, Eq, Clone)]
@@ -62,6 +63,15 @@ impl EntityWrapper {
         match self {
             &WPlayer(ref x) => x.get_pos(),
             &WJosef(ref x) => x.get_pos(),
+        }
+    }
+
+    pub fn get_shape(&self) -> Shape {
+        use self::EntityWrapper::*;
+
+        match self {
+            &WPlayer(ref x) => x.get_shape(),
+            &WJosef(ref x) => x.get_shape(),
         }
     }
 
