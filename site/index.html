@@ -43,7 +43,7 @@ body {
                         ctx.fillStyle = `rgb(${br & 255},${bg & 255},${bb & 255})`;
                         ctx.fillRect(x*squaresize_x, y*squaresize_y, squaresize_x, squaresize_y);
                         ctx.fillStyle = `rgb(${fr & 255},${fg & 255},${fb & 255})`;
-                        ctx.fillText(String.fromCharCode(ch), (x + 0.5) * squaresize_x, (y + 1) * squaresize_y);
+                        ctx.fillText(String.fromCharCode(ch), (x + 0.5) * squaresize_x, (y + 0.9) * squaresize_y);
                     },
                     u_log: ch => {
                         if (ch == 10) {

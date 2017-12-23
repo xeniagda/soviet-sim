@@ -12,9 +12,9 @@ mod entity;
 mod shape;
 
 use world::*;
-use ext::log;
+
 use std::sync::Mutex;
-use shape::Shape;
+use std::collections::HashMap;
 
 struct Rougelike<'a> {
     world: World<'a>,
@@ -23,13 +23,7 @@ struct Rougelike<'a> {
 
 lazy_static! {
     static ref ROUGE: Mutex<Rougelike<'static>> = Mutex::new(Rougelike {
-        world: World::new(
-                   vec![], 
-                   vec![
-                       entity::EntityWrapper::WPlayer(entity::Player{pos: (3, 3), shape: Shape::new('@', (255, 0, 0), (0, 0, 0))}),
-                       entity::EntityWrapper::WJosef(entity::Josef{pos: (0, 0), shape: Shape::new('X', (255, 0, 0), (0, 0, 0))}),
-                   ],
-                   ),
+        world: World::new( vec![], HashMap::new() ),
         keys_down: vec![]
     });
 }

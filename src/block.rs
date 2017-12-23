@@ -1,11 +1,10 @@
 use world::World;
 use std::sync::Mutex;
-use ext::*;
 use shape::Shape;
 
 lazy_static! {
-    pub static ref BLOCK_FUNCS: Mutex<Vec<fn(&mut World) -> bool>>
-        = Mutex::new(vec![|_| { false }]);
+    pub static ref BLOCK_FUNCS: Mutex<Vec<fn(&mut World, u64) -> bool>>
+        = Mutex::new(vec![|_, _| { false }]);
 }
 
 pub struct Block {
@@ -21,7 +20,7 @@ impl PartialEq for Block {
 impl Eq for Block {}
 
 impl Block {
-    fn new(shape: Shape, on_walk: fn(&mut World) -> bool) -> Block {
+    fn new(shape: Shape, on_walk: fn(&mut World, u64) -> bool) -> Block {
         let mut blkf = BLOCK_FUNCS.lock().unwrap();
         blkf.push(on_walk);
 
@@ -40,8 +39,32 @@ impl Block {
 }
 
 lazy_static! {
-    pub static ref GROUND:     Block = Block::new(Shape::new('.', (128, 128, 128), (0, 0, 0)), |_| { true } );
-    pub static ref WALL:       Block = Block::new(Shape::new('#', (202, 195, 210), (0, 0, 0)), |_| { false } );
-    pub static ref TELEPORTER: Block = Block::new(Shape::new('%', (255, 30, 255), (0, 100, 0)), |world| { let (w, h) = (world.blocks.len(), world.blocks[0].len()); world.generate(w, h); true } );
+    pub static ref GROUND: Block = Block::new(
+        Shape::new('.', (128, 128, 128), (0, 0, 0)),
+        |_, _| { true }
+        );
+    pub static ref WALL: Block = Block::new(
+        Shape::new('#', (202, 195, 210), (0, 0, 0)),
+        |_, _| { false }
+        );
+    pub static ref TELEPORTER: Block = Block::new(
+        Shape::new('%', (255, 30, 255), (0, 100, 0)),
+        |world, _| {
+            let (w, h) = (world.blocks.len(), world.blocks[0].len());
+            world.generate(w, h); 
+            true
+        }
+        );
+    pub static ref MOVER: Block = Block::new(
+        Shape::new('^', (255, 240, 30), (0, 0, 0)),
+        |world, id| {
+            if let Some(en) = world.entities.get_mut(&id) {
+                let mut pos = en.get_pos_mut();
+                pos.0 = 10;
+                pos.1 = 10;
+            }
+            true
+        }
+        );
 
 }

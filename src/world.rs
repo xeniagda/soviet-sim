@@ -2,20 +2,24 @@ use ext::*;
 use controls::Action;
 use block;
 use entity;
-use entity::Entity;
+use entity::{EntityWrapper, Player};
+use shape::Shape;
+use std::collections::HashMap;
+
 
 #[derive(PartialEq, Eq)]
 pub struct World<'a> {
     pub blocks: Vec<Vec<&'a block::Block>>,
-    pub entities: Vec<entity::EntityWrapper>,
-    auto: Option<MoveDir>
+    pub entities: HashMap<u64, entity::EntityWrapper>,
+    auto: Option<MoveDir>,
+    last: Option<MoveDir>
 }
 
 #[derive(PartialEq, Eq, Clone, Copy)]
-enum MoveDir { Up, Left, Down, Right }
+pub enum MoveDir { Up, Left, Down, Right }
 
 impl MoveDir {
-    fn to_vec(&self) -> (i8, i8) {
+    pub fn to_vec(&self) -> (i8, i8) {
         match self {
             &MoveDir::Up => (0, -1),
             &MoveDir::Down => (0, 1),
@@ -26,44 +30,36 @@ impl MoveDir {
 }
 
 impl <'a> World<'a> {
-    pub fn new(blocks: Vec<Vec<&block::Block>>, entities: Vec<entity::EntityWrapper>) -> World {
+    pub fn new(blocks: Vec<Vec<&block::Block>>, entities: HashMap<u64, entity::EntityWrapper>) -> World {
         World {
             blocks: blocks,
             entities: entities,
-            auto: None
+            auto: None,
+            last: None
         }
     }
 
     pub fn tick(&mut self) {
-        for i in 0..self.entities.len() {
-            let mut en = self.entities[i].clone();
-            // en.tick(&mut self);
-            self.entities[i] = en;
+        {
+            for v in self.entities.values_mut() {
+                v.tick();
+            }
         }
 
         // Automove
         if let Some(auto) = self.auto {
             if self.move_player_side(&auto) {
                 self.auto = None;
+                self.last = None;
             }
             self.draw();
         }
     }
 
-    pub fn get_player(&self) -> Option<&entity::Player> {
-        for x in &self.entities {
+    pub fn get_player_id(&self) -> Option<u64> {
+        for (k, x) in &self.entities {
             match x {
-                &entity::EntityWrapper::WPlayer(ref pl) => { return Some(&pl); }
-                _ => {}
-            }
-        }
-        None
-    }
-
-    pub fn get_player_mut(&mut self) -> Option<&mut entity::Player> {
-        for x in self.entities.iter_mut() {
-            match x {
-                &mut entity::EntityWrapper::WPlayer(ref mut pl) => { return Some(pl); }
+                &entity::EntityWrapper::WPlayer(_) => { return Some(*k); }
                 _ => {}
             }
         }
@@ -91,7 +87,8 @@ impl <'a> World<'a> {
 
         if let Some(x) = move_dir {
             self.auto = None;
-            self.move_player(&x);
+            self.get_player_id().map(|id| self.move_entity(id, &x));
+            self.last = Some(x);
         }
 
         let move_dir_side: Option<MoveDir> = match *action {
@@ -109,17 +106,24 @@ impl <'a> World<'a> {
     }
 
     fn move_player_side(&mut self, move_dir: &MoveDir) -> bool {
-        if self.move_player(move_dir) {
+        if self.get_player_id().map(|id| self.move_entity(id, move_dir)) == Some(true) {
             match *move_dir {
                 MoveDir::Up | MoveDir::Down => {
                     let mut d1 = MoveDir::Left;
                     let mut d2 = MoveDir::Right;
-                    if rand() < 0.5 {
+                    if let Some(last) = self.last {
+                        if last == d2 {
+                            d1 = MoveDir::Right;
+                            d2 = MoveDir::Left;
+                        }
+                    } else if rand() < 0.5 {
                         d1 = MoveDir::Right;
                         d2 = MoveDir::Left;
                     }
-                    if self.move_player(&d1) {
-                        if self.move_player(&d2) {
+
+                    self.last = Some(d1);
+                    if self.get_player_id().map(|id| self.move_entity(id, &d1)) == Some(true) {
+                        if self.get_player_id().map(|id| self.move_entity(id, &d2)) == Some(true) {
                             return true;
                         }
                     }
@@ -127,12 +131,19 @@ impl <'a> World<'a> {
                 MoveDir::Left | MoveDir::Right => {
                     let mut d1 = MoveDir::Up;
                     let mut d2 = MoveDir::Down;
-                    if rand() < 0.5 {
+                    if let Some(last) = self.last {
+                        if last == d2 {
+                            d1 = MoveDir::Down;
+                            d2 = MoveDir::Right;
+                        }
+                    } else if rand() < 0.5 {
                         d1 = MoveDir::Down;
                         d2 = MoveDir::Up;
                     }
-                    if self.move_player(&d1) {
-                        if self.move_player(&d2) {
+
+                    self.last = Some(d1);
+                    if self.get_player_id().map(|id| self.move_entity(id, &d1)) == Some(true) {
+                        if self.get_player_id().map(|id| self.move_entity(id, &d2)) == Some(true) {
                             return true;
                         }
                     }
@@ -141,27 +152,38 @@ impl <'a> World<'a> {
         }
         false
     }
-    fn move_player(&mut self, move_dir: &MoveDir) -> bool {
+
+
+    fn move_entity(&mut self, en_id: u64, move_dir: &MoveDir) -> bool {
         let mut new_pos_and_dir: Option<((u16, u16), (i8, i8))> = None;
 
-        if let Some(pl) = self.get_player_mut() {
-            let (dx, dy) = move_dir.to_vec();
-            pl.get_pos_mut().0 += dx as u16;
-            pl.get_pos_mut().1 += dy as u16;
+        self.last = Some(*move_dir);
 
-            new_pos_and_dir = Some((pl.pos.clone(), (dx, dy)));
+        if let Some(en) = self.entities.get_mut(&en_id) {
+            let (dx, dy) = move_dir.to_vec();
+
+            en.get_pos_mut().0 += dx as u16;
+            en.get_pos_mut().1 += dy as u16;
+
+            new_pos_and_dir = Some((en.get_pos().clone(), (dx, dy)));
         }
 
+
         if let Some((pos, dir)) = new_pos_and_dir {
+            log(&format!("Moved to {:?} in {:?}", pos, dir));
+
             let id = self.blocks.get(pos.0 as usize).and_then(|x| x.get(pos.1 as usize)).map(|x| x.get_id()).unwrap_or(0);
             let mut blkf = block::BLOCK_FUNCS.lock().unwrap();
 
+            log(&format!("Id: {}", id));
+
             match blkf.get(id) {
                 Some(f) => {
-                    if !f(self) {
-                        if let Some(pl) = self.get_player_mut() {
-                            pl.get_pos_mut().0 -= dir.0 as u16;
-                            pl.get_pos_mut().1 -= dir.1 as u16;
+                    if !f(self, en_id) {
+                        log("Moving back");
+                        if let Some(en) = self.entities.get_mut(&en_id) {
+                            en.get_pos_mut().0 -= dir.0 as u16;
+                            en.get_pos_mut().1 -= dir.1 as u16;
                             return true;
                         }
                     }
@@ -177,13 +199,11 @@ impl <'a> World<'a> {
         for (x, col) in self.blocks.iter().enumerate() {
             for (y, block) in col.iter().enumerate() {
                 block.get_shape().draw((x as u16, y as u16));
-                // put_char((x as u16, y as u16), block.get_ch(), block.get_col(), block.get_bg());
             }
         }
 
-        // Draw player
-        self.entities.iter().for_each(|x| x.get_shape().draw(x.get_pos()));
-        // put_char(self.player_pos, '@', (0, 255, 0), (0, 0, 0));
+        // Draw entities
+        self.entities.iter().for_each(|(_, x)| x.get_shape().draw(x.get_pos()));
     }
 
     pub fn generate(&mut self, width: usize, height: usize) {
@@ -193,16 +213,16 @@ impl <'a> World<'a> {
         for x in 0..width {
             self.blocks.push(vec![]);
             for _ in 0..height {
-                self.blocks[x].push(&*block::GROUND);
+                self.blocks[x].push(&*block::WALL);
             }
         }
 
         let mut placed = vec![];
-        for _ in 0..1000 {
-            if rand() < 0.2 || placed.is_empty() {
+        for _ in 0..10000 {
+            if rand() < 0.001 || placed.is_empty() {
                 let x = (rand() * width as f64) as usize;
                 let y = (rand() * height as f64) as usize;
-                self.blocks[x][y] = &*block::WALL;
+                self.blocks[x][y] = &*block::GROUND;
                 placed.push((x, y, random_dir()));
             } else {
                 let idx = (rand() * placed.len() as f64) as usize;
@@ -216,20 +236,37 @@ impl <'a> World<'a> {
 
                 let (nx, ny) = (x + dirv.0 as usize, y + dirv.1 as usize);
                 
-                let can_place = self.blocks.get(nx).and_then(|col| col.get(ny)).is_some();
+                let can_place = self.blocks.get(nx).and_then(|col| col.get(ny)) == Some(&&*block::WALL);
                 if can_place {
-                    self.blocks[nx][ny] = &*block::WALL;
+                    self.blocks[nx][ny] = &*block::GROUND;
                     placed.push((nx, ny, dir));
+                    self.entities = HashMap::new();
+                    self.add_entity(EntityWrapper::WPlayer(Player { pos: (nx as u16, ny as u16), shape: Shape::new('@', (255, 0, 0), (0, 0, 0)) }));
                 }
             }
         }
+
         let x = (rand() * width as f64) as usize;
         let y = (rand() * height as f64) as usize;
         self.blocks[x][y] = &*block::TELEPORTER;
+
+        let x = (rand() * width as f64) as usize;
+        let y = (rand() * height as f64) as usize;
+        self.blocks[x][y] = &*block::MOVER;
+    }
+
+    pub fn add_entity(&mut self, entity: EntityWrapper) {
+        loop {
+            let key = (rand() * <u64>::max_value() as f64) as u64;
+            if !self.entities.contains_key(&key) {
+                self.entities.insert(key, entity);
+                break;
+            }
+        }
     }
 }
 
-fn random_dir() -> MoveDir {
+pub fn random_dir() -> MoveDir {
     match (rand() * 4.) as usize {
         0 => MoveDir::Left,
         1 => MoveDir::Right,
