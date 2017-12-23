@@ -4,6 +4,7 @@ use block;
 use entity;
 use entity::{EntityWrapper, Player};
 use shape::Shape;
+
 use std::collections::HashMap;
 
 
@@ -30,20 +31,18 @@ impl MoveDir {
 }
 
 impl <'a> World<'a> {
-    pub fn new(blocks: Vec<Vec<&block::Block>>, entities: HashMap<u64, entity::EntityWrapper>) -> World {
+    pub fn empty() -> World<'a> {
         World {
-            blocks: blocks,
-            entities: entities,
+            blocks: vec![],
+            entities: HashMap::new(),
             auto: None,
             last: None
         }
     }
 
     pub fn tick(&mut self) {
-        {
-            for v in self.entities.values_mut() {
-                v.tick();
-            }
+        for v in self.entities.values_mut() {
+            v.tick();
         }
 
         // Automove
@@ -58,9 +57,8 @@ impl <'a> World<'a> {
 
     pub fn get_player_id(&self) -> Option<u64> {
         for (k, x) in &self.entities {
-            match x {
-                &entity::EntityWrapper::WPlayer(_) => { return Some(*k); }
-                _ => {}
+            if let &entity::EntityWrapper::WPlayer(_) = x {
+                return Some(*k);
             }
         }
         None
@@ -122,8 +120,12 @@ impl <'a> World<'a> {
                     }
 
                     self.last = Some(d1);
-                    if self.get_player_id().map(|id| self.move_entity(id, &d1)) == Some(true) {
-                        if self.get_player_id().map(|id| self.move_entity(id, &d2)) == Some(true) {
+                    if self.get_player_id()
+                        .map(|id| self.move_entity(id, &d1))
+                            == Some(true) {
+                        if self.get_player_id()
+                            .map(|id| self.move_entity(id, &d2))
+                                == Some(true) {
                             return true;
                         }
                     }
@@ -142,8 +144,12 @@ impl <'a> World<'a> {
                     }
 
                     self.last = Some(d1);
-                    if self.get_player_id().map(|id| self.move_entity(id, &d1)) == Some(true) {
-                        if self.get_player_id().map(|id| self.move_entity(id, &d2)) == Some(true) {
+                    if self.get_player_id()
+                        .map(|id| self.move_entity(id, &d1))
+                            == Some(true) {
+                        if self.get_player_id()
+                            .map(|id| self.move_entity(id, &d2))
+                                == Some(true) {
                             return true;
                         }
                     }
@@ -172,7 +178,11 @@ impl <'a> World<'a> {
         if let Some((pos, dir)) = new_pos_and_dir {
             log(&format!("Moved to {:?} in {:?}", pos, dir));
 
-            let id = self.blocks.get(pos.0 as usize).and_then(|x| x.get(pos.1 as usize)).map(|x| x.get_id()).unwrap_or(0);
+            let id = self.blocks.get(pos.0 as usize)
+                        .and_then(|x| x.get(pos.1 as usize))
+                        .map(|x| x.get_id())
+                        .unwrap_or(0);
+
             let mut blkf = block::BLOCK_FUNCS.lock().unwrap();
 
             log(&format!("Id: {}", id));
@@ -203,7 +213,8 @@ impl <'a> World<'a> {
         }
 
         // Draw entities
-        self.entities.iter().for_each(|(_, x)| x.get_shape().draw(x.get_pos()));
+        self.entities.iter()
+            .for_each(|(_, x)| x.get_shape().draw(x.get_pos()));
     }
 
     pub fn generate(&mut self, width: usize, height: usize) {
@@ -241,7 +252,14 @@ impl <'a> World<'a> {
                     self.blocks[nx][ny] = &*block::GROUND;
                     placed.push((nx, ny, dir));
                     self.entities = HashMap::new();
-                    self.add_entity(EntityWrapper::WPlayer(Player { pos: (nx as u16, ny as u16), shape: Shape::new('@', (255, 0, 0), (0, 0, 0)) }));
+                    self.add_entity(
+                        EntityWrapper::WPlayer(
+                            Player {
+                                pos: (nx as u16, ny as u16),
+                                shape: Shape::new('@', (255, 0, 0), (0, 0, 0))
+                            }
+                            )
+                        );
                 }
             }
         }

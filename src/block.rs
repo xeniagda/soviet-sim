@@ -1,6 +1,7 @@
 use world::World;
-use std::sync::Mutex;
 use shape::Shape;
+
+use std::sync::Mutex;
 
 lazy_static! {
     pub static ref BLOCK_FUNCS: Mutex<Vec<fn(&mut World, u64) -> bool>>
@@ -43,10 +44,12 @@ lazy_static! {
         Shape::new('.', (128, 128, 128), (0, 0, 0)),
         |_, _| { true }
         );
+
     pub static ref WALL: Block = Block::new(
         Shape::new('#', (202, 195, 210), (0, 0, 0)),
         |_, _| { false }
         );
+
     pub static ref TELEPORTER: Block = Block::new(
         Shape::new('%', (255, 30, 255), (0, 100, 0)),
         |world, _| {
@@ -55,6 +58,7 @@ lazy_static! {
             true
         }
         );
+
     pub static ref MOVER: Block = Block::new(
         Shape::new('^', (255, 240, 30), (0, 0, 0)),
         |world, id| {

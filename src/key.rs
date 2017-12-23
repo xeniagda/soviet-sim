@@ -1,3 +1,12 @@
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(dead_code)]
+pub enum Key {
+    Down, Up, Left, Right,
+    Letter(u8),
+    Digit(u8),
+    Shift, Alt, Ctrl, Meta,
+    Enter, Backspace, Tab
+}
 
 pub fn parse_key(code: u8) -> Option<Key> {
     match code {
@@ -16,14 +25,4 @@ pub fn parse_key(code: u8) -> Option<Key> {
         48...57 => Some(Key::Digit(code - 48)),
         _ => None
     }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[allow(dead_code)]
-pub enum Key {
-    Down, Up, Left, Right,
-    Letter(u8),
-    Digit(u8),
-    Shift, Alt, Ctrl, Meta,
-    Enter, Backspace, Tab
 }

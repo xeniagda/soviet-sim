@@ -1,5 +1,7 @@
-use world::{World, MoveDir};
+use world::{MoveDir};
 use shape::Shape;
+
+use std::ops::{Deref, DerefMut};
 
 pub trait Entity {
 
@@ -33,7 +35,6 @@ pub trait Entity {
 
     fn get_shape(&self) -> Shape;
 
-    fn on_collision<E: Entity>(&mut self, other: &mut E, world: &mut World) {}
 }
 
 
@@ -68,51 +69,26 @@ pub enum EntityWrapper {
     WJosef(Josef)
 }
 
-impl EntityWrapper {
+impl Deref for EntityWrapper {
+    type Target = Entity;
 
-    pub fn tick(&mut self) {
-        use self::EntityWrapper::*;
-
-        match self {
-            &mut WPlayer(ref mut x) => x.tick(),
-            &mut WJosef(ref mut x) => x.tick(),
-        }
-    }
-
-    pub fn get_pos(&self) -> (u16, u16) {
-        use self::EntityWrapper::*;
-
-        match self {
-            &WPlayer(ref x) => x.get_pos(),
-            &WJosef(ref x) => x.get_pos(),
-        }
-    }
-
-    pub fn get_pos_mut(&mut self) -> &mut (u16, u16) {
-        use self::EntityWrapper::*;
-
-        match self {
-            &mut WPlayer(ref mut x) => x.get_pos_mut(),
-            &mut WJosef(ref mut x) => x.get_pos_mut(),
-        }
-    }
-
-    pub fn get_shape(&self) -> Shape {
-        use self::EntityWrapper::*;
-
-        match self {
-            &WPlayer(ref x) => x.get_shape(),
-            &WJosef(ref x) => x.get_shape(),
-        }
-    }
-
-    pub fn on_collision<E: Entity>(&mut self, other: &mut E, mut world: &mut World) {
+    fn deref<'a>(&'a self) -> &'a Self::Target {
         use self::EntityWrapper::*;
 
         match *self {
-            WPlayer(ref mut x) => x.on_collision(other, &mut world),
-            WJosef(ref mut x) => x.on_collision(other, &mut world),
+            WPlayer(ref e) => e,
+            WJosef(ref e) => e,
         }
     }
 }
 
+impl DerefMut for EntityWrapper {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        use self::EntityWrapper::*;
+
+        match *self {
+            WPlayer(ref mut e) => e,
+            WJosef(ref mut e) => e,
+        }
+    }
+}
