@@ -1,4 +1,4 @@
-use world::{MoveDir, World, random_dir};
+use world::{MoveDir, World};
 use shape::Shape;
 use ext::*;
 use block;
@@ -77,6 +77,8 @@ impl Entity for Player {
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub struct Josef {
+    pub countdown: u16,
+    pub speed: u16,
     pub pos: (u16, u16),
 }
 
@@ -87,10 +89,20 @@ impl Entity for Josef {
 
     fn tick(world: &mut World, en_id: u64) where Self: Sized {
         if rand() < 0.1 {
-            for _ in 0..10 {
-                if Josef::move_dir(world, en_id, random_dir()) {
-                    break;
-                }
+            let mut dirs = vec![];
+            if let Some(player) = world.get_player_id().and_then(|x| world.entities.get(&x)) {
+                let this = world.entities.get(&en_id).unwrap();
+                let (dx, dy) =
+                    (player.get_pos().0 as i32 - this.get_pos().0 as i32,
+                     player.get_pos().1 as i32 - this.get_pos().1 as i32);
+                if dx > 0 { dirs.push(MoveDir::Right) }
+                if dx < 0 { dirs.push(MoveDir::Left) }
+                if dy > 0 { dirs.push(MoveDir::Down) }
+                if dy < 0 { dirs.push(MoveDir::Up) }
+            }
+            if !dirs.is_empty() {
+                let idx = (rand() * dirs.len() as f64) as usize;
+                Josef::move_dir(world, en_id, dirs[idx]);
             }
         }
     }
