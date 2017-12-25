@@ -1,4 +1,4 @@
-#![feature(exclusive_range_pattern, inclusive_range_pattern, vec_remove_item)]
+#![feature(vec_remove_item, nll, universal_impl_trait, conservative_impl_trait)]
 
 #[macro_use]
 extern crate lazy_static;
