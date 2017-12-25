@@ -1,36 +1,19 @@
-use world::{MoveDir};
+use world::{MoveDir, World};
 use shape::Shape;
 
 use std::ops::{Deref, DerefMut};
 
 pub trait Entity {
 
-    fn tick(&mut self) {
-    }
+    fn tick(world: &mut World, en_id: u64) where Self: Sized { }
 
     fn get_pos(&self) -> (u16, u16);
     fn get_pos_mut(&mut self) -> &mut (u16, u16);
 
-    fn move_dir(&mut self, dir: MoveDir/*, world: &mut World */) /* -> bool */ {
+    fn move_dir(&mut self, dir: MoveDir) {
         let (dx, dy) = dir.to_vec();
         self.get_pos_mut().0 += dx as u16;
         self.get_pos_mut().1 += dy as u16;
-
-        // let id = world.blocks.get(self.get_pos().0 as usize).and_then(|x| x.get(self.get_pos().1 as usize)).map(|x| x.get_id()).unwrap_or(0);
-        // let blkf = block::BLOCK_FUNCS.lock().unwrap();
-
-        // match blkf.get(id) {
-        //     Some(f) => {
-        //         if !f(world) {
-        //             self.get_pos_mut().0 -= dx as u16;
-        //             self.get_pos_mut().1 -= dy as u16;
-        //             true
-        //         } else {
-        //             false
-        //         }
-        //     }
-        //     None => { false }
-        // }
     }
 
     fn get_shape(&self) -> Shape;
@@ -67,6 +50,17 @@ impl Entity for Josef {
 pub enum EntityWrapper {
     WPlayer(Player),
     WJosef(Josef)
+}
+
+impl EntityWrapper {
+    pub fn get_tick_fn(&self) -> impl Fn(&mut World, u64) {
+        use self::EntityWrapper::*;
+
+        match *self {
+            WPlayer(_) => Player::tick,
+            WJosef(_) => Josef::tick,
+        }
+    }
 }
 
 impl Deref for EntityWrapper {

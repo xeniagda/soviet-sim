@@ -41,8 +41,9 @@ impl <'a> World<'a> {
     }
 
     pub fn tick(&mut self) {
-        for v in self.entities.values_mut() {
-            v.tick();
+        for k in self.entities.clone().keys() {
+            let f = self.entities.get(k).unwrap().get_tick_fn();
+            f(self, *k);
         }
 
         // Automove
