@@ -2,8 +2,7 @@ use ext::*;
 use controls::Action;
 use block;
 use entity;
-use entity::{EntityWrapper, Player};
-use shape::Shape;
+use entity::{EntityWrapper, Player, Josef};
 
 use std::collections::HashMap;
 
@@ -52,8 +51,8 @@ impl <'a> World<'a> {
                 self.auto = None;
                 self.last = None;
             }
-            self.draw();
         }
+        self.draw();
     }
 
     pub fn get_player_id(&self) -> Option<u64> {
@@ -77,10 +76,10 @@ impl <'a> World<'a> {
 
 
         let move_dir: Option<MoveDir> = match *action {
-            Action::MoveDown  => { Some(MoveDir::Down) }  
-            Action::MoveUp    => { Some(MoveDir::Up) }    
-            Action::MoveLeft  => { Some(MoveDir::Left) }  
-            Action::MoveRight => { Some(MoveDir::Right) } 
+            Action::MoveDown  => { Some(MoveDir::Down) }
+            Action::MoveUp    => { Some(MoveDir::Up) }
+            Action::MoveLeft  => { Some(MoveDir::Left) }
+            Action::MoveRight => { Some(MoveDir::Right) }
             _                 => { None }
         };
 
@@ -91,10 +90,10 @@ impl <'a> World<'a> {
         }
 
         let move_dir_side: Option<MoveDir> = match *action {
-            Action::SideDown  => { Some(MoveDir::Down) }  
-            Action::SideUp    => { Some(MoveDir::Up) }    
-            Action::SideLeft  => { Some(MoveDir::Left) }  
-            Action::SideRight => { Some(MoveDir::Right) } 
+            Action::SideDown  => { Some(MoveDir::Down) }
+            Action::SideUp    => { Some(MoveDir::Up) }
+            Action::SideLeft  => { Some(MoveDir::Left) }
+            Action::SideRight => { Some(MoveDir::Right) }
             _                 => { None }
         };
 
@@ -162,47 +161,11 @@ impl <'a> World<'a> {
 
 
     fn move_entity(&mut self, en_id: u64, move_dir: &MoveDir) -> bool {
-        let mut new_pos_and_dir: Option<((u16, u16), (i8, i8))> = None;
 
         self.last = Some(*move_dir);
+        let en_move_fn = self.entities.get(&en_id).unwrap().get_move_fn();
 
-        if let Some(en) = self.entities.get_mut(&en_id) {
-            let (dx, dy) = move_dir.to_vec();
-
-            en.get_pos_mut().0 += dx as u16;
-            en.get_pos_mut().1 += dy as u16;
-
-            new_pos_and_dir = Some((en.get_pos().clone(), (dx, dy)));
-        }
-
-
-        if let Some((pos, dir)) = new_pos_and_dir {
-            log(&format!("Moved to {:?} in {:?}", pos, dir));
-
-            let id = self.blocks.get(pos.0 as usize)
-                        .and_then(|x| x.get(pos.1 as usize))
-                        .map(|x| x.get_id())
-                        .unwrap_or(0);
-
-            let mut blkf = block::BLOCK_FUNCS.lock().unwrap();
-
-            log(&format!("Id: {}", id));
-
-            match blkf.get(id) {
-                Some(f) => {
-                    if !f(self, en_id) {
-                        log("Moving back");
-                        if let Some(en) = self.entities.get_mut(&en_id) {
-                            en.get_pos_mut().0 -= dir.0 as u16;
-                            en.get_pos_mut().1 -= dir.1 as u16;
-                            return true;
-                        }
-                    }
-                }
-                None => {}
-            }
-        }
-        false
+        en_move_fn(self, en_id, *move_dir)
     }
 
     pub fn draw(&self) {
@@ -247,7 +210,7 @@ impl <'a> World<'a> {
                 let dirv = dir.to_vec();
 
                 let (nx, ny) = (x + dirv.0 as usize, y + dirv.1 as usize);
-                
+
                 let can_place = self.blocks.get(nx).and_then(|col| col.get(ny)) == Some(&&*block::WALL);
                 if can_place {
                     self.blocks[nx][ny] = &*block::GROUND;
@@ -257,7 +220,6 @@ impl <'a> World<'a> {
                         EntityWrapper::WPlayer(
                             Player {
                                 pos: (nx as u16, ny as u16),
-                                shape: Shape::new('@', (255, 0, 0), (0, 0, 0))
                             }
                             )
                         );
@@ -272,9 +234,13 @@ impl <'a> World<'a> {
         let x = (rand() * width as f64) as usize;
         let y = (rand() * height as f64) as usize;
         self.blocks[x][y] = &*block::MOVER;
+
+        let x = (rand() * width as f64) as usize;
+        let y = (rand() * height as f64) as usize;
+        self.add_entity(EntityWrapper::WJosef(Josef { pos: (x as u16, y as u16) }))
     }
 
-    pub fn add_entity(&mut self, entity: EntityWrapper) {
+    fn add_entity(&mut self, entity: EntityWrapper) {
         loop {
             let key = (rand() * <u64>::max_value() as f64) as u64;
             if !self.entities.contains_key(&key) {
@@ -292,5 +258,5 @@ pub fn random_dir() -> MoveDir {
         2 => MoveDir::Up,
         3 => MoveDir::Down,
         _ => MoveDir::Left
-    }   
+    }
 }
