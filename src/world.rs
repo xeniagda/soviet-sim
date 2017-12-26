@@ -65,6 +65,11 @@ impl <'a> World<'a> {
     }
 
     pub fn do_action(&mut self, action: &Action) {
+        if let &Action::Restart = action {
+            let (w, h) = (self.blocks.len(), self.blocks[0].len());
+            self.generate(w, h);
+            return;
+        }
 
         self.auto = match *action {
             Action::RunDown  => { Some(MoveDir::Down) }
@@ -237,7 +242,7 @@ impl <'a> World<'a> {
 
         let x = (rand() * width as f64) as usize;
         let y = (rand() * height as f64) as usize;
-        self.add_entity(EntityWrapper::WJosef(Josef { pos: (x as u16, y as u16) }))
+        self.add_entity(EntityWrapper::WJosef(Josef { pos: (x as u16, y as u16), countdown: 0, speed: 30 }))
     }
 
     fn add_entity(&mut self, entity: EntityWrapper) {

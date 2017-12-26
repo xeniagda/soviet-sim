@@ -1,4 +1,4 @@
-use world::{MoveDir, World};
+use world::{MoveDir, World, random_dir};
 use shape::Shape;
 use ext::*;
 use block;
@@ -62,8 +62,7 @@ pub trait Entity {
 
 }
 
-
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone)]
 pub struct Player {
     pub pos: (u16, u16),
 }
@@ -75,7 +74,7 @@ impl Entity for Player {
     fn get_shape(&self) -> Shape { Shape { ch: '@', col: (0, 255, 0), bg: (0, 0, 0) } }
 }
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone)]
 pub struct Josef {
     pub countdown: u16,
     pub speed: u16,
@@ -88,7 +87,22 @@ impl Entity for Josef {
     fn get_shape(&self) -> Shape { Shape { ch: 'J', col: (255, 0, 0), bg: (0, 0, 0) } }
 
     fn tick(world: &mut World, en_id: u64) where Self: Sized {
-        if rand() < 0.1 {
+        let should_walk = {
+            match world.entities.get_mut(&en_id).unwrap() {
+                &mut EntityWrapper::WJosef(ref mut this) => {
+                    if this.countdown == 0 {
+                        this.countdown = this.speed;
+                        true
+                    } else {
+                        this.countdown -= 1;
+                        false
+                    }
+                }
+                _ => false
+            }
+        };
+
+        if should_walk {
             let mut dirs = vec![];
             if let Some(player) = world.get_player_id().and_then(|x| world.entities.get(&x)) {
                 let this = world.entities.get(&en_id).unwrap();
@@ -101,14 +115,27 @@ impl Entity for Josef {
                 if dy < 0 { dirs.push(MoveDir::Up) }
             }
             if !dirs.is_empty() {
-                let idx = (rand() * dirs.len() as f64) as usize;
-                Josef::move_dir(world, en_id, dirs[idx]);
+                let mut moved = false;
+                for _ in 0..3 {
+                    let idx = (rand() * dirs.len() as f64) as usize;
+                    if !Josef::move_dir(world, en_id, dirs[idx]) {
+                        moved = true;
+                        break;
+                    }
+                }
+                if !moved {
+                    for _ in 0..10 {
+                        if !Josef::move_dir(world, en_id, random_dir()) {
+                            break;
+                        }
+                    }
+                }
             }
         }
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone)]
 pub enum EntityWrapper {
     WPlayer(Player),
     WJosef(Josef)

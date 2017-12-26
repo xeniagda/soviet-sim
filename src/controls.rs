@@ -14,6 +14,7 @@ pub enum Action {
     MoveUp, MoveDown, MoveLeft, MoveRight,
     RunUp,  RunDown,  RunLeft,  RunRight,
     SideUp,  SideDown,  SideLeft,  SideRight,
+    Restart
 }
 
 const CONTROLS: &[Control] = &[
@@ -29,6 +30,7 @@ const CONTROLS: &[Control] = &[
     Control {modifiers: &[],                    key: Key::Down,    desc: "Move the character downwards",   action: Action::MoveDown},
     Control {modifiers: &[],                    key: Key::Left,    desc: "Move the character left",        action: Action::MoveLeft},
     Control {modifiers: &[],                    key: Key::Right,   desc: "Move the character right",       action: Action::MoveRight},
+    Control {modifiers: &[],                    key: Key::Letter(b'r' - b'a'),   desc: "Restart level",    action: Action::Restart},
 ];
 
 pub fn parse_control<'a>(key: &'a Key, pressed: &[Key]) -> Option<&'static Control<'static>> {
