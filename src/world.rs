@@ -41,8 +41,9 @@ impl <'a> World<'a> {
 
     pub fn tick(&mut self) {
         for k in self.entities.clone().keys() {
-            let f = self.entities.get(k).unwrap().get_tick_fn();
-            f(self, *k);
+            if let Some(f) = self.entities.get(k).map(|x| x.get_tick_fn()) {
+                f(self, *k);
+            }
         }
 
         // Automove
@@ -168,9 +169,12 @@ impl <'a> World<'a> {
     fn move_entity(&mut self, en_id: u64, move_dir: &MoveDir) -> bool {
 
         self.last = Some(*move_dir);
-        let en_move_fn = self.entities.get(&en_id).unwrap().get_move_fn();
+        if let Some(en_move_fn) = self.entities.get(&en_id).map(|x| x.get_move_fn()) {
+            en_move_fn(self, en_id, *move_dir)
+        } else {
+            false
+        }
 
-        en_move_fn(self, en_id, *move_dir)
     }
 
     pub fn draw(&self) {
@@ -187,6 +191,8 @@ impl <'a> World<'a> {
     }
 
     pub fn generate(&mut self, width: usize, height: usize) {
+        log("Generating!");
+
         self.blocks = vec![];
         self.auto = None;
 
@@ -242,7 +248,9 @@ impl <'a> World<'a> {
 
         let x = (rand() * width as f64) as usize;
         let y = (rand() * height as f64) as usize;
-        self.add_entity(EntityWrapper::WJosef(Josef { pos: (x as u16, y as u16), countdown: 0, speed: 30 }))
+        self.add_entity(EntityWrapper::WJosef(Josef { pos: (x as u16, y as u16), countdown: 0, speed: 10 }));
+
+        log("Done!");
     }
 
     fn add_entity(&mut self, entity: EntityWrapper) {

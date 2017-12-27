@@ -27,17 +27,26 @@ lazy_static! {
 }
 
 pub fn put_char(pos: (u16, u16), shape: &Shape) {
-    let mut screen = SCREEN.lock().unwrap();
+    let should_draw = match SCREEN.try_lock() {
+        Ok(mut screen) => {
+            while screen.len() <= pos.0 as usize {
+                screen.push(vec![]);
+            }
+            while screen[pos.0 as usize].len() <= pos.1 as usize {
+                screen[pos.0 as usize].push(Shape::new(' ', (0,0,0), (0,0,0)));
+            }
 
-    while screen.len() <= pos.0 as usize {
-        screen.push(vec![]);
-    }
-    while screen[pos.0 as usize].len() <= pos.1 as usize {
-        screen[pos.0 as usize].push(Shape::new(' ', (0,0,0), (0,0,0)));
-    }
+            if screen[pos.0 as usize][pos.1 as usize] != *shape {
+                screen[pos.0 as usize][pos.1 as usize] = *shape;
+                true
+            } else {
+                false
+            }
+        }
+        _ => true
+    };
 
-    if screen[pos.0 as usize][pos.1 as usize] != *shape {
-        screen[pos.0 as usize][pos.1 as usize] = *shape;
+    if should_draw {
         unsafe {
             u_put_char(pos.0, pos.1, shape.ch as usize, shape.col.0, shape.col.1, shape.col.2, shape.bg.0, shape.bg.1, shape.bg.2);
         }
