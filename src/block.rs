@@ -4,7 +4,7 @@ use shape::Shape;
 use std::sync::Mutex;
 
 lazy_static! {
-    pub static ref BLOCK_FUNCS: Mutex<Vec<fn(&mut World, u64) -> bool>>
+    pub static ref BLOCK_FUNCS: Mutex<Vec<fn(&mut World, Option<u64>) -> bool>>
         = Mutex::new(vec![|_, _| { false }]);
 }
 
@@ -21,7 +21,7 @@ impl PartialEq for Block {
 impl Eq for Block {}
 
 impl Block {
-    fn new(shape: Shape, on_walk: fn(&mut World, u64) -> bool) -> Block {
+    fn new(shape: Shape, on_walk: fn(&mut World, Option<u64>) -> bool) -> Block {
         let mut blkf = BLOCK_FUNCS.lock().unwrap();
         blkf.push(on_walk);
 
@@ -30,7 +30,6 @@ impl Block {
             shape: shape
         }
     }
-
 
     #[inline]
     pub fn get_id(&self) -> usize { self.id }
@@ -52,9 +51,11 @@ lazy_static! {
 
     pub static ref TELEPORTER: Block = Block::new(
         Shape::new('%', (255, 30, 255), (0, 100, 0)),
-        |world, _| {
-            let (w, h) = (world.blocks.len(), world.blocks[0].len());
-            world.generate(w, h); 
+        |world, en| {
+            if en.is_some() {
+                let (w, h) = (world.blocks.len(), world.blocks[0].len());
+                world.generate(w, h);
+            }
             true
         }
         );
@@ -62,10 +63,15 @@ lazy_static! {
     pub static ref MOVER: Block = Block::new(
         Shape::new('^', (255, 240, 30), (0, 0, 0)),
         |world, id| {
-            if let Some(en) = world.entities.get_mut(&id) {
-                let mut pos = en.get_pos_mut();
-                pos.0 = 10;
-                pos.1 = 10;
+            match id {
+                Some(id) => {
+                    if let Some(en) = world.entities.get_mut(&id) {
+                        let mut pos = en.get_pos_mut();
+                        pos.0 = 10;
+                        pos.1 = 10;
+                    }
+                }
+                None => {}
             }
             true
         }

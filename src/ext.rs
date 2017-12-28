@@ -52,3 +52,30 @@ pub fn put_char(pos: (u16, u16), shape: &Shape) {
         }
     }
 }
+
+pub fn recolor(pos: (u16, u16), fg: (u8, u8, u8), bg: (u8, u8, u8)) {
+    match SCREEN.try_lock() {
+        Ok(mut screen) => {
+            while screen.len() <= pos.0 as usize {
+                screen.push(vec![]);
+            }
+            while screen[pos.0 as usize].len() <= pos.1 as usize {
+                screen[pos.0 as usize].push(Shape::new(' ', (0,0,0), (0,0,0)));
+            }
+            let current = screen[pos.0 as usize][pos.1 as usize];
+
+            screen[pos.0 as usize][pos.1 as usize].col = fg;
+            screen[pos.0 as usize][pos.1 as usize].bg = bg;
+            unsafe {
+                // Put a space instead
+                u_put_char(pos.0, pos.1, current.ch as usize, fg.0, fg.1, fg.2, bg.0, bg.1, bg.2);
+            }
+        }
+        Err(_) => {
+            unsafe {
+                // Put a space instead
+                u_put_char(pos.0, pos.1, 32, fg.0, fg.1, fg.2, bg.0, bg.1, bg.2);
+            }
+        }
+    }
+}

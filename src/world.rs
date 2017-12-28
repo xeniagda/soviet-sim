@@ -27,6 +27,7 @@ impl MoveDir {
             &MoveDir::Right => (1, 0),
         }
     }
+
 }
 
 impl <'a> World<'a> {
@@ -187,10 +188,10 @@ impl <'a> World<'a> {
 
         // Draw entities
         self.entities.iter()
-            .for_each(|(_, x)| {
-                x.get_shape().draw(x.get_pos());
-                x.draw_other(self, x.get_pos());
-            });
+            .for_each(|(_, x)| x.pre_draw(self));
+
+        self.entities.iter()
+            .for_each(|(_, x)| x.get_shape().draw(x.get_pos()));
     }
 
     pub fn generate(&mut self, width: usize, height: usize) {
@@ -205,6 +206,8 @@ impl <'a> World<'a> {
                 self.blocks[x].push(&*block::WALL);
             }
         }
+
+        self.entities = HashMap::new();
 
         let mut placed = vec![];
         for _ in 0..10000 {
@@ -229,29 +232,42 @@ impl <'a> World<'a> {
                 if can_place {
                     self.blocks[nx][ny] = &*block::GROUND;
                     placed.push((nx, ny, dir));
-                    self.entities = HashMap::new();
-                    self.add_entity(
-                        EntityWrapper::WPlayer(
-                            Player {
-                                pos: (nx as u16, ny as u16),
-                            }
-                            )
-                        );
                 }
             }
         }
 
-        let x = (rand() * width as f64) as usize;
-        let y = (rand() * height as f64) as usize;
+        let idx = (rand() * placed.len() as f64) as usize;
+        let (x, y, _) = placed[idx];
+        placed.remove(idx);
         self.blocks[x][y] = &*block::TELEPORTER;
 
-        let x = (rand() * width as f64) as usize;
-        let y = (rand() * height as f64) as usize;
+        let idx = (rand() * placed.len() as f64) as usize;
+        let (x, y, _) = placed[idx];
+        placed.remove(idx);
         self.blocks[x][y] = &*block::MOVER;
 
-        let x = (rand() * width as f64) as usize;
-        let y = (rand() * height as f64) as usize;
-        self.add_entity(EntityWrapper::WJosef(Josef { pos: (x as u16, y as u16), countdown: 0, speed: 10 }));
+        let idx = (rand() * placed.len() as f64) as usize;
+        let (x, y, _) = placed[idx];
+        placed.remove(idx);
+        self.add_entity(
+            EntityWrapper::WPlayer(
+                Player {
+                    pos: (x as u16, y as u16),
+                }
+                )
+            );
+
+        let idx = (rand() * placed.len() as f64) as usize;
+        let (x, y, _) = placed[idx];
+        placed.remove(idx);
+        self.add_entity(
+            EntityWrapper::WJosef(Josef {
+                pos: (x as u16, y as u16),
+                countdown: 0,
+                speed: 10,
+                path: vec![],
+                visited: vec![]
+            }));
 
         log("Done!");
     }

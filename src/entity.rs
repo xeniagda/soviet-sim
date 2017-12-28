@@ -1,9 +1,11 @@
-use world::{MoveDir, World, random_dir};
+use world::{MoveDir, World};
 use shape::Shape;
 use ext::*;
 use block;
 
 use std::ops::{Deref, DerefMut};
+
+const SHOW_PATH_FINDING: bool = true;
 
 pub trait Entity {
 
@@ -43,7 +45,7 @@ pub trait Entity {
 
             match blkf.get(id) {
                 Some(f) => {
-                    if !f(world, en_id) {
+                    if !f(world, Some(en_id)) {
                         // log("Moving back");
                         if let Some(en) = world.entities.get_mut(&en_id) {
                             en.get_pos_mut().0 -= dir.0 as u16;
@@ -92,7 +94,7 @@ pub trait Entity {
 
     fn get_shape(&self) -> Shape;
 
-    fn draw_other(&self, _world: &World, _pos: (u16, u16)) {
+    fn pre_draw(&self, _world: &World) {
     }
 
     /// When another entity moves on top of this entity, what should happen?
@@ -119,6 +121,8 @@ impl Entity for Player {
 pub struct Josef {
     pub countdown: u16,
     pub speed: u16,
+    pub path: Vec<MoveDir>,
+    pub visited: Vec<(u16, u16)>,
     pub pos: (u16, u16),
 }
 
@@ -145,34 +149,82 @@ impl Entity for Josef {
         };
 
         if should_walk {
-            let mut dirs = vec![];
+            let (player_pos, my_pos);
             if let Some(player) = world.get_player_id().and_then(|x| world.entities.get(&x)) {
                 if let Some(this) = world.entities.get(&en_id) {
-                    let (dx, dy) =
-                           (player.get_pos().0 as i32 - this.get_pos().0 as i32,
-                            player.get_pos().1 as i32 - this.get_pos().1 as i32);
-                    if dx > 0 { dirs.push(MoveDir::Right) }
-                    if dx < 0 { dirs.push(MoveDir::Left) }
-                    if dy > 0 { dirs.push(MoveDir::Down) }
-                    if dy < 0 { dirs.push(MoveDir::Up) }
+                    player_pos = player.get_pos();
+                    my_pos = this.get_pos();
+                } else {
+                    return;
                 }
+            } else {
+                return;
             }
-            if !dirs.is_empty() {
-                let mut moved = false;
-                for _ in 0..3 {
-                    let idx = (rand() * dirs.len() as f64) as usize;
-                    if !Josef::move_dir(world, en_id, dirs[idx]) {
-                        moved = true;
-                        break;
-                    }
-                }
-                if !moved {
-                    for _ in 0..10 {
-                        if !Josef::move_dir(world, en_id, random_dir()) {
-                            break;
+
+            let mut visited = vec![ my_pos ];
+            let mut paths: Vec<(_, Vec<MoveDir>)> = vec![ (my_pos, vec![]) ];
+
+            let mut best_path = None;
+
+            // Find closest path to player
+            'outer: loop {
+                if let Some((ref pos, ref path)) = paths.clone().into_iter()
+                        .min_by_key(|&(ref pos, ref path)| {
+                            let delta = (pos.0 - player_pos.0, pos.1 - player_pos.1);
+                            delta.0 * delta.0 + delta.1 * delta.1 + path.len() as u16 * 2
+                        }) {
+                    paths.remove_item(&(*pos, path.clone()));
+
+                    let mut dirs = vec! [MoveDir::Up, MoveDir::Down, MoveDir::Left, MoveDir::Right];
+                    for _ in 0..4 {
+                        let fidx = rand() * dirs.len() as f64;
+                        let dir = dirs[fidx as usize];
+                        dirs.remove(fidx as usize);
+
+                        let (dx, dy) = dir.to_vec();
+                        let new_pos = (pos.0 + dx as u16, pos.1 + dy as u16);
+
+                        let mut new_path = path.clone();
+                        new_path.push(dir);
+
+                        if visited.contains(&new_pos) {
+                            continue;
+                        }
+                        if new_pos == player_pos {
+                            best_path = Some(new_path);
+                            break 'outer;
+                        }
+
+                        let id = world.blocks.get(new_pos.0 as usize)
+                            .and_then(|x| x.get(new_pos.1 as usize))
+                            .map(|x| x.get_id())
+                            .unwrap_or(0);
+
+                        let mut blkf = block::BLOCK_FUNCS.lock().unwrap();
+
+                        // log(&format!("Id: {}", id));
+
+                        match blkf.get(id) {
+                            Some(f) => {
+                                if f(world, None) {
+                                    paths.push((new_pos, new_path));
+                                    visited.push(new_pos);
+                                }
+                            }
+                            None => {}
                         }
                     }
+                } else {
+                    break 'outer;
                 }
+            }
+
+            if let Some(best_path) = best_path.clone() {
+                Josef::move_dir(world, en_id, best_path[0]);
+            }
+            if let Some(&mut EntityWrapper::WJosef(ref mut this)) = world.entities.get_mut(&en_id) {
+                this.path = best_path.unwrap_or(vec![]);
+                this.visited = visited;
             }
         }
     }
@@ -186,6 +238,22 @@ impl Entity for Josef {
         true
     }
 
+    fn pre_draw(&self, _world: &World) {
+        if SHOW_PATH_FINDING {
+            let mut pos = self.get_pos();
+
+            for pos in &self.visited {
+                recolor(*pos, (0, 0, 0), (0, 128, 0));
+            }
+
+            for dir in self.path.iter().skip(1) {
+                let (dx, dy) = dir.to_vec();
+                pos = (pos.0 + dx as u16, pos.1 + dy as u16);
+
+                recolor(pos, (0, 0, 0), (128, 0, 0));
+            }
+        }
+    }
 }
 
 #[derive(PartialEq, Eq, Clone)]
