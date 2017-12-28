@@ -92,6 +92,9 @@ pub trait Entity {
 
     fn get_shape(&self) -> Shape;
 
+    fn draw_other(&self, _world: &World, _pos: (u16, u16)) {
+    }
+
     /// When another entity moves on top of this entity, what should happen?
     /// Returns if the entity have to move back
     fn on_collision(_world: &mut World, _me_id: u64, _other_id: u64) -> bool
@@ -124,6 +127,7 @@ impl Entity for Josef {
     fn get_pos_mut(&mut self) -> &mut (u16, u16) { &mut self.pos }
     fn get_shape(&self) -> Shape { Shape { ch: 'J', col: (255, 0, 0), bg: (0, 0, 0) } }
 
+
     fn tick(world: &mut World, en_id: u64) where Self: Sized {
         let should_walk = {
             match world.entities.get_mut(&en_id) {
@@ -145,8 +149,8 @@ impl Entity for Josef {
             if let Some(player) = world.get_player_id().and_then(|x| world.entities.get(&x)) {
                 if let Some(this) = world.entities.get(&en_id) {
                     let (dx, dy) =
-                        (player.get_pos().0 as i32 - this.get_pos().0 as i32,
-                        player.get_pos().1 as i32 - this.get_pos().1 as i32);
+                           (player.get_pos().0 as i32 - this.get_pos().0 as i32,
+                            player.get_pos().1 as i32 - this.get_pos().1 as i32);
                     if dx > 0 { dirs.push(MoveDir::Right) }
                     if dx < 0 { dirs.push(MoveDir::Left) }
                     if dy > 0 { dirs.push(MoveDir::Down) }

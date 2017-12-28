@@ -187,7 +187,10 @@ impl <'a> World<'a> {
 
         // Draw entities
         self.entities.iter()
-            .for_each(|(_, x)| x.get_shape().draw(x.get_pos()));
+            .for_each(|(_, x)| {
+                x.get_shape().draw(x.get_pos());
+                x.draw_other(self, x.get_pos());
+            });
     }
 
     pub fn generate(&mut self, width: usize, height: usize) {
