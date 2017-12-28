@@ -49,7 +49,7 @@ impl <'a> World<'a> {
 
         // Automove
         if let Some(auto) = self.auto {
-            if self.move_player_side(&auto) {
+            if !self.move_player_side(&auto) {
                 self.auto = None;
                 self.last = None;
             }
@@ -111,7 +111,7 @@ impl <'a> World<'a> {
     }
 
     fn move_player_side(&mut self, move_dir: &MoveDir) -> bool {
-        if self.get_player_id().map(|id| self.move_entity(id, move_dir)) == Some(true) {
+        if self.get_player_id().map(|id| self.move_entity(id, move_dir)) == Some(false) {
             match *move_dir {
                 MoveDir::Up | MoveDir::Down => {
                     let mut d1 = MoveDir::Left;
@@ -129,11 +129,11 @@ impl <'a> World<'a> {
                     self.last = Some(d1);
                     if self.get_player_id()
                         .map(|id| self.move_entity(id, &d1))
-                            == Some(true) {
+                            == Some(false) {
                         if self.get_player_id()
                             .map(|id| self.move_entity(id, &d2))
-                                == Some(true) {
-                            return true;
+                                == Some(false) {
+                            return false;
                         }
                     }
                 }
@@ -153,17 +153,17 @@ impl <'a> World<'a> {
                     self.last = Some(d1);
                     if self.get_player_id()
                         .map(|id| self.move_entity(id, &d1))
-                            == Some(true) {
+                            == Some(false) {
                         if self.get_player_id()
                             .map(|id| self.move_entity(id, &d2))
-                                == Some(true) {
-                            return true;
+                                == Some(false) {
+                            return false;
                         }
                     }
                 }
             }
         }
-        false
+        true
     }
 
 

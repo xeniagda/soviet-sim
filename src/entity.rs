@@ -5,7 +5,7 @@ use block;
 
 use std::ops::{Deref, DerefMut};
 
-const SHOW_PATH_FINDING: bool = true;
+const SHOW_PATH_FINDING: bool = false;
 
 pub trait Entity {
 
@@ -15,7 +15,7 @@ pub trait Entity {
     fn get_pos_mut(&mut self) -> &mut (u16, u16);
 
     /// Try to move an entity in a specific direction
-    /// Returns if the entity collided and had to move back
+    /// Returns if the entity successfully moved
     fn move_dir(world: &mut World, en_id: u64, dir: MoveDir) -> bool
         where Self: Sized {
 
@@ -34,37 +34,41 @@ pub trait Entity {
         if let Some((pos, dir)) = new_pos_and_dir {
             // log(&format!("Moved to {:?} in {:?}", pos, dir));
 
-            let id = world.blocks.get(pos.0 as usize)
+            let passable = world.blocks.get(pos.0 as usize)
                         .and_then(|x| x.get(pos.1 as usize))
-                        .map(|x| x.get_id())
-                        .unwrap_or(0);
+                        .map(|x| x.is_passable())
+                        .unwrap_or(false);
 
-            let mut blkf = block::BLOCK_FUNCS.lock().unwrap();
+            if passable {
+                let id = world.blocks.get(pos.0 as usize)
+                    .and_then(|x| x.get(pos.1 as usize))
+                    .map(|x| x.get_id())
+                    .unwrap_or(0);
 
-            // log(&format!("Id: {}", id));
+                let mut blkf = block::BLOCK_FUNCS.lock().unwrap();
 
-            match blkf.get(id) {
-                Some(f) => {
-                    if !f(world, Some(en_id)) {
-                        // log("Moving back");
-                        if let Some(en) = world.entities.get_mut(&en_id) {
-                            en.get_pos_mut().0 -= dir.0 as u16;
-                            en.get_pos_mut().1 -= dir.1 as u16;
-                            return true;
-                        }
+                // log(&format!("Id: {}", id));
+
+                match blkf.get(id) {
+                    Some(f) => {
+                        f(world, en_id);
                     }
+                    None => {}
                 }
-                None => {}
+            } else {
+                if let Some(en) = world.entities.get_mut(&en_id) {
+                    en.get_pos_mut().0 -= dir.0 as u16;
+                    en.get_pos_mut().1 -= dir.1 as u16;
+                }
+                return false;
             }
-
             for k in world.entities.clone().keys() {
                 if k != &en_id && world.entities.get(k).map(|x| x.get_pos()) == Some(pos) {
                     let mut collided = false;
 
                     let f = world.entities.get(k).unwrap().get_collision_fn();
 
-                    if f(world, *k, en_id) {
-                        // log("Entity collision");
+                    if !f(world, *k, en_id) {
                         if let Some(en) = world.entities.get_mut(&en_id) {
                             en.get_pos_mut().0 -= dir.0 as u16;
                             en.get_pos_mut().1 -= dir.1 as u16;
@@ -74,8 +78,7 @@ pub trait Entity {
 
 
                     if let Some(f) = world.entities.get(&en_id).map(|x| x.get_collision_fn()) {
-                        if f(world, en_id, *k) {
-                            // log("Self collision");
+                        if !f(world, en_id, *k) {
                             if let Some(en) = world.entities.get_mut(&en_id) {
                                 en.get_pos_mut().0 -= dir.0 as u16;
                                 en.get_pos_mut().1 -= dir.1 as u16;
@@ -84,12 +87,12 @@ pub trait Entity {
                         }
                     }
                     if collided {
-                        return true;
+                        return false;
                     }
                 }
             }
         }
-        false
+        true
     }
 
     fn get_shape(&self) -> Shape;
@@ -98,10 +101,10 @@ pub trait Entity {
     }
 
     /// When another entity moves on top of this entity, what should happen?
-    /// Returns if the entity have to move back
+    /// Returns if entity is passable
     fn on_collision(_world: &mut World, _me_id: u64, _other_id: u64) -> bool
         where Self: Sized {
-        true
+        false
     }
 }
 
@@ -195,23 +198,13 @@ impl Entity for Josef {
                             break 'outer;
                         }
 
-                        let id = world.blocks.get(new_pos.0 as usize)
+                        let passable = world.blocks.get(new_pos.0 as usize)
                             .and_then(|x| x.get(new_pos.1 as usize))
-                            .map(|x| x.get_id())
-                            .unwrap_or(0);
-
-                        let mut blkf = block::BLOCK_FUNCS.lock().unwrap();
-
-                        // log(&format!("Id: {}", id));
-
-                        match blkf.get(id) {
-                            Some(f) => {
-                                if f(world, None) {
-                                    paths.push((new_pos, new_path));
-                                    visited.push(new_pos);
-                                }
-                            }
-                            None => {}
+                            .map(|x| x.is_passable())
+                            .unwrap_or(false);
+                        if passable {
+                            paths.push((new_pos, new_path));
+                            visited.push(new_pos);
                         }
                     }
                 } else {
@@ -235,7 +228,7 @@ impl Entity for Josef {
         let (w, h) = (world.blocks.len(), world.blocks[0].len());
         world.generate(w, h);
 
-        true
+        false
     }
 
     fn pre_draw(&self, _world: &World) {
@@ -243,14 +236,14 @@ impl Entity for Josef {
             let mut pos = self.get_pos();
 
             for pos in &self.visited {
-                recolor(*pos, (0, 0, 0), (0, 128, 0));
+                recolor(*pos, (0, 255, 0), (0, 0, 0));
             }
 
             for dir in self.path.iter().skip(1) {
                 let (dx, dy) = dir.to_vec();
                 pos = (pos.0 + dx as u16, pos.1 + dy as u16);
 
-                recolor(pos, (0, 0, 0), (128, 0, 0));
+                recolor(pos, (255, 0, 0), (0, 0, 0));
             }
         }
     }

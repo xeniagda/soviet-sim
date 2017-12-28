@@ -1,16 +1,18 @@
 use world::World;
 use shape::Shape;
+use ext::*;
 
 use std::sync::Mutex;
 
 lazy_static! {
-    pub static ref BLOCK_FUNCS: Mutex<Vec<fn(&mut World, Option<u64>) -> bool>>
-        = Mutex::new(vec![|_, _| { false }]);
+    pub static ref BLOCK_FUNCS: Mutex<Vec<fn(&mut World, u64)>>
+        = Mutex::new(vec![|_, _| {}]);
 }
 
 pub struct Block {
     shape: Shape,
     id: usize,
+    passable: bool
 }
 
 impl PartialEq for Block {
@@ -21,12 +23,13 @@ impl PartialEq for Block {
 impl Eq for Block {}
 
 impl Block {
-    fn new(shape: Shape, on_walk: fn(&mut World, Option<u64>) -> bool) -> Block {
+    fn new(shape: Shape, passable: bool, on_walk: fn(&mut World, u64)) -> Block {
         let mut blkf = BLOCK_FUNCS.lock().unwrap();
         blkf.push(on_walk);
 
         Block {
             id: blkf.len() - 1,
+            passable: passable,
             shape: shape
         }
     }
@@ -36,44 +39,57 @@ impl Block {
 
     #[inline]
     pub fn get_shape(&self) -> Shape { self.shape }
+
+    #[inline]
+    pub fn is_passable(&self) -> bool { self.passable }
 }
 
 lazy_static! {
     pub static ref GROUND: Block = Block::new(
         Shape::new('.', (128, 128, 128), (0, 0, 0)),
-        |_, _| { true }
+        true,
+        |_, _| {}
         );
 
     pub static ref WALL: Block = Block::new(
         Shape::new('#', (202, 195, 210), (0, 0, 0)),
-        |_, _| { false }
+        false,
+        |_, _| {}
         );
 
     pub static ref TELEPORTER: Block = Block::new(
         Shape::new('%', (255, 30, 255), (0, 100, 0)),
-        |world, en| {
-            if en.is_some() {
-                let (w, h) = (world.blocks.len(), world.blocks[0].len());
-                world.generate(w, h);
-            }
-            true
+        true,
+        |world, _| {
+            let (w, h) = (world.blocks.len(), world.blocks[0].len());
+            world.generate(w, h);
         }
         );
 
     pub static ref MOVER: Block = Block::new(
         Shape::new('^', (255, 240, 30), (0, 0, 0)),
+        true,
         |world, id| {
-            match id {
-                Some(id) => {
-                    if let Some(en) = world.entities.get_mut(&id) {
-                        let mut pos = en.get_pos_mut();
-                        pos.0 = 10;
-                        pos.1 = 10;
-                    }
+            let pos;
+            loop {
+                let x = (rand() * world.blocks.len() as f64) as usize;
+                let y = (rand() * world.blocks[0].len() as f64) as usize;
+
+                let passable = world.blocks.get(x as usize)
+                    .and_then(|a| a.get(y as usize))
+                    .map(|a| a.is_passable())
+                    .unwrap_or(false);
+
+                if passable {
+                    pos = (x as u16, y as u16);
+                    break;
                 }
-                None => {}
             }
-            true
+            if let Some(en) = world.entities.get_mut(&id) {
+                let mut epos = en.get_pos_mut();
+                epos.0 = pos.0;
+                epos.1 = pos.1;
+            }
         }
         );
 
