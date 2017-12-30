@@ -14,17 +14,20 @@ mod shape;
 use world::*;
 
 use std::sync::Mutex;
+use std::collections::HashSet;
 use std::panic::set_hook;
 
-struct Rougelike<'a> {
-    world: World<'a>,
-    keys_down: Vec<key::Key>
+struct Rougelike {
+    world: World,
+    keys_down: HashSet<key::Key>,
+    size: (u16, u16)
 }
 
 lazy_static! {
-    static ref ROUGELIKE: Mutex<Rougelike<'static>> = Mutex::new(Rougelike {
+    static ref ROUGELIKE: Mutex<Rougelike> = Mutex::new(Rougelike {
         world: World::empty(),
-        keys_down: vec![]
+        keys_down: HashSet::new(),
+        size: (0, 0)
     });
 }
 
@@ -50,9 +53,10 @@ pub fn start(width: u16, height: u16) {
 
 
     if let Ok(mut rouge) = ROUGELIKE.try_lock() {
-        rouge.world.generate(width as usize, height as usize);
+        rouge.size = (width, height);
+        rouge.world.generate(width as usize, height as usize - 2);
 
-        rouge.world.draw();
+        rouge.world.draw(&rouge.size);
     }
 }
 
@@ -61,6 +65,7 @@ pub fn start(width: u16, height: u16) {
 pub fn tick() {
     if let Ok(mut rouge) = ROUGELIKE.try_lock() {
         rouge.world.tick();
+        rouge.world.draw(&rouge.size);
     }
 }
 
@@ -68,20 +73,20 @@ pub fn tick() {
 pub fn key_down(key_code: u8) {
     match key::parse_key(key_code) {
         Some(key) => {
-            // log(&format!("Pressed key: {} -> {:?}", key_code, key));
+            ext::log(&format!("Pressed key: {} -> {:?}", key_code, key));
             if let Ok(mut rouge) = ROUGELIKE.try_lock() {
 
                 if let Some(ref cont) = controls::parse_control(&key, &rouge.keys_down) {
-                    // log(&format!("Control: {:?}", cont));
+                    ext::log(&format!("Control: {:?}", cont));
                     rouge.world.do_action(&cont.action);
                 }
 
-                rouge.keys_down.push(key);
-                rouge.world.draw();
+                rouge.keys_down.insert(key);
+                rouge.world.draw(&rouge.size);
             }
         }
         None => {
-            // log(&format!("Pressed key: {}", key_code));
+            ext::log(&format!("Pressed key: {}", key_code));
         }
     }
 }
@@ -92,7 +97,7 @@ pub fn key_up(key_code: u8) {
         Some(key) => {
             // log(&format!("Released key: {} -> {:?}", key_code, key));
             if let Ok(mut rouge) = ROUGELIKE.try_lock() {
-                rouge.keys_down.remove_item(&key);
+                rouge.keys_down.remove(&key);
             }
         }
         None => {

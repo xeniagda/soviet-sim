@@ -97,7 +97,7 @@ pub trait Entity {
 
     fn get_shape(&self) -> Shape;
 
-    fn pre_draw(&self, _world: &World) {
+    fn pre_draw(&self, _world: &World, _size: &(u16, u16)) {
     }
 
     /// When another entity moves on top of this entity, what should happen?
@@ -111,6 +111,28 @@ pub trait Entity {
 #[derive(PartialEq, Eq, Clone)]
 pub struct Player {
     pub pos: (u16, u16),
+    pub inventory: Vec<(block::Block, u64)>,
+    pub active: usize
+}
+
+impl Player {
+    pub fn new(pos: (u16, u16)) -> Player {
+        Player {
+            pos: pos,
+            active: 0,
+            inventory: vec! []
+        }
+    }
+
+    pub fn pick_up(&mut self, block: block::Block) {
+        if let Some(&mut (_, ref mut count)) = self.inventory.iter_mut()
+                .find(|x| x.0 == block) {
+            *count += 1;
+        } else {
+            self.inventory.push((block, 1));
+        }
+        log(&format!("Inventory: {:?}", self.inventory));
+    }
 }
 
 impl Entity for Player {
@@ -118,6 +140,26 @@ impl Entity for Player {
     fn get_pos_mut(&mut self) -> &mut (u16, u16) { &mut self.pos }
 
     fn get_shape(&self) -> Shape { Shape { ch: '@', col: (0, 255, 0), bg: (0, 0, 0) } }
+
+    fn pre_draw(&self, _world: &World, size: &(u16, u16)) {
+        let mut x = 5;
+
+        for (i, &(ref block, ref count)) in self.inventory.iter().enumerate() {
+            block.get_shape().draw((x, size.1 - 2));
+            let text = format!("x{}", count);
+
+            if i == self.active {
+                put_char((x, size.1 - 1), &Shape::new('^', (255, 255, 255), (0, 0, 0)));
+            }
+
+            for ch in text.chars() {
+                x += 1;
+                put_char((x, size.1 - 2), &Shape::new(ch, (255, 255, 255), (0, 0, 0)));
+            }
+
+            x += 3;
+        }
+    }
 }
 
 #[derive(PartialEq, Eq, Clone)]
@@ -127,6 +169,18 @@ pub struct Josef {
     pub path: Vec<MoveDir>,
     pub visited: Vec<(u16, u16)>,
     pub pos: (u16, u16),
+}
+
+impl Josef {
+    pub fn new(pos: (u16, u16), speed: u16) -> Josef {
+        Josef {
+            countdown: 0,
+            speed: speed,
+            path: vec! [],
+            visited: vec! [],
+            pos: pos
+        }
+    }
 }
 
 impl Entity for Josef {
@@ -168,6 +222,7 @@ impl Entity for Josef {
             let mut paths: Vec<(_, Vec<MoveDir>)> = vec![ (my_pos, vec![]) ];
 
             let mut best_path = None;
+            let mut best_score = u16::max_value();
 
             // Find closest path to player
             'outer: loop {
@@ -202,9 +257,17 @@ impl Entity for Josef {
                             .and_then(|x| x.get(new_pos.1 as usize))
                             .map(|x| x.is_passable())
                             .unwrap_or(false);
+
                         if passable {
-                            paths.push((new_pos, new_path));
+                            paths.push((new_pos, new_path.clone()));
                             visited.push(new_pos);
+
+                            let delta = (pos.0 - player_pos.0, pos.1 - player_pos.1);
+                            let score = delta.0 * delta.0 + delta.1 * delta.1 + path.len() as u16 * 2;
+                            if score < best_score {
+                                best_path = Some(new_path);
+                                best_score = score;
+                            }
                         }
                     }
                 } else {
@@ -231,7 +294,7 @@ impl Entity for Josef {
         false
     }
 
-    fn pre_draw(&self, _world: &World) {
+    fn pre_draw(&self, _world: &World, _size: &(u16, u16)) {
         if SHOW_PATH_FINDING {
             let mut pos = self.get_pos();
 

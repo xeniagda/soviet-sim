@@ -1,6 +1,7 @@
 use world::World;
 use shape::Shape;
 use ext::*;
+use entity::*;
 
 use std::sync::Mutex;
 
@@ -9,10 +10,12 @@ lazy_static! {
         = Mutex::new(vec![|_, _| {}]);
 }
 
+#[derive(Debug, Clone)]
 pub struct Block {
     shape: Shape,
     id: usize,
-    passable: bool
+    passable: bool,
+    breakable: bool
 }
 
 impl PartialEq for Block {
@@ -23,13 +26,14 @@ impl PartialEq for Block {
 impl Eq for Block {}
 
 impl Block {
-    fn new(shape: Shape, passable: bool, on_walk: fn(&mut World, u64)) -> Block {
+    fn new(shape: Shape, passable: bool, breakable: bool, on_walk: fn(&mut World, u64)) -> Block {
         let mut blkf = BLOCK_FUNCS.lock().unwrap();
         blkf.push(on_walk);
 
         Block {
             id: blkf.len() - 1,
             passable: passable,
+            breakable: breakable,
             shape: shape
         }
     }
@@ -42,32 +46,48 @@ impl Block {
 
     #[inline]
     pub fn is_passable(&self) -> bool { self.passable }
+
+    #[inline]
+    pub fn is_breakable(&self) -> bool { self.breakable }
 }
 
 lazy_static! {
     pub static ref GROUND: Block = Block::new(
         Shape::new('.', (128, 128, 128), (0, 0, 0)),
         true,
+        false,
         |_, _| {}
         );
 
     pub static ref WALL: Block = Block::new(
         Shape::new('#', (202, 195, 210), (0, 0, 0)),
         false,
+        true,
+        |_, _| {}
+        );
+
+    pub static ref STONE: Block = Block::new(
+        Shape::new('&', (120, 140, 160), (10, 30, 50)),
+        false,
+        true,
         |_, _| {}
         );
 
     pub static ref TELEPORTER: Block = Block::new(
         Shape::new('%', (255, 30, 255), (0, 100, 0)),
         true,
-        |world, _| {
-            let (w, h) = (world.blocks.len(), world.blocks[0].len());
-            world.generate(w, h);
+        true,
+        |world, id| {
+            if let Some(&EntityWrapper::WPlayer(_)) = world.entities.get(&id) {
+                let (w, h) = (world.blocks.len(), world.blocks[0].len());
+                world.generate(w, h);
+            }
         }
         );
 
     pub static ref MOVER: Block = Block::new(
         Shape::new('^', (255, 240, 30), (0, 0, 0)),
+        true,
         true,
         |world, id| {
             let pos;

@@ -12,6 +12,10 @@ impl Shape {
         Shape { ch: ch, col: col, bg: bg }
     }
 
+    pub fn empty() -> Shape {
+        Shape::new(' ', (0, 0, 0), (0, 0, 0))
+    }
+
     pub fn draw(&self, pos: (u16, u16)) {
         put_char(pos, &self);
     }
