@@ -404,7 +404,7 @@ impl World {
         placed.remove(idx);
         self.add_entity(
             EntityWrapper::WJosef(
-                Josef::new((x as u16, y as u16), 10)
+                Josef::new((x as u16, y as u16), 20)
             ));
 
         log("Done!");
