@@ -105,3 +105,11 @@ pub fn key_up(key_code: u8) {
         }
     }
 }
+
+#[no_mangle]
+pub fn redraw() {
+    if let Ok(rouge) = ROUGELIKE.try_lock() {
+        ext::clear();
+        rouge.world.draw(&rouge.size);
+    }
+}

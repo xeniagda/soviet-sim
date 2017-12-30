@@ -45,6 +45,10 @@ body {
                         ctx.fillStyle = `rgb(${fr & 255},${fg & 255},${fb & 255})`;
                         ctx.fillText(String.fromCharCode(ch), (x + 0.5) * squaresize_x, (y + 0.9) * squaresize_y);
                     },
+                    u_clear: () => {
+                        ctx.fillStyle = "rgb(0, 0, 0)";
+                        ctx.fillRect(0, 0, squaresize_x * width, squaresize_y * height);
+                    },
                     u_log: ch => {
                         if (ch == 10) {
                             console.log(LOG_BUF);
@@ -68,6 +72,7 @@ body {
                     result.instance.exports.key_up(event.keyCode);
                 });
                 setInterval(result.instance.exports.tick, 1000 / 60);
+                setInterval(result.instance.exports.redraw, 1000 * 10);
             })
     </script>
 </html>

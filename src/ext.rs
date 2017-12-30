@@ -5,6 +5,7 @@ use std::sync::Mutex;
 
 extern {
     fn u_put_char(x: u16, y: u16, ch: usize, fr: u8, fg: u8, fb: u8, br: u8, bg: u8, bb: u8);
+    fn u_clear();
     fn u_log(msg: c_char);
     fn u_rand() -> f64;
 }
@@ -76,6 +77,15 @@ pub fn recolor(pos: (u16, u16), fg: (u8, u8, u8), bg: (u8, u8, u8)) {
                 // Put a space instead
                 u_put_char(pos.0, pos.1, 32, fg.0, fg.1, fg.2, bg.0, bg.1, bg.2);
             }
+        }
+    }
+}
+
+pub fn clear() {
+    if let Ok(ref mut screen) = SCREEN.try_lock() {
+        screen.clear();
+        unsafe {
+            u_clear();
         }
     }
 }
