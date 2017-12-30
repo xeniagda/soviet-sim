@@ -1,4 +1,4 @@
-![screenshot](screenshot.png)
+<img src="screenshot.png" width=500 />
 
 # A rougelike game written in Webassembly and Rust
 
