@@ -8,7 +8,7 @@ Blocks:
 * `^` - Random teleporter
 * `%` - Regenerate level
 * `@` - You
-* `J` - Enemy
+* `J` - Enemy (Joseph Stalin)
 
 Controls:
 
