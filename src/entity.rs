@@ -2,6 +2,7 @@ use world::{MoveDir, World};
 use shape::Shape;
 use ext::*;
 use block;
+use rand::random;
 
 use std::ops::{Deref, DerefMut};
 
@@ -112,7 +113,8 @@ pub trait Entity {
 pub struct Player {
     pub pos: (u16, u16),
     pub inventory: Vec<(block::Block, u64)>,
-    pub active: usize
+    pub active: usize,
+    pub hunger: u16
 }
 
 impl Player {
@@ -120,12 +122,15 @@ impl Player {
         Player {
             pos: pos,
             active: 0,
-            inventory: vec! []
+            inventory: vec! [],
+            hunger: 1
         }
     }
 
     pub fn pick_up(&mut self, block: block::Block) {
-        if let Some(&mut (_, ref mut count)) = self.inventory.iter_mut()
+        if block.get_shape() ==  Shape::new('☭', (180, 0, 0), (0, 0, 0)) {
+            self.hunger += 1;
+        } else if let Some(&mut (_, ref mut count)) = self.inventory.iter_mut()
                 .find(|x| x.0 == block) {
             *count += 1;
         } else {
@@ -144,6 +149,29 @@ impl Entity for Player {
     fn pre_draw(&self, _world: &World, size: &(u16, u16)) {
         let mut x = 5;
 
+        for i in 0..5 {
+            if i < self.hunger {
+                let text = format!("☭");
+                for ch in text.chars() {
+                    x += 1;
+                    put_char((x, size.1 - 2), &Shape::new(ch, (180, 0, 0), (0, 0, 0)));
+                }
+
+            } else {
+                let text = format!("☭");
+                
+                for ch in text.chars() {
+                    x += 1;
+                    put_char((x, size.1 - 2), &Shape::new(ch, (255, 255, 255), (0, 0, 0)));
+                }
+
+            }
+
+
+        }
+        
+        x += 1;
+
         for (i, &(ref block, ref count)) in self.inventory.iter().enumerate() {
             block.get_shape().draw((x, size.1 - 2));
             let text = format!("x{}", count);
@@ -159,6 +187,7 @@ impl Entity for Player {
 
             x += 3;
         }
+
     }
 }
 
@@ -283,6 +312,21 @@ impl Entity for Josef {
                 this.visited = visited;
             }
         }
+
+
+        let should_drop = {
+            let x = rand::random::<u8>();
+            if x - 200 > 0 {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        if should_drop {
+            
+        }
+
     }
 
     fn on_collision(world: &mut World, _me_id: u64, _other_id: u64) -> bool
