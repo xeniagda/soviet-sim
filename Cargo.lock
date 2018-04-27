@@ -4,8 +4,8 @@ version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
-name = "rougelike"
-version = "0.1.0"
+name = "soviet-sim"
+version = "1.0.0"
 dependencies = [
  "lazy_static 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

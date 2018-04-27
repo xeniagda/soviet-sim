@@ -1,6 +1,6 @@
 <img src="screenshot.png" width=500 />
 
-# A rougelike game written in Webassembly and Rust
+# Soviet Simulator: a rougelike game written in Webassembly and Rust
 
 Blocks:
 * `#`, `&` - Walls

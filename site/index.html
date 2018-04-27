@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title> Rougelike </title>
+        <title> SovietSim </title>
         <style>
 body {
   color: white;
@@ -16,7 +16,7 @@ body {
         </style>
     </head>
     <body>
-        <canvas id="rougelike"></canvas>
+        <canvas id="soviet_sim"></canvas>
     </body>
     <script>
         var width = 60;
@@ -24,7 +24,7 @@ body {
         var squaresize_x = 15;
         var squaresize_y = 20;
 
-        var canvas = document.getElementById("rougelike");
+        var canvas = document.getElementById("soviet_sim");
         var ctx = canvas.getContext("2d");
 
         canvas.width = width * squaresize_x;
@@ -35,7 +35,7 @@ body {
         var LOG_BUF = "";
         amount = 0;
 
-        fetch("rougelike.wasm")
+        fetch("soviet_sim.wasm")
             .then(response => response.arrayBuffer())
             .then(bytes => WebAssembly.instantiate(bytes, {
                 env: {

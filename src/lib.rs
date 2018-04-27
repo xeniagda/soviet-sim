@@ -17,14 +17,14 @@ use std::sync::Mutex;
 use std::collections::HashSet;
 use std::panic::set_hook;
 
-struct Rougelike {
+struct SovietSim {
     world: World,
     keys_down: HashSet<key::Key>,
     size: (u16, u16)
 }
 
 lazy_static! {
-    static ref ROUGELIKE: Mutex<Rougelike> = Mutex::new(Rougelike {
+    static ref SOVIET_SIM: Mutex<SovietSim> = Mutex::new(SovietSim {
         world: World::empty(),
         keys_down: HashSet::new(),
         size: (0, 0)
@@ -52,7 +52,7 @@ pub fn start(width: u16, height: u16) {
     }));
 
 
-    if let Ok(mut rouge) = ROUGELIKE.try_lock() {
+    if let Ok(mut rouge) = SOVIET_SIM.try_lock() {
         rouge.size = (width, height);
         rouge.world.generate(width as usize, height as usize - 2);
 
@@ -63,7 +63,7 @@ pub fn start(width: u16, height: u16) {
 // Called 60 times every second from JavaScript
 #[no_mangle]
 pub fn tick() {
-    if let Ok(mut rouge) = ROUGELIKE.try_lock() {
+    if let Ok(mut rouge) = SOVIET_SIM.try_lock() {
         rouge.world.tick();
         rouge.world.draw(&rouge.size);
     }
@@ -74,7 +74,7 @@ pub fn key_down(key_code: u8) {
     match key::parse_key(key_code) {
         Some(key) => {
             ext::log(&format!("Pressed key: {} -> {:?}", key_code, key));
-            if let Ok(mut rouge) = ROUGELIKE.try_lock() {
+            if let Ok(mut rouge) = SOVIET_SIM.try_lock() {
 
                 if let Some(ref cont) = controls::parse_control(&key, &rouge.keys_down) {
                     ext::log(&format!("Control: {:?}", cont));
@@ -96,7 +96,7 @@ pub fn key_up(key_code: u8) {
     match key::parse_key(key_code) {
         Some(key) => {
             // log(&format!("Released key: {} -> {:?}", key_code, key));
-            if let Ok(mut rouge) = ROUGELIKE.try_lock() {
+            if let Ok(mut rouge) = SOVIET_SIM.try_lock() {
                 rouge.keys_down.remove(&key);
             }
         }
@@ -108,7 +108,7 @@ pub fn key_up(key_code: u8) {
 
 #[no_mangle]
 pub fn redraw() {
-    if let Ok(rouge) = ROUGELIKE.try_lock() {
+    if let Ok(rouge) = SOVIET_SIM.try_lock() {
         ext::clear();
         rouge.world.draw(&rouge.size);
     }

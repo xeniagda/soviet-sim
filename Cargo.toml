@@ -1,6 +1,6 @@
 [package]
-name = "rougelike"
-version = "0.1.0"
+name = "soviet-sim"
+version = "1.0.0"
 authors = ["loovjo <jonathan.loov@gmail.com>"]
 
 [lib]
