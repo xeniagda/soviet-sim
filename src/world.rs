@@ -354,7 +354,7 @@ impl World {
         self.entities = HashMap::new();
 
         let mut placed = vec![];
-        for _ in 0..10000 {
+        for _ in 0..20000 {
             if rand() < 0.01 || placed.is_empty() {
                 let x = (rand() * width as f64) as usize;
                 let y = (rand() * height as f64) as usize;
@@ -406,6 +406,15 @@ impl World {
             EntityWrapper::WJosef(
                 Josef::new((x as u16, y as u16), 20)
             ));
+
+        let idx = (rand() * placed.len() as f64) as usize;
+        let (x, y, _) = placed[idx];
+        placed.remove(idx);
+        self.add_entity(
+            EntityWrapper::WJosef(
+                Josef::new((x as u16, y as u16), 20)
+            ));
+
 
         log("Done!");
     }
