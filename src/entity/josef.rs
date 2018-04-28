@@ -1,7 +1,7 @@
 use world::{MoveDir, World};
 use shape::Shape;
 use ext::*;
-use rand::random;
+use block;
 
 use super::{Entity, EntityWrapper};
 
@@ -71,52 +71,52 @@ impl Entity for Josef {
             // Find closest path to player
             'outer: loop {
                 if let Some((ref pos, ref path)) = paths.clone().into_iter()
-                        .min_by_key(|&(ref pos, ref path)| {
-                            let delta = (pos.0 - player_pos.0, pos.1 - player_pos.1);
-                            delta.0 * delta.0 + delta.1 * delta.1 + path.len() as u16 * 2
-                        }) {
-                    paths.remove_item(&(*pos, path.clone()));
+                    .min_by_key(|&(ref pos, ref path)| {
+                        let delta = (pos.0 - player_pos.0, pos.1 - player_pos.1);
+                        delta.0 * delta.0 + delta.1 * delta.1 + path.len() as u16 * 2
+                    }) {
+                        paths.remove_item(&(*pos, path.clone()));
 
-                    let mut dirs = vec! [MoveDir::Up, MoveDir::Down, MoveDir::Left, MoveDir::Right];
-                    for _ in 0..4 {
-                        let fidx = rand() * dirs.len() as f64;
-                        let dir = dirs[fidx as usize];
-                        dirs.remove(fidx as usize);
+                        let mut dirs = vec! [MoveDir::Up, MoveDir::Down, MoveDir::Left, MoveDir::Right];
+                        for _ in 0..4 {
+                            let fidx = rand() * dirs.len() as f64;
+                            let dir = dirs[fidx as usize];
+                            dirs.remove(fidx as usize);
 
-                        let (dx, dy) = dir.to_vec();
-                        let new_pos = (pos.0 + dx as u16, pos.1 + dy as u16);
+                            let (dx, dy) = dir.to_vec();
+                            let new_pos = (pos.0 + dx as u16, pos.1 + dy as u16);
 
-                        let mut new_path = path.clone();
-                        new_path.push(dir);
+                            let mut new_path = path.clone();
+                            new_path.push(dir);
 
-                        if visited.contains(&new_pos) {
-                            continue;
-                        }
-                        if new_pos == player_pos {
-                            best_path = Some(new_path);
-                            break 'outer;
-                        }
-
-                        let passable = world.blocks.get(new_pos.0 as usize)
-                            .and_then(|x| x.get(new_pos.1 as usize))
-                            .map(|x| x.is_passable())
-                            .unwrap_or(false);
-
-                        if passable {
-                            paths.push((new_pos, new_path.clone()));
-                            visited.push(new_pos);
-
-                            let delta = (pos.0 - player_pos.0, pos.1 - player_pos.1);
-                            let score = delta.0 * delta.0 + delta.1 * delta.1 + path.len() as u16 * 2;
-                            if score < best_score {
+                            if visited.contains(&new_pos) {
+                                continue;
+                            }
+                            if new_pos == player_pos {
                                 best_path = Some(new_path);
-                                best_score = score;
+                                break 'outer;
+                            }
+
+                            let passable = world.blocks.get(new_pos.0 as usize)
+                                .and_then(|x| x.get(new_pos.1 as usize))
+                                .map(|x| x.is_passable())
+                                .unwrap_or(false);
+
+                            if passable {
+                                paths.push((new_pos, new_path.clone()));
+                                visited.push(new_pos);
+
+                                let delta = (pos.0 - player_pos.0, pos.1 - player_pos.1);
+                                let score = delta.0 * delta.0 + delta.1 * delta.1 + path.len() as u16 * 2;
+                                if score < best_score {
+                                    best_path = Some(new_path);
+                                    best_score = score;
+                                }
                             }
                         }
+                    } else {
+                        break 'outer;
                     }
-                } else {
-                    break 'outer;
-                }
             }
 
             if let Some(best_path) = best_path.clone() {
@@ -126,14 +126,15 @@ impl Entity for Josef {
                 this.path = best_path.unwrap_or(vec![]);
                 this.visited = visited;
             }
+            if let Some(&mut EntityWrapper::WJosef(ref mut this)) = world.entities.get_mut(&en_id) {
+                let should_drop = rand() < 0.1;
+
+                if should_drop {
+                    world.blocks[this.pos.0 as usize][this.pos.1 as usize] = block::COMMUNISM.clone();
+                }
+            }
         }
 
-
-        let should_drop = random::<u8>() == 0;
-
-        if should_drop {
-            
-        }
 
     }
 

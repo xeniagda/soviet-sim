@@ -2,7 +2,6 @@
 
 #[macro_use]
 extern crate lazy_static;
-extern crate rand;
 
 mod ext;
 mod key;
