@@ -126,6 +126,21 @@ impl Entity for Josef {
                 this.visited = visited;
             }
         }
+
+
+        let should_drop = {
+            let x = rand::random::<u8>();
+            if x - 200 > 0 {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        if should_drop {
+            
+        }
+
     }
 
     fn on_collision(world: &mut World, _me_id: u64, other_id: u64) -> bool
