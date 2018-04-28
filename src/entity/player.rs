@@ -44,30 +44,15 @@ impl Entity for Player {
     fn get_shape(&self) -> Shape { Shape { ch: '@', col: (0, 255, 0), bg: (0, 0, 0) } }
 
     fn pre_draw(&self, _world: &World, size: &(u16, u16)) {
-        let mut x = 5;
-
         for i in 0..5 {
             if i < self.hunger {
-                let text = format!("☭");
-                for ch in text.chars() {
-                    x += 1;
-                    put_char((x, size.1 - 2), &Shape::new(ch, (180, 0, 0), (0, 0, 0)));
-                }
-
+                put_char((i, size.1 - 1), &Shape::new('☭', (180, 0, 0), (0, 0, 0)));
             } else {
-                let text = format!("☭");
-                
-                for ch in text.chars() {
-                    x += 1;
-                    put_char((x, size.1 - 2), &Shape::new(ch, (255, 255, 255), (0, 0, 0)));
-                }
-
+                put_char((i, size.1 - 1), &Shape::new('☭', (255, 255, 255), (0, 0, 0)));
             }
-
-
         }
-        
-        x += 1;
+
+        let mut x = 5;
 
         for (i, &(ref block, ref count)) in self.inventory.iter().enumerate() {
             block.get_shape().draw((x, size.1 - 2));

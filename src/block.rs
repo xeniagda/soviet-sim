@@ -114,10 +114,15 @@ lazy_static! {
         );
 
     pub static ref COMMUNISM: Block = Block::new(
-        Shape::new('☭', (180, 0, 0), (0, 0, 0)), 
-        true, 
+        Shape::new('☭', (180, 0, 0), (0, 0, 0)),
         true,
-        |_, _| {}
+        true,
+        |world, id| {
+            if let Some(EntityWrapper::WPlayer(player)) = world.entities.get_mut(&id) {
+                player.hunger += 1;
+                world.blocks[player.pos.0 as usize][player.pos.1 as usize] = GROUND.clone();
+            }
+        }
         );
 
 }
