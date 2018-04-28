@@ -1,6 +1,7 @@
 use world::{MoveDir, World};
 use shape::Shape;
 use ext::*;
+use rand::random;
 
 use super::{Entity, EntityWrapper};
 
@@ -128,14 +129,7 @@ impl Entity for Josef {
         }
 
 
-        let should_drop = {
-            let x = rand::random::<u8>();
-            if x - 200 > 0 {
-                return true;
-            } else {
-                return false;
-            }
-        }
+        let should_drop = random::<u8>() == 0;
 
         if should_drop {
             
