@@ -147,7 +147,7 @@ impl EntityWrapper {
 impl Deref for EntityWrapper {
     type Target = Entity;
 
-    fn deref<'a>(&'a self) -> &'a Self::Target {
+    fn deref(&self) -> &Self::Target {
         use self::EntityWrapper::*;
 
         match *self {
