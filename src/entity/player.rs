@@ -25,9 +25,7 @@ impl Player {
     }
 
     pub fn pick_up(&mut self, block: block::Block) {
-        if block.get_shape() ==  Shape::new('☭', (180, 0, 0), (0, 0, 0)) {
-            self.hunger += 1;
-        } else if let Some(&mut (_, ref mut count)) = self.inventory.iter_mut()
+        if let Some(&mut (_, ref mut count)) = self.inventory.iter_mut()
                 .find(|x| x.0 == block) {
             *count += 1;
         } else {
