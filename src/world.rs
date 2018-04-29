@@ -407,15 +407,6 @@ impl World {
                 Josef::new((x as u16, y as u16), 20)
             ));
 
-        let idx = (rand() * placed.len() as f64) as usize;
-        let (x, y, _) = placed[idx];
-        placed.remove(idx);
-        self.add_entity(
-            EntityWrapper::WJosef(
-                Josef::new((x as u16, y as u16), 20)
-            ));
-
-
         log("Done!");
     }
 
