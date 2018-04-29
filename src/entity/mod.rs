@@ -82,8 +82,10 @@ pub trait Entity {
                     if let Some(f) = world.entities.get(&en_id).map(|x| x.get_collision_fn()) {
                         if !f(world, en_id, *k) {
                             if let Some(en) = world.entities.get_mut(&en_id) {
-                                en.get_pos_mut().0 -= dir.0 as u16;
-                                en.get_pos_mut().1 -= dir.1 as u16;
+                                if !collided {
+                                    en.get_pos_mut().0 -= dir.0 as u16;
+                                    en.get_pos_mut().1 -= dir.1 as u16;
+                                }
                                 collided = true;
                             }
                         }
