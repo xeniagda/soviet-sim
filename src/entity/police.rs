@@ -97,12 +97,15 @@ impl Entity for Police {
                                 break 'outer;
                             }
 
-                            let passable = world.blocks.get(new_pos.0 as usize)
+                            let passable_block = world.blocks.get(new_pos.0 as usize)
                                 .and_then(|x| x.get(new_pos.1 as usize))
                                 .map(|x| x.is_passable())
                                 .unwrap_or(false);
+                            let passable_entity =
+                                !world.entities.values()
+                                .any(|x| x.get_pos() == new_pos);
 
-                            if passable {
+                            if passable_block && passable_entity {
                                 paths.push((new_pos, new_path.clone()));
                                 visited.push(new_pos);
 
