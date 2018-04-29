@@ -6,8 +6,10 @@ use std::ops::{Deref, DerefMut};
 
 mod player;
 mod josef;
+mod police;
 pub use self::player::*;
 pub use self::josef::*;
+pub use self::police::*;
 
 pub trait Entity {
 
@@ -115,7 +117,8 @@ pub trait Entity {
 #[derive(PartialEq, Eq, Clone)]
 pub enum EntityWrapper {
     WPlayer(Player),
-    WJosef(Josef)
+    WJosef(Josef),
+    WPolice(Police),
 }
 
 impl EntityWrapper {
@@ -124,6 +127,7 @@ impl EntityWrapper {
         match *self {
             WPlayer(_) => Player::tick,
             WJosef(_) => Josef::tick,
+            WPolice(_) => Police::tick,
         }
     }
 
@@ -132,6 +136,7 @@ impl EntityWrapper {
         match *self {
             WPlayer(_) => Player::move_dir,
             WJosef(_) => Josef::move_dir,
+            WPolice(_) => Police::move_dir,
         }
     }
 
@@ -140,6 +145,7 @@ impl EntityWrapper {
         match *self {
             WPlayer(_) => Player::on_collision,
             WJosef(_) => Josef::on_collision,
+            WPolice(_) => Police::on_collision,
         }
     }
 }
@@ -153,6 +159,7 @@ impl Deref for EntityWrapper {
         match *self {
             WPlayer(ref e) => e,
             WJosef(ref e) => e,
+            WPolice(ref e) => e,
         }
     }
 }
@@ -164,6 +171,7 @@ impl DerefMut for EntityWrapper {
         match *self {
             WPlayer(ref mut e) => e,
             WJosef(ref mut e) => e,
+            WPolice(ref mut e) => e,
         }
     }
 }

@@ -114,7 +114,7 @@ lazy_static! {
         );
 
     pub static ref COMMUNISM: Block = Block::new(
-        Shape::new('☭', (180, 0, 0), (0, 0, 0)),
+        Shape::new('☭', (253, 233, 54), (0, 0, 0)),
         true,
         true,
         |world, id| {

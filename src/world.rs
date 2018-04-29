@@ -404,13 +404,13 @@ impl World {
         placed.remove(idx);
         self.add_entity(
             EntityWrapper::WJosef(
-                Josef::new((x as u16, y as u16), 20)
+                Josef::new((x as u16, y as u16), 200)
             ));
 
         log("Done!");
     }
 
-    fn add_entity(&mut self, entity: EntityWrapper) {
+    pub fn add_entity(&mut self, entity: EntityWrapper) {
         loop {
             let key = (rand() * <u64>::max_value() as f64) as u64;
             if !self.entities.contains_key(&key) {

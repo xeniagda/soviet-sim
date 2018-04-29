@@ -3,7 +3,7 @@ use shape::Shape;
 use ext::*;
 use block;
 
-use super::{Entity, EntityWrapper};
+use super::{Entity, EntityWrapper, Police};
 
 const SHOW_PATH_FINDING: bool = false;
 
@@ -35,107 +35,18 @@ impl Entity for Josef {
 
 
     fn tick(world: &mut World, en_id: u64) where Self: Sized {
-        let should_walk = {
-            if let Some(&mut EntityWrapper::WJosef(ref mut this)) = world.entities.get_mut(&en_id) {
-                if this.countdown == 0 {
-                    this.countdown = this.speed;
-                    true
-                } else {
-                    this.countdown -= 1;
-                    false
-                }
+        let mut pos_to_place = None;
+        if let Some(EntityWrapper::WJosef(ref mut this)) = world.entities.get_mut(&en_id) {
+            if this.countdown == 0 {
+                pos_to_place = Some(this.pos);
+                this.countdown = this.speed;
             } else {
-                false
-            }
-        };
-
-        if should_walk {
-            let (player_pos, my_pos);
-            if let Some(player) = world.get_player_id().and_then(|x| world.entities.get(&x)) {
-                if let Some(this) = world.entities.get(&en_id) {
-                    player_pos = player.get_pos();
-                    my_pos = this.get_pos();
-                } else {
-                    return;
-                }
-            } else {
-                return;
-            }
-
-            let mut visited = vec![ my_pos ];
-            let mut paths: Vec<(_, Vec<MoveDir>)> = vec![ (my_pos, vec![]) ];
-
-            let mut best_path = None;
-            let mut best_score = u16::max_value();
-
-            // Find closest path to player
-            'outer: loop {
-                if let Some((ref pos, ref path)) = paths.clone().into_iter()
-                    .min_by_key(|&(ref pos, ref path)| {
-                        let delta = (pos.0 - player_pos.0, pos.1 - player_pos.1);
-                        delta.0 * delta.0 + delta.1 * delta.1 + path.len() as u16 * 2
-                    }) {
-                        paths.remove_item(&(*pos, path.clone()));
-
-                        let mut dirs = vec! [MoveDir::Up, MoveDir::Down, MoveDir::Left, MoveDir::Right];
-                        for _ in 0..4 {
-                            let fidx = rand() * dirs.len() as f64;
-                            let dir = dirs[fidx as usize];
-                            dirs.remove(fidx as usize);
-
-                            let (dx, dy) = dir.to_vec();
-                            let new_pos = (pos.0 + dx as u16, pos.1 + dy as u16);
-
-                            let mut new_path = path.clone();
-                            new_path.push(dir);
-
-                            if visited.contains(&new_pos) {
-                                continue;
-                            }
-                            if new_pos == player_pos {
-                                best_path = Some(new_path);
-                                break 'outer;
-                            }
-
-                            let passable = world.blocks.get(new_pos.0 as usize)
-                                .and_then(|x| x.get(new_pos.1 as usize))
-                                .map(|x| x.is_passable())
-                                .unwrap_or(false);
-
-                            if passable {
-                                paths.push((new_pos, new_path.clone()));
-                                visited.push(new_pos);
-
-                                let delta = (pos.0 - player_pos.0, pos.1 - player_pos.1);
-                                let score = delta.0 * delta.0 + delta.1 * delta.1 + path.len() as u16 * 2;
-                                if score < best_score {
-                                    best_path = Some(new_path);
-                                    best_score = score;
-                                }
-                            }
-                        }
-                    } else {
-                        break 'outer;
-                    }
-            }
-
-            if let Some(best_path) = best_path.clone() {
-                Josef::move_dir(world, en_id, best_path[0]);
-            }
-            if let Some(&mut EntityWrapper::WJosef(ref mut this)) = world.entities.get_mut(&en_id) {
-                this.path = best_path.unwrap_or(vec![]);
-                this.visited = visited;
-            }
-            if let Some(&mut EntityWrapper::WJosef(ref mut this)) = world.entities.get_mut(&en_id) {
-                let should_drop = rand() < 0.1;
-
-                if should_drop {
-                    world.blocks[this.pos.0 as usize][this.pos.1 as usize] = block::COMMUNISM.clone();
-                }
+                this.countdown -= 1;
             }
         }
-
-
+        if let Some(to_place) = pos_to_place {
+            world.add_entity(EntityWrapper::WPolice(Police::new(to_place, 20)));
+        }
     }
 
     fn on_collision(world: &mut World, _me_id: u64, other_id: u64) -> bool
