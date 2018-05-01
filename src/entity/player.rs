@@ -1,10 +1,11 @@
-use world::World;
+use world::{World, INVENTORY_HEIGHT};
 use shape::Shape;
 use ext::*;
 use block;
 
 use super::Entity;
 
+const COMMUNISM_WIDTH: u16 = 10;
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct Player {
@@ -14,13 +15,14 @@ pub struct Player {
     pub hunger: u16
 }
 
+
 impl Player {
     pub fn new(pos: (u16, u16)) -> Player {
         Player {
             pos: pos,
             active: 0,
             inventory: vec! [],
-            hunger: 1
+            hunger: 42
         }
     }
 
@@ -42,15 +44,25 @@ impl Entity for Player {
     fn get_shape(&self) -> Shape { Shape { ch: '@', col: (0, 255, 0), bg: (0, 0, 0) } }
 
     fn pre_draw(&self, _world: &World, size: &(u16, u16)) {
-        for i in 0..5 {
-            if i < self.hunger {
-                put_char((i, size.1 - 1), &Shape::new('☭', (180, 0, 0), (0, 0, 0)));
-            } else {
-                put_char((i, size.1 - 1), &Shape::new('☭', (255, 255, 255), (0, 0, 0)));
+        if self.hunger > INVENTORY_HEIGHT * COMMUNISM_WIDTH {
+            put_char((0, size.1 - INVENTORY_HEIGHT as u16), &Shape::new('☭', (180, 0, 0), (0, 0, 0)));
+            let x = format!("x{}", self.hunger);
+            for (i, ch) in x.chars().enumerate() {
+                put_char((1 + i as u16, size.1 - INVENTORY_HEIGHT as u16), &Shape::new(ch, (180, 180, 180), (0, 0, 0)));
+            }
+        } else {
+            for y in 0..self.hunger / COMMUNISM_WIDTH + 1 {
+                for i in 0..COMMUNISM_WIDTH {
+                    if i + y * COMMUNISM_WIDTH < self.hunger {
+                        put_char((i, size.1 + y - INVENTORY_HEIGHT as u16), &Shape::new('☭', (180, 0, 0), (0, 0, 0)));
+                    } else {
+                        put_char((i, size.1 + y - INVENTORY_HEIGHT as u16), &Shape::new('☭', (255, 255, 255), (0, 0, 0)));
+                    }
+                }
             }
         }
 
-        let mut x = 5;
+        let mut x = COMMUNISM_WIDTH + 1;
 
         for (i, &(ref block, ref count)) in self.inventory.iter().enumerate() {
             block.get_shape().draw((x, size.1 - 2));

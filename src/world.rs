@@ -8,6 +8,7 @@ use shape::Shape;
 use std::collections::HashMap;
 use std::mem;
 
+pub const INVENTORY_HEIGHT: u16 = 5;
 
 #[derive(PartialEq, Eq)]
 pub struct World {

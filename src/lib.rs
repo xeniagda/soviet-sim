@@ -54,7 +54,7 @@ pub fn start(width: u16, height: u16) {
 
     if let Ok(mut rouge) = SOVIET_SIM.try_lock() {
         rouge.size = (width, height);
-        rouge.world.generate(width as usize, height as usize - 2);
+        rouge.world.generate(width as usize, (height - world::INVENTORY_HEIGHT) as usize);
 
         rouge.world.draw(&rouge.size);
     }

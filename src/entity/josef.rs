@@ -1,7 +1,6 @@
 use world::{MoveDir, World};
 use shape::Shape;
 use ext::*;
-use block;
 
 use super::{Entity, EntityWrapper, Police};
 
