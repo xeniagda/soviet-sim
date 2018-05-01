@@ -48,15 +48,24 @@ impl Entity for Player {
             put_char((0, size.1 - INVENTORY_HEIGHT as u16), &Shape::new('☭', (180, 0, 0), (0, 0, 0)));
             let x = format!("x{}", self.hunger);
             for (i, ch) in x.chars().enumerate() {
-                put_char((1 + i as u16, size.1 - INVENTORY_HEIGHT as u16), &Shape::new(ch, (180, 180, 180), (0, 0, 0)));
+                put_char(
+                    (1 + i as u16, size.1 - INVENTORY_HEIGHT as u16),
+                    &Shape::new(ch, (180, 180, 180), (0, 0, 0))
+                    );
             }
         } else {
             for y in 0..self.hunger / COMMUNISM_WIDTH + 1 {
                 for i in 0..COMMUNISM_WIDTH {
                     if i + y * COMMUNISM_WIDTH < self.hunger {
-                        put_char((i, size.1 + y - INVENTORY_HEIGHT as u16), &Shape::new('☭', (180, 0, 0), (0, 0, 0)));
+                        put_char(
+                            (i, size.1 + y - INVENTORY_HEIGHT as u16),
+                            &Shape::new('☭', (180, 0, 0), (0, 0, 0))
+                            );
                     } else {
-                        put_char((i, size.1 + y - INVENTORY_HEIGHT as u16), &Shape::new('☭', (255, 255, 255), (0, 0, 0)));
+                        put_char(
+                            (i, size.1 + y - INVENTORY_HEIGHT as u16),
+                            &Shape::new('☭', (255, 255, 255), (0, 0, 0))
+                            );
                     }
                 }
             }
