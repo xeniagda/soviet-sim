@@ -1,4 +1,4 @@
-use world::{MoveDir, World};
+use world::{MoveDir, World, MetaAction};
 use shape::Shape;
 use ext::*;
 
@@ -44,7 +44,7 @@ impl Entity for Josef {
             }
         }
         if let Some(to_place) = pos_to_place {
-            world.add_entity(EntityWrapper::WPolice(Police::new(to_place, 20)));
+            world.add_entity(EntityWrapper::WPolice(Police::new(to_place, world.difficulty.get_police_speed())));
         }
     }
 
@@ -52,8 +52,7 @@ impl Entity for Josef {
         where Self: Sized {
 
         if let Some(EntityWrapper::WPlayer(_)) = world.entities.get(&other_id) {
-            let (w, h) = (world.blocks.len(), world.blocks[0].len());
-            world.generate(w, h);
+            world.do_metaaction(MetaAction::Win);
         }
         false
     }

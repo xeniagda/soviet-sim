@@ -1,4 +1,4 @@
-use world::{MoveDir, World};
+use world::{MoveDir, World, MetaAction};
 use shape::Shape;
 use ext::*;
 use block;
@@ -158,7 +158,7 @@ impl Entity for Police {
             world.entities.remove(&me_id);
             if restart {
                 let (w, h) = (world.blocks.len(), world.blocks[0].len());
-                world.generate(w, h);
+                world.do_metaaction(MetaAction::Die);
             }
         }
 

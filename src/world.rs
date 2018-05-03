@@ -4,18 +4,26 @@ use block;
 use entity;
 use entity::{EntityWrapper, Player, Josef};
 use shape::Shape;
+use difficulty::Difficulty;
 
 use std::collections::HashMap;
 use std::mem;
+use std::sync::mpsc::Sender;
 
 pub const INVENTORY_HEIGHT: u16 = 5;
 
-#[derive(PartialEq, Eq)]
+#[derive(Debug)]
+pub enum MetaAction {
+    Die, Win
+}
+
 pub struct World {
     pub blocks: Vec<Vec<block::Block>>,
     pub entities: HashMap<u64, entity::EntityWrapper>,
+    pub difficulty: Difficulty,
     auto: Option<MoveDir>,
     last: Option<MoveDir>,
+    action_sender: Sender<MetaAction>,
 }
 
 #[derive(PartialEq, Eq, Clone, Copy)]
@@ -34,12 +42,14 @@ impl MoveDir {
 }
 
 impl World {
-    pub fn empty() -> World {
+    pub fn empty(difficulty: Difficulty, action_sender: Sender<MetaAction>) -> World {
         World {
             blocks: vec![],
             entities: HashMap::new(),
             auto: None,
             last: None,
+            difficulty: difficulty,
+            action_sender: action_sender,
         }
     }
 
@@ -68,11 +78,13 @@ impl World {
         None
     }
 
+    pub fn do_metaaction(&mut self, action: MetaAction) {
+        self.action_sender.send(action).expect("Can't send!");
+    }
+
     pub fn do_action(&mut self, action: &Action) {
-        if let &Action::Restart = action {
-            let (w, h) = (self.blocks.len(), self.blocks[0].len());
-            self.generate(w, h);
-            return;
+        if let &Action::Die = action {
+            self.do_metaaction(MetaAction::Die);
         }
 
         if let &Action::IncActive = action {
@@ -405,7 +417,7 @@ impl World {
         placed.remove(idx);
         self.add_entity(
             EntityWrapper::WJosef(
-                Josef::new((x as u16, y as u16), 200)
+                Josef::new((x as u16, y as u16), self.difficulty.get_josef_speed())
             ));
 
         log("Done!");

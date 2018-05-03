@@ -106,7 +106,7 @@ lazy_static! {
                 }
             }
             if let Some(en) = world.entities.get_mut(&id) {
-                let mut epos = en.get_pos_mut();
+                let epos = en.get_pos_mut();
                 epos.0 = pos.0;
                 epos.1 = pos.1;
             }

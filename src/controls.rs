@@ -19,7 +19,7 @@ pub enum Action {
     PlaceUp,  PlaceDown,  PlaceLeft,  PlaceRight,
     BreakUp,  BreakDown,  BreakLeft,  BreakRight,
     IncActive, DecActive,
-    Restart,
+    Die,
 }
 
 const CONTROLS: &[Control] = &[
@@ -184,8 +184,8 @@ const CONTROLS: &[Control] = &[
     Control {
         modifiers: &[],
         key: Key::Letter(17),
-        desc: "Restart level",
-        action: Action::Restart
+        desc: "Die",
+        action: Action::Die
     },
 
 ];

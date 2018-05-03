@@ -22,7 +22,7 @@ impl Player {
             pos: pos,
             active: 0,
             inventory: vec! [],
-            hunger: 42
+            hunger: 5
         }
     }
 
