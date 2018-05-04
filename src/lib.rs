@@ -118,7 +118,7 @@ fn draw_menu(difficulty: Difficulty, msg: Option<RestartMessage>, size: (u16, u1
         ext::put_char((i as u16 + (size.0 - TITLE.len() as u16) / 2, 0), &Shape::new(ch, (255, 255, 0), (255, 0, 0)));
     }
 
-    for (i, ch) in format!("Diffiulty: {:?}", difficulty).chars().enumerate() {
+    for (i, ch) in format!("Diffiulty: {}", difficulty.to_string()).chars().enumerate() {
         ext::put_char((i as u16, 3), &Shape::new(ch, (255, 255, 255), (0, 0, 0)));
     }
 

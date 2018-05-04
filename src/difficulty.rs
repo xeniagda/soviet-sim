@@ -7,6 +7,16 @@ pub enum Difficulty {
 }
 
 impl Difficulty {
+    pub fn to_string(self) -> String {
+        match self {
+            Difficulty::Easy    => "2014 (Easy)".to_string(),
+            Difficulty::Medium  => "1989 (Medium)".to_string(),
+            Difficulty::Hard    => "1917 (Hard)".to_string(),
+            Difficulty::Extreme => "1922 (Extreme)".to_string(),
+            Difficulty::Reality => "1944 (Reality)".to_string(),
+        }
+    }
+
     pub fn harder(self) -> Difficulty {
         match self {
             Difficulty::Easy    => Difficulty::Medium,
