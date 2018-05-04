@@ -42,6 +42,7 @@ struct WorldWrapper {
     world: World,
     action_receiver: Receiver<MetaAction>,
     keys_down: HashSet<key::Key>,
+    at_inventory: bool
 }
 
 lazy_static! {
@@ -87,6 +88,9 @@ pub fn tick() {
             GameState::Playing(ref mut rouge) => {
                 rouge.world.tick();
                 rouge.world.draw(size);
+                if rouge.at_inventory {
+                    draw_inventory(size);
+                }
 
                 while let Ok(action) = rouge.action_receiver.try_recv() {
                     actions_to_process.push(action);
@@ -138,6 +142,12 @@ fn draw_menu(difficulty: Difficulty, msg: Option<RestartMessage>, size: (u16, u1
     }
 }
 
+fn draw_inventory(size: (u16, u16)) {
+    ext::clear();
+
+    ext::put_char((0, 0), &Shape::new('I', (255, 255, 255), (0, 0, 0)))
+}
+
 pub fn init_game(difficulty: Difficulty) {
     if let Ok(mut game) = GAME.try_lock() {
         let (send, recv) = channel::<MetaAction>();
@@ -146,6 +156,7 @@ pub fn init_game(difficulty: Difficulty) {
             world: World::empty(difficulty, send),
             action_receiver: recv,
             keys_down: HashSet::new(),
+            at_inventory: false,
         };
 
         rouge.world.generate(game.size.0 as usize, (game.size.1 - world::INVENTORY_HEIGHT) as usize);
@@ -167,8 +178,12 @@ pub fn key_down(key_code: u8) {
                     GameState::Playing(ref mut rouge) => {
                         if let Some(ref cont) = controls::parse_control(&key, &rouge.keys_down) {
                             ext::log(&format!("Control: {:?}", cont));
+                            if let controls::Action::ToggleInventory = cont.action {
+                                rouge.at_inventory = !rouge.at_inventory;
+                            }
                             rouge.world.do_action(&cont.action);
                         }
+
 
                         rouge.keys_down.insert(key);
                         rouge.world.draw(size);

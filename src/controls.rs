@@ -19,6 +19,7 @@ pub enum Action {
     PlaceUp,  PlaceDown,  PlaceLeft,  PlaceRight,
     BreakUp,  BreakDown,  BreakLeft,  BreakRight,
     IncActive, DecActive,
+    ToggleInventory,
     Die,
 }
 
@@ -183,7 +184,14 @@ const CONTROLS: &[Control] = &[
 
     Control {
         modifiers: &[],
-        key: Key::Letter(17),
+        key: Key::Letter(8), // I
+        desc: "Open/close the inventory",
+        action: Action::ToggleInventory
+    },
+
+    Control {
+        modifiers: &[],
+        key: Key::Letter(17), // R
         desc: "Die",
         action: Action::Die
     },
