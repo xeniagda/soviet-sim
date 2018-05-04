@@ -69,4 +69,15 @@ impl Difficulty {
             Difficulty::Reality => 100.,
         }
     }
+
+    #[inline(always)]
+    pub fn get_start_health(self) -> u16 {
+        match self {
+            Difficulty::Easy => 5,
+            Difficulty::Medium => 4,
+            Difficulty::Hard => 3,
+            Difficulty::Extreme => 2,
+            Difficulty::Reality => 1,
+        }
+    }
 }

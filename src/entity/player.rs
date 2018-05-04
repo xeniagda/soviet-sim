@@ -17,12 +17,12 @@ pub struct Player {
 
 
 impl Player {
-    pub fn new(pos: (u16, u16)) -> Player {
+    pub fn new(pos: (u16, u16), hunger: u16) -> Player {
         Player {
             pos: pos,
             active: 0,
             inventory: vec! [],
-            hunger: 5
+            hunger: hunger,
         }
     }
 
