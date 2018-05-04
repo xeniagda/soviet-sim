@@ -324,7 +324,7 @@ impl World {
 
     }
 
-    pub fn draw(&self, size: &(u16, u16)) {
+    pub fn draw(&self, size: (u16, u16)) {
         // Clear below world
         for x in 0..size.0 {
             for y in self.blocks[0].len()..size.1 as usize {
@@ -341,7 +341,7 @@ impl World {
 
         // Draw entities
         self.entities.iter()
-            .for_each(|(_, x)| x.pre_draw(self, size));
+            .for_each(|(_, x)| x.pre_draw(self, &size));
 
         self.entities.iter()
             .for_each(|(_, x)| x.get_shape().draw(x.get_pos()));

@@ -21,25 +21,35 @@ use std::sync::mpsc::{Receiver, channel};
 use std::collections::HashSet;
 use std::panic::set_hook;
 
+const TITLE: &str = "☭☭☭ COMMUNISM SIMULATOR ☭☭☭";
+
+struct Game {
+    state: GameState,
+    size: (u16, u16),
+}
+
 enum GameState {
-    Playing(SovietSim),
+    Playing(WorldWrapper),
     Menu(Difficulty, Option<RestartMessage>),
 }
 
+#[derive(Clone, Copy)]
 enum RestartMessage {
     Died, Won
 }
 
-struct SovietSim {
+struct WorldWrapper {
     world: World,
     action_receiver: Receiver<MetaAction>,
     keys_down: HashSet<key::Key>,
-    size: (u16, u16),
 }
 
 lazy_static! {
-    static ref SOVIET_SIM: Mutex<GameState> = Mutex::new(GameState::Menu(Difficulty::Easy, None));
-    static ref GAME_SIZE: Mutex<(u16, u16)> = Mutex::new((0, 0));
+    static ref GAME: Mutex<Game> = Mutex::new(
+        Game {
+            state: GameState::Menu(Difficulty::Easy, None),
+            size: (0, 0)
+        });
 }
 
 
@@ -62,76 +72,87 @@ pub fn start(width: u16, height: u16) {
         }
     }));
 
-
-    if let Ok(mut size) = GAME_SIZE.try_lock() {
-        *size = (width, height);
+    if let Ok(mut game) = GAME.try_lock() {
+        game.size = (width, height);
     }
 }
 
 // Called 60 times every second from JavaScript
 #[no_mangle]
 pub fn tick() {
-    if let Ok(mut state) = SOVIET_SIM.try_lock() {
+    if let Ok(mut game) = GAME.try_lock() {
         let mut actions_to_process = vec![];
-        match *state {
+        let size = game.size;
+        match game.state {
             GameState::Playing(ref mut rouge) => {
                 rouge.world.tick();
-                rouge.world.draw(&rouge.size);
+                rouge.world.draw(size);
 
                 while let Ok(action) = rouge.action_receiver.try_recv() {
                     actions_to_process.push(action);
                 }
             }
-            GameState::Menu(difficulty, ref msg) => {
-                ext::clear();
-
-                for (i, ch) in format!("{:?}", difficulty).chars().enumerate() {
-                    ext::put_char((i as u16, 0), &Shape::new(ch, (255, 255, 255), (0, 0, 0)));
-                }
-
-                if let Some(msg) = msg {
-                    let (text, col) = match msg {
-                        RestartMessage::Died => (&"You died!", (255, 0, 0)),
-                        RestartMessage::Won  => (&"You won!", (0, 255, 0)),
-                    };
-
-                    for (i, ch) in text.chars().enumerate() {
-                        ext::put_char((i as u16, 10), &Shape::new(ch, col, (0, 0, 0)));
-                    }
-                }
+            GameState::Menu(difficulty, msg) => {
+                draw_menu(difficulty, msg, size);
             }
         }
         for action in actions_to_process {
             match action {
                 MetaAction::Die => {
-                    *state = GameState::Menu(Difficulty::Easy, Some(RestartMessage::Died));
+                    game.state = GameState::Menu(Difficulty::Easy, Some(RestartMessage::Died));
                 }
                 MetaAction::Win => {
-                    *state = GameState::Menu(Difficulty::Easy, Some(RestartMessage::Won));
+                    game.state = GameState::Menu(Difficulty::Easy, Some(RestartMessage::Won));
                 }
             }
         }
     }
 }
 
-pub fn init_game(difficulty: Difficulty) {
-    if let Ok(mut state) = SOVIET_SIM.try_lock() {
-        if let Ok(size) = GAME_SIZE.try_lock() {
-            let (send, recv) = channel::<MetaAction>();
+fn draw_menu(difficulty: Difficulty, msg: Option<RestartMessage>, size: (u16, u16)) {
+    ext::clear();
 
-            let mut rouge = SovietSim {
-                world: World::empty(difficulty, send),
-                action_receiver: recv,
-                size: *size,
-                keys_down: HashSet::new(),
-            };
 
-            rouge.world.generate(size.0 as usize, (size.1 - world::INVENTORY_HEIGHT) as usize);
+    // Title
+    for (i, ch) in TITLE.chars().enumerate() {
+        ext::put_char((i as u16 + (size.0 - TITLE.len() as u16) / 2, 0), &Shape::new(ch, (255, 255, 0), (255, 0, 0)));
+    }
 
-            rouge.world.draw(&rouge.size);
+    for (i, ch) in format!("Diffiulty: {:?}", difficulty).chars().enumerate() {
+        ext::put_char((i as u16, 3), &Shape::new(ch, (255, 255, 255), (0, 0, 0)));
+    }
 
-            *state = GameState::Playing(rouge);
+    for (i, ch) in "Press enter to start!".chars().enumerate() {
+        ext::put_char((i as u16, 6), &Shape::new(ch, (255, 255, 255), (0, 0, 0)));
+    }
+
+    if let Some(msg) = msg {
+        let (text, col) = match msg {
+            RestartMessage::Died => (&"You died!", (255, 0, 0)),
+            RestartMessage::Won  => (&"You won!", (0, 255, 0)),
+        };
+
+        for (i, ch) in text.chars().enumerate() {
+            ext::put_char((i as u16, 1), &Shape::new(ch, col, (0, 0, 0)));
         }
+    }
+}
+
+pub fn init_game(difficulty: Difficulty) {
+    if let Ok(mut game) = GAME.try_lock() {
+        let (send, recv) = channel::<MetaAction>();
+
+        let mut rouge = WorldWrapper {
+            world: World::empty(difficulty, send),
+            action_receiver: recv,
+            keys_down: HashSet::new(),
+        };
+
+        rouge.world.generate(game.size.0 as usize, (game.size.1 - world::INVENTORY_HEIGHT) as usize);
+
+        rouge.world.draw(game.size);
+
+        game.state = GameState::Playing(rouge);
     }
 }
 
@@ -140,8 +161,9 @@ pub fn key_down(key_code: u8) {
     match key::parse_key(key_code) {
         Some(key) => {
             ext::log(&format!("Pressed key: {} -> {:?}", key_code, key));
-            if let Ok(mut state) = SOVIET_SIM.try_lock() {
-                match *state {
+            if let Ok(mut game) = GAME.try_lock() {
+                let size = game.size;
+                match game.state {
                     GameState::Playing(ref mut rouge) => {
                         if let Some(ref cont) = controls::parse_control(&key, &rouge.keys_down) {
                             ext::log(&format!("Control: {:?}", cont));
@@ -149,7 +171,7 @@ pub fn key_down(key_code: u8) {
                         }
 
                         rouge.keys_down.insert(key);
-                        rouge.world.draw(&rouge.size);
+                        rouge.world.draw(size);
                     }
                     _ => {
 
@@ -169,8 +191,8 @@ pub fn key_up(key_code: u8) {
     match key::parse_key(key_code) {
         Some(key) => {
             // log(&format!("Released key: {} -> {:?}", key_code, key));
-            if let Ok(mut state) = SOVIET_SIM.try_lock() {
-                match *state {
+            if let Ok(mut game) = GAME.try_lock() {
+                match game.state {
                     GameState::Playing(ref mut rouge) => {
                         rouge.keys_down.remove(&key);
                     }
@@ -196,11 +218,11 @@ pub fn key_up(key_code: u8) {
 
 #[no_mangle]
 pub fn redraw() {
-    if let Ok(state) = SOVIET_SIM.try_lock() {
+    if let Ok(game) = GAME.try_lock() {
         ext::clear();
-        match *state {
+        match game.state {
             GameState::Playing(ref rouge) => {
-                rouge.world.draw(&rouge.size);
+                rouge.world.draw(game.size);
             }
             _ => {
 
