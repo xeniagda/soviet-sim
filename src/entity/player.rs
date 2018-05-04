@@ -1,4 +1,4 @@
-use world::{World, INVENTORY_HEIGHT};
+use world::{World, HOTBAR_HEIGHT};
 use shape::Shape;
 use ext::*;
 use block;
@@ -44,12 +44,12 @@ impl Entity for Player {
     fn get_shape(&self) -> Shape { Shape { ch: '@', col: (0, 255, 0), bg: (0, 0, 0) } }
 
     fn pre_draw(&self, _world: &World, size: &(u16, u16)) {
-        if self.hunger > INVENTORY_HEIGHT * COMMUNISM_WIDTH {
-            put_char((0, size.1 - INVENTORY_HEIGHT as u16), &Shape::new('☭', (180, 0, 0), (0, 0, 0)));
+        if self.hunger > HOTBAR_HEIGHT * COMMUNISM_WIDTH {
+            put_char((0, size.1 - HOTBAR_HEIGHT as u16), &Shape::new('☭', (180, 0, 0), (0, 0, 0)));
             let x = format!("x{}", self.hunger);
             for (i, ch) in x.chars().enumerate() {
                 put_char(
-                    (1 + i as u16, size.1 - INVENTORY_HEIGHT as u16),
+                    (1 + i as u16, size.1 - HOTBAR_HEIGHT as u16),
                     &Shape::new(ch, (180, 180, 180), (0, 0, 0))
                     );
             }
@@ -58,12 +58,12 @@ impl Entity for Player {
                 for i in 0..COMMUNISM_WIDTH {
                     if i + y * COMMUNISM_WIDTH < self.hunger {
                         put_char(
-                            (i, size.1 + y - INVENTORY_HEIGHT as u16),
+                            (i, size.1 + y - HOTBAR_HEIGHT as u16),
                             &Shape::new('☭', (180, 0, 0), (0, 0, 0))
                             );
                     } else {
                         put_char(
-                            (i, size.1 + y - INVENTORY_HEIGHT as u16),
+                            (i, size.1 + y - HOTBAR_HEIGHT as u16),
                             &Shape::new('☭', (255, 255, 255), (0, 0, 0))
                             );
                     }

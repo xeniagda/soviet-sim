@@ -164,7 +164,6 @@ impl Entity for Police {
         if let Some(restart) = action_restart {
             world.entities.remove(&me_id);
             if restart {
-                let (w, h) = (world.blocks.len(), world.blocks[0].len());
                 world.do_metaaction(MetaAction::Die);
             }
         }

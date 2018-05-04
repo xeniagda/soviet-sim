@@ -170,10 +170,7 @@ fn draw_game_over(difficulty: Difficulty, msg: RestartMessage, size: (u16, u16))
     }
 }
 
-fn draw_inventory(size: (u16, u16)) {
-    ext::clear();
-
-    ext::put_char((0, 0), &Shape::new('I', (255, 255, 255), (0, 0, 0)))
+fn draw_inventory(_size: (u16, u16)) {
 }
 
 pub fn init_game(difficulty: Difficulty) {
@@ -187,7 +184,7 @@ pub fn init_game(difficulty: Difficulty) {
             at_inventory: false,
         };
 
-        rouge.world.generate(game.size.0 as usize, (game.size.1 - world::INVENTORY_HEIGHT) as usize);
+        rouge.world.generate(game.size.0 as usize, (game.size.1 - world::HOTBAR_HEIGHT) as usize);
 
         rouge.world.draw(game.size);
 

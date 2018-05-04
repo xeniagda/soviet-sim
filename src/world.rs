@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::mem;
 use std::sync::mpsc::Sender;
 
-pub const INVENTORY_HEIGHT: u16 = 5;
+pub const HOTBAR_HEIGHT: u16 = 5;
 
 #[derive(Debug)]
 pub enum MetaAction {
