@@ -10,6 +10,7 @@ const SHOW_PATH_FINDING: bool = false;
 #[derive(PartialEq, Eq, Clone)]
 pub struct Police {
     pub countdown: u16,
+    pub drop_countdown: u16,
     pub speed: u16,
     pub path: Vec<MoveDir>,
     pub visited: Vec<(u16, u16)>,
@@ -21,6 +22,7 @@ impl Police {
         Police {
             countdown: 0,
             speed: speed,
+            drop_countdown: 0,
             path: vec! [],
             visited: vec! [],
             pos: pos
@@ -130,9 +132,14 @@ impl Entity for Police {
                 this.visited = visited;
             }
             if let Some(&mut EntityWrapper::WPolice(ref mut this)) = world.entities.get_mut(&en_id) {
-                let should_drop = rand() < 0.1;
+                this.drop_countdown += 1;
+
+                let should_drop =
+                    this.drop_countdown as f64 >
+                    world.difficulty.get_communism_drop_rate() as f64 * ((rand() - 0.5) / 4. + 1.);
 
                 if should_drop {
+                    this.drop_countdown = 0;
                     world.blocks[this.pos.0 as usize][this.pos.1 as usize] = block::COMMUNISM.clone();
                 }
             }

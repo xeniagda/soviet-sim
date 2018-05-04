@@ -58,4 +58,15 @@ impl Difficulty {
             Difficulty::Reality => 7
         }
     }
+
+    #[inline(always)]
+    pub fn get_communism_drop_rate(self) -> f64 {
+        match self {
+            Difficulty::Easy => 10.,
+            Difficulty::Medium => 20.,
+            Difficulty::Hard => 30.,
+            Difficulty::Extreme => 50.,
+            Difficulty::Reality => 100.,
+        }
+    }
 }
