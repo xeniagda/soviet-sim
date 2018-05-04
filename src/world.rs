@@ -408,7 +408,7 @@ impl World {
         placed.remove(idx);
         self.add_entity(
             EntityWrapper::WPlayer(
-                Player::new((x as u16, y as u16))
+                Player::new((x as u16, y as u16), self.difficulty.get_start_health())
                 )
             );
 

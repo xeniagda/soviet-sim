@@ -30,7 +30,8 @@ struct Game {
 
 enum GameState {
     Playing(WorldWrapper),
-    Menu(Difficulty, Option<RestartMessage>),
+    Menu(Difficulty),
+    GameOver(Difficulty, RestartMessage),
 }
 
 #[derive(Clone, Copy)]
@@ -48,7 +49,7 @@ struct WorldWrapper {
 lazy_static! {
     static ref GAME: Mutex<Game> = Mutex::new(
         Game {
-            state: GameState::Menu(Difficulty::Easy, None),
+            state: GameState::Menu(Difficulty::Easy),
             size: (0, 0)
         });
 }
@@ -96,25 +97,28 @@ pub fn tick() {
                     actions_to_process.push(action);
                 }
             }
-            GameState::Menu(difficulty, msg) => {
-                draw_menu(difficulty, msg, size);
+            GameState::Menu(difficulty) => {
+                draw_menu(difficulty, size);
+            }
+            GameState::GameOver(difficulty, msg) => {
+                draw_game_over(difficulty, msg, size);
             }
 
         }
         for action in actions_to_process {
             match action {
                 MetaAction::Die => {
-                    game.state = GameState::Menu(Difficulty::Easy, Some(RestartMessage::Died));
+                    game.state = GameState::GameOver(Difficulty::Easy, RestartMessage::Died);
                 }
                 MetaAction::Win => {
-                    game.state = GameState::Menu(Difficulty::Easy, Some(RestartMessage::Won));
+                    game.state = GameState::GameOver(Difficulty::Easy, RestartMessage::Won);
                 }
             }
         }
     }
 }
 
-fn draw_menu(difficulty: Difficulty, msg: Option<RestartMessage>, size: (u16, u16)) {
+fn draw_menu(difficulty: Difficulty, size: (u16, u16)) {
     ext::clear();
 
     // Border
@@ -147,16 +151,22 @@ fn draw_menu(difficulty: Difficulty, msg: Option<RestartMessage>, size: (u16, u1
     for (i, ch) in "Press enter to start!".chars().enumerate() {
         ext::put_char((i as u16 + 1, 6), &Shape::new(ch, (255, 255, 255), (0, 0, 0)));
     }
+}
 
-    if let Some(msg) = msg {
-        let (text, col) = match msg {
-            RestartMessage::Died => (&"You died!", (255, 0, 0)),
-            RestartMessage::Won  => (&"You won!", (0, 255, 0)),
-        };
+fn draw_game_over(difficulty: Difficulty, msg: RestartMessage, size: (u16, u16)) {
+    ext::clear();
 
-        for (i, ch) in text.chars().enumerate() {
-            ext::put_char((i as u16 + 1, 1), &Shape::new(ch, col, (0, 0, 0)));
-        }
+    for (i, ch) in "game over lol. press enter to continue".chars().enumerate() {
+        ext::put_char((i as u16, 0), &Shape::new(ch, (255, 0, 0), (0, 0, 0)));
+    }
+
+    let (text, col) = match msg {
+        RestartMessage::Died => (&"u ded lol!", (255, 0, 0)),
+        RestartMessage::Won  => (&"gj", (0, 255, 0)),
+    };
+
+    for (i, ch) in text.chars().enumerate() {
+        ext::put_char((i as u16, 1), &Shape::new(ch, col, (0, 0, 0)));
     }
 }
 
@@ -221,6 +231,7 @@ pub fn key_down(key_code: u8) {
 #[no_mangle]
 pub fn key_up(key_code: u8) {
     let mut start: Option<Difficulty> = None;
+    let mut next_state: Option<GameState> = None;
     match key::parse_key(key_code) {
         Some(key) => {
             // log(&format!("Released key: {} -> {:?}", key_code, key));
@@ -230,11 +241,17 @@ pub fn key_up(key_code: u8) {
                     GameState::Playing(ref mut rouge) => {
                         rouge.keys_down.remove(&key);
                     }
-                    GameState::Menu(ref mut difficulty, _) => {
+                    GameState::Menu(ref mut difficulty) => {
                         match key {
                             key::Key::Right => { *difficulty = difficulty.harder() }
                             key::Key::Left  => { *difficulty = difficulty.easier() }
                             key::Key::Enter => { start = Some(*difficulty); }
+                            _ => {}
+                        }
+                    }
+                    GameState::GameOver(difficulty, _) => {
+                        match key {
+                            key::Key::Enter => { next_state = Some(GameState::Menu(difficulty)); }
                             _ => {}
                         }
                     }
@@ -243,6 +260,11 @@ pub fn key_up(key_code: u8) {
         }
         None => {
             // log(&format!("Released key: {}", key_code));
+        }
+    }
+    if let Some(next_state) = next_state {
+        if let Ok(mut game) = GAME.try_lock() {
+            game.state = next_state;
         }
     }
     if let Some(difficulty) = start {
