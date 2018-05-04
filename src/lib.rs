@@ -99,6 +99,7 @@ pub fn tick() {
             GameState::Menu(difficulty, msg) => {
                 draw_menu(difficulty, msg, size);
             }
+
         }
         for action in actions_to_process {
             match action {
@@ -116,18 +117,35 @@ pub fn tick() {
 fn draw_menu(difficulty: Difficulty, msg: Option<RestartMessage>, size: (u16, u16)) {
     ext::clear();
 
+    // Border
+    for i in 0..size.0 {
+        ext::put_char((i as u16, 0), &Shape::new('=', (255, 255, 255), (0, 0, 0)));
+    }
+    for i in 0..size.0 {
+        ext::put_char((i as u16, size.1 - 1), &Shape::new('=', (255, 255, 255), (0, 0, 0)));
+    }
+    for i in 0..size.1 {
+        ext::put_char((0, i as u16), &Shape::new('|', (255, 255, 255), (0, 0, 0)));
+    }
+    for i in 0..size.1 {
+        ext::put_char((size.0 - 1, i as u16), &Shape::new('|', (255, 255, 255), (0, 0, 0)));
+    }
 
     // Title
     for (i, ch) in TITLE.chars().enumerate() {
-        ext::put_char((i as u16 + (size.0 - TITLE.len() as u16) / 2, 0), &Shape::new(ch, (255, 255, 0), (255, 0, 0)));
+        ext::put_char(
+            (i as u16 + (size.0 - TITLE.chars().count() as u16) / 2, 0),
+            &Shape::new(ch, (255, 255, 0), (255, 0, 0))
+            );
     }
 
+
     for (i, ch) in format!("Diffiulty: {}", difficulty.to_string()).chars().enumerate() {
-        ext::put_char((i as u16, 3), &Shape::new(ch, (255, 255, 255), (0, 0, 0)));
+        ext::put_char((i as u16 + 1, 3), &Shape::new(ch, (255, 255, 255), (0, 0, 0)));
     }
 
     for (i, ch) in "Press enter to start!".chars().enumerate() {
-        ext::put_char((i as u16, 6), &Shape::new(ch, (255, 255, 255), (0, 0, 0)));
+        ext::put_char((i as u16 + 1, 6), &Shape::new(ch, (255, 255, 255), (0, 0, 0)));
     }
 
     if let Some(msg) = msg {
@@ -137,7 +155,7 @@ fn draw_menu(difficulty: Difficulty, msg: Option<RestartMessage>, size: (u16, u1
         };
 
         for (i, ch) in text.chars().enumerate() {
-            ext::put_char((i as u16, 1), &Shape::new(ch, col, (0, 0, 0)));
+            ext::put_char((i as u16 + 1, 1), &Shape::new(ch, col, (0, 0, 0)));
         }
     }
 }
@@ -206,6 +224,7 @@ pub fn key_up(key_code: u8) {
     match key::parse_key(key_code) {
         Some(key) => {
             // log(&format!("Released key: {} -> {:?}", key_code, key));
+
             if let Ok(mut game) = GAME.try_lock() {
                 match game.state {
                     GameState::Playing(ref mut rouge) => {
