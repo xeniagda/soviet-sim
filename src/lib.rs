@@ -22,6 +22,7 @@ use std::collections::HashSet;
 use std::panic::set_hook;
 
 const TITLE: &str = "☭☭☭ COMMUNISM SIMULATOR ☭☭☭";
+const INVENTORY_INDENT: u16 = 5;
 
 struct Game {
     state: GameState,
@@ -87,10 +88,12 @@ pub fn tick() {
         let size = game.size;
         match game.state {
             GameState::Playing(ref mut rouge) => {
-                rouge.world.tick();
-                rouge.world.draw(size);
                 if rouge.at_inventory {
+                    rouge.world.draw(size);
                     draw_inventory(size);
+                } else {
+                    rouge.world.tick();
+                    rouge.world.draw(size);
                 }
 
                 while let Ok(action) = rouge.action_receiver.try_recv() {
@@ -170,7 +173,26 @@ fn draw_game_over(difficulty: Difficulty, msg: RestartMessage, size: (u16, u16))
     }
 }
 
-fn draw_inventory(_size: (u16, u16)) {
+fn draw_inventory(size: (u16, u16)) {
+    // Border
+    for i in INVENTORY_INDENT..size.0-INVENTORY_INDENT {
+        ext::put_char((i as u16, INVENTORY_INDENT), &Shape::new('=', (255, 255, 255), (0, 0, 0)));
+    }
+    for i in INVENTORY_INDENT..size.0-INVENTORY_INDENT {
+        ext::put_char((i as u16, size.1 - INVENTORY_INDENT - 1), &Shape::new('=', (255, 255, 255), (0, 0, 0)));
+    }
+    for i in INVENTORY_INDENT..size.1-INVENTORY_INDENT {
+        ext::put_char((INVENTORY_INDENT, i as u16), &Shape::new('|', (255, 255, 255), (0, 0, 0)));
+    }
+    for i in INVENTORY_INDENT..size.1-INVENTORY_INDENT {
+        ext::put_char((size.0 - INVENTORY_INDENT - 1, i as u16), &Shape::new('|', (255, 255, 255), (0, 0, 0)));
+    }
+
+    for x in INVENTORY_INDENT+1..size.0-INVENTORY_INDENT-1 {
+        for y in INVENTORY_INDENT+1..size.1-INVENTORY_INDENT-1 {
+            ext::put_char((x, y), &Shape::new(' ', (0, 0, 0), (0, 0, 0)))
+        }
+    }
 }
 
 pub fn init_game(difficulty: Difficulty) {
@@ -206,7 +228,9 @@ pub fn key_down(key_code: u8) {
                             if let controls::Action::ToggleInventory = cont.action {
                                 rouge.at_inventory = !rouge.at_inventory;
                             }
-                            rouge.world.do_action(&cont.action);
+                            if !rouge.at_inventory {
+                                rouge.world.do_action(&cont.action);
+                            }
                         }
 
 
