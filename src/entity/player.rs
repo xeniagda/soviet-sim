@@ -55,13 +55,14 @@ impl Player {
         }
 
         for (c_item, c_amount) in rec.needed.iter() {
-            let (i, (_, mut amount)) = self.inventory.iter_mut()
+            let (i, (_, ref mut amount)) = self.inventory.iter_mut()
                     .enumerate()
                     .find(|(_, (item, _))| item == c_item)
                     .expect("o no");
 
-            amount -= c_amount;
-            if amount == 0 {
+            *amount -= c_amount;
+
+            if amount == &0 {
                 self.inventory.remove(i);
             }
         }
