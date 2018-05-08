@@ -112,8 +112,8 @@ pub fn tick() {
             GameState::Menu(difficulty) => {
                 draw_menu(difficulty, size);
             }
-            GameState::GameOver(difficulty, msg) => {
-                draw_game_over(difficulty, msg, size);
+            GameState::GameOver(_, msg) => {
+                draw_game_over(msg, size);
             }
 
         }
@@ -155,7 +155,7 @@ fn draw_menu(difficulty: Difficulty, size: (u16, u16)) {
     ext::put_text((1, 6), "Press enter to start!", (255, 255, 255), (0, 0, 0));
 }
 
-fn draw_game_over(difficulty: Difficulty, msg: RestartMessage, size: (u16, u16)) {
+fn draw_game_over(msg: RestartMessage, _size: (u16, u16)) {
     ext::clear();
 
     ext::put_text((0, 0), "game over lol. press enter to continue", (255, 255, 255), (0, 0, 0));
@@ -166,6 +166,7 @@ fn draw_game_over(difficulty: Difficulty, msg: RestartMessage, size: (u16, u16))
     };
 
     ext::put_text((0, 0), text, col, (0, 0, 0));
+
 
 }
 
@@ -273,7 +274,6 @@ pub fn key_down(key_code: u8) {
         Some(key) => {
             ext::log(&format!("Pressed key: {} -> {:?}", key_code, key));
             if let Ok(mut game) = GAME.try_lock() {
-                let size = game.size;
                 match game.state {
                     GameState::Playing(ref mut rouge) => {
                         if let Some(ref cont) = controls::parse_control(&key, &rouge.keys_down) {

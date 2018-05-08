@@ -49,7 +49,7 @@ pub trait Entity {
                     .map(|x| x.get_id())
                     .unwrap_or(0);
 
-                let mut blkf = block::BLOCK_FUNCS.lock().unwrap();
+                let blkf = block::BLOCK_FUNCS.lock().unwrap();
 
                 // log(&format!("Id: {}", id));
 
