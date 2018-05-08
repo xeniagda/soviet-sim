@@ -147,38 +147,25 @@ fn draw_menu(difficulty: Difficulty, size: (u16, u16)) {
     }
 
     // Title
-    for (i, ch) in TITLE.chars().enumerate() {
-        ext::put_char(
-            (i as u16 + (size.0 - TITLE.chars().count() as u16) / 2, 0),
-            &Shape::new(ch, (255, 255, 0), (255, 0, 0))
-            );
-    }
+    ext::put_text(((size.0 - TITLE.chars().count() as u16) / 2, 0), TITLE, (255, 255, 0), (255, 0, 0));
 
+    ext::put_text((1, 3), &format!("Diffiulty: {}", difficulty.to_string()), (255, 255, 255), (0, 0, 0));
 
-    for (i, ch) in format!("Diffiulty: {}", difficulty.to_string()).chars().enumerate() {
-        ext::put_char((i as u16 + 1, 3), &Shape::new(ch, (255, 255, 255), (0, 0, 0)));
-    }
-
-    for (i, ch) in "Press enter to start!".chars().enumerate() {
-        ext::put_char((i as u16 + 1, 6), &Shape::new(ch, (255, 255, 255), (0, 0, 0)));
-    }
+    ext::put_text((1, 6), "Press enter to start!", (255, 255, 255), (0, 0, 0));
 }
 
 fn draw_game_over(difficulty: Difficulty, msg: RestartMessage, size: (u16, u16)) {
     ext::clear();
 
-    for (i, ch) in "game over lol. press enter to continue".chars().enumerate() {
-        ext::put_char((i as u16, 0), &Shape::new(ch, (255, 0, 0), (0, 0, 0)));
-    }
+    ext::put_text((0, 0), "game over lol. press enter to continue", (255, 255, 255), (0, 0, 0));
 
     let (text, col) = match msg {
         RestartMessage::Died => (&"u ded lol!", (255, 0, 0)),
         RestartMessage::Won  => (&"gj", (0, 255, 0)),
     };
 
-    for (i, ch) in text.chars().enumerate() {
-        ext::put_char((i as u16, 1), &Shape::new(ch, col, (0, 0, 0)));
-    }
+    ext::put_text((0, 0), text, col, (0, 0, 0));
+
 }
 
 fn draw_inventory(inv: &AtInventory, size: (u16, u16)) {
@@ -204,13 +191,10 @@ fn draw_inventory(inv: &AtInventory, size: (u16, u16)) {
     }
 
     // Draw title
-    for (i, ch) in INVENTORY_TITLE.chars().enumerate() {
-        ext::put_char(
-            (i as u16 + (size.0 - INVENTORY_TITLE.chars().count() as u16) / 2, INVENTORY_INDENT),
-            &Shape::new(ch, (255, 255, 0), (255, 0, 0))
-            );
-    }
-
+    ext::put_text(
+        ((size.0 - INVENTORY_TITLE.chars().count() as u16) / 2, INVENTORY_INDENT),
+        INVENTORY_TITLE,
+        (255, 255, 0), (255, 0, 0));
 
     // Draw bar
     for i in INVENTORY_INDENT+1..size.1-INVENTORY_INDENT-1 {
@@ -218,18 +202,16 @@ fn draw_inventory(inv: &AtInventory, size: (u16, u16)) {
     }
 
     // Draw titles
-    for (i, ch) in INVENTORY_INVENTORY.chars().enumerate() {
-        ext::put_char(
-            (i as u16 + (size.0 - INVENTORY_INVENTORY.chars().count() as u16) / 2 - size.0 / 4, INVENTORY_INDENT + 1),
-            &Shape::new(ch, (255, 255, 255), (0, 0, 0))
-            );
-    }
-    for (i, ch) in INVENTORY_CRAFTING.chars().enumerate() {
-        ext::put_char(
-            (i as u16 + (size.0 - INVENTORY_CRAFTING.chars().count() as u16) / 2 + size.0 / 4, INVENTORY_INDENT + 1),
-            &Shape::new(ch, (255, 255, 255), (0, 0, 0))
-            );
-    }
+    ext::put_text(
+        ((size.0 / 2 - INVENTORY_INVENTORY.chars().count() as u16) / 2, INVENTORY_INDENT + 1),
+        INVENTORY_INVENTORY,
+        (255, 255, 255), (0, 0, 0));
+
+    // Draw titles
+    ext::put_text(
+        ((size.0 / 2 * 3 - INVENTORY_CRAFTING.chars().count() as u16) / 2, INVENTORY_INDENT + 1),
+        INVENTORY_CRAFTING,
+        (255, 255, 255), (0, 0, 0));
 
     // Draw inventory
     if let Ok(game) = GAME.try_lock() {

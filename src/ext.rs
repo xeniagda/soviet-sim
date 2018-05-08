@@ -54,6 +54,12 @@ pub fn put_char(pos: (u16, u16), shape: &Shape) {
     }
 }
 
+pub fn put_text(pos: (u16, u16), text: &str, fg: (u8, u8, u8), bg: (u8, u8, u8)) {
+    for (i, ch) in text.chars().enumerate() {
+        put_char((pos.0 + i as u16, pos.1), &Shape::new(ch, fg, bg));
+    }
+}
+
 pub fn recolor(pos: (u16, u16), fg: (u8, u8, u8), bg: (u8, u8, u8)) {
     match SCREEN.try_lock() {
         Ok(mut screen) => {
