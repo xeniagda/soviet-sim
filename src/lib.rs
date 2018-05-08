@@ -11,6 +11,7 @@ mod block;
 mod entity;
 mod shape;
 mod difficulty;
+mod crafting;
 
 use world::*;
 use difficulty::Difficulty;
@@ -52,6 +53,7 @@ struct WorldWrapper {
 
 #[derive(Default, Debug)]
 struct AtInventory {
+    selected_recipe: usize
 }
 
 lazy_static! {
@@ -224,6 +226,22 @@ fn draw_inventory(inv: &AtInventory, ww: &WorldWrapper, size: (u16, u16)) {
                 &format!("x{}", count),
                 (255, 255, 255), (0, 0, 0));
         }
+    }
+
+    let mut y = 2;
+    // Draw recipes
+    for (i, recipe) in crafting::RECIPES.iter().enumerate() {
+        ext::put_char((size.0 / 2 + 1, INVENTORY_INDENT + y), &recipe.out.shape);
+        if i == inv.selected_recipe {
+            for (needed, amount) in recipe.needed.iter() {
+                ext::put_char((size.0 / 2 + 3, INVENTORY_INDENT + y), &needed.shape);
+                ext::put_text((size.0 / 2 + 4, INVENTORY_INDENT + y),
+                              &format!("x{}", amount),
+                              (255, 255, 255), (0, 0, 0));
+                y += 1;
+            }
+        }
+        y += 1;
     }
 }
 
