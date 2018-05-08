@@ -1,6 +1,7 @@
 use world::{World, HOTBAR_HEIGHT};
 use shape::Shape;
 use ext::*;
+use crafting::Recipe;
 use block;
 
 use super::Entity;
@@ -34,6 +35,40 @@ impl Player {
             self.inventory.push((block, 1));
         }
         log(&format!("Inventory: {:?}", self.inventory));
+    }
+
+    pub fn craft(&mut self, rec: &Recipe) -> bool {
+        log(&format!("Crafting {:?}", rec));
+
+        // Is craftable?
+        for (c_item, c_amount) in rec.needed.iter() {
+            // Has item?
+            if self.inventory
+                .iter()
+                .find(|(item, _)| item == c_item)
+                .map(|(_, amount)| amount < c_amount)
+                .unwrap_or(true)
+            {
+                log(&format!("Not enough {:?}", c_item));
+                return false;
+            }
+        }
+
+        for (c_item, c_amount) in rec.needed.iter() {
+            let (i, (_, mut amount)) = self.inventory.iter_mut()
+                    .enumerate()
+                    .find(|(_, (item, _))| item == c_item)
+                    .expect("o no");
+
+            amount -= c_amount;
+            if amount == 0 {
+                self.inventory.remove(i);
+            }
+        }
+
+        self.pick_up(rec.out.clone());
+
+        true
     }
 }
 

@@ -19,8 +19,7 @@ pub enum Action {
     PlaceUp,  PlaceDown,  PlaceLeft,  PlaceRight,
     BreakUp,  BreakDown,  BreakLeft,  BreakRight,
     IncActive, DecActive,
-    ToggleInventory,
-    Die,
+    ToggleInventory, Die, Select
 }
 
 const CONTROLS: &[Control] = &[
@@ -196,6 +195,12 @@ const CONTROLS: &[Control] = &[
         action: Action::Die
     },
 
+    Control {
+        modifiers: &[],
+        key: Key::Enter,
+        desc: "Select",
+        action: Action::Select
+    },
 ];
 
 pub fn parse_control<'a>(key: &'a Key, pressed: &HashSet<Key>) -> Option<&'static Control<'static>> {
