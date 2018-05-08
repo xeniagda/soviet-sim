@@ -396,16 +396,6 @@ impl World {
         let idx = (rand() * placed.len() as f64) as usize;
         let (x, y, _) = placed[idx];
         placed.remove(idx);
-        self.blocks[x][y] = block::TELEPORTER.clone();
-
-        let idx = (rand() * placed.len() as f64) as usize;
-        let (x, y, _) = placed[idx];
-        placed.remove(idx);
-        self.blocks[x][y] = block::MOVER.clone();
-
-        let idx = (rand() * placed.len() as f64) as usize;
-        let (x, y, _) = placed[idx];
-        placed.remove(idx);
         self.add_entity(
             EntityWrapper::WPlayer(
                 Player::new((x as u16, y as u16), self.difficulty.get_start_health())
