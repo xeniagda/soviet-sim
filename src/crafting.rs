@@ -4,7 +4,7 @@ use block::Block;
 #[derive(Debug, Clone)]
 pub struct Recipe {
     pub out: Block,
-    pub needed: Vec<(Block, usize)>,
+    pub needed: Vec<(Block, u64)>,
 }
 
 lazy_static! {
