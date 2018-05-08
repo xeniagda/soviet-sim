@@ -13,6 +13,7 @@ lazy_static! {
 #[derive(Debug, Clone)]
 pub struct Block {
     pub shape: Shape,
+    pub name: String,
     id: usize,
     passable: bool,
     breakable: bool
@@ -26,12 +27,13 @@ impl PartialEq for Block {
 impl Eq for Block {}
 
 impl Block {
-    fn new(shape: Shape, passable: bool, breakable: bool, on_walk: fn(&mut World, u64)) -> Block {
+    fn new(shape: Shape, name: String, passable: bool, breakable: bool, on_walk: fn(&mut World, u64)) -> Block {
         let mut blkf = BLOCK_FUNCS.lock().unwrap();
         blkf.push(on_walk);
 
         Block {
             id: blkf.len() - 1,
+            name: name,
             passable: passable,
             breakable: breakable,
             shape: shape
@@ -54,6 +56,7 @@ impl Block {
 lazy_static! {
     pub static ref GROUND: Block = Block::new(
         Shape::new('.', (128, 128, 128), (0, 0, 0)),
+        "Ground".into(),
         true,
         false,
         |_, _| {}
@@ -61,6 +64,7 @@ lazy_static! {
 
     pub static ref WALL: Block = Block::new(
         Shape::new('#', (202, 195, 210), (0, 0, 0)),
+        "Wall".into(),
         false,
         true,
         |_, _| {}
@@ -68,6 +72,7 @@ lazy_static! {
 
     pub static ref STONE: Block = Block::new(
         Shape::new('&', (120, 140, 160), (10, 30, 50)),
+        "Stone".into(),
         false,
         true,
         |_, _| {}
@@ -75,6 +80,7 @@ lazy_static! {
 
     pub static ref TELEPORTER: Block = Block::new(
         Shape::new('%', (255, 30, 255), (0, 100, 0)),
+        "Teleporter".into(),
         true,
         true,
         |world, id| {
@@ -87,6 +93,7 @@ lazy_static! {
 
     pub static ref MOVER: Block = Block::new(
         Shape::new('^', (255, 240, 30), (0, 0, 0)),
+        "Mover".into(),
         true,
         true,
         |world, id| {
@@ -115,6 +122,7 @@ lazy_static! {
 
     pub static ref COMMUNISM: Block = Block::new(
         Shape::new('☭', (253, 233, 54), (0, 0, 0)),
+        "COMMUNISM".into(),
         true,
         true,
         |world, id| {
