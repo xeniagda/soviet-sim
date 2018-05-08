@@ -52,7 +52,6 @@ struct WorldWrapper {
 
 #[derive(Default, Debug)]
 struct AtInventory {
-    scroll: usize
 }
 
 lazy_static! {
@@ -98,7 +97,7 @@ pub fn tick() {
             GameState::Playing(ref mut rouge) => {
                 if let Some(ref inv) = rouge.at_inventory {
                     rouge.world.draw(size);
-                    draw_inventory(inv, size);
+                    draw_inventory(inv, rouge, size);
                 } else {
                     rouge.world.tick();
                     rouge.world.draw(size);
@@ -168,7 +167,7 @@ fn draw_game_over(difficulty: Difficulty, msg: RestartMessage, size: (u16, u16))
 
 }
 
-fn draw_inventory(inv: &AtInventory, size: (u16, u16)) {
+fn draw_inventory(inv: &AtInventory, ww: &WorldWrapper, size: (u16, u16)) {
     // Border
     for i in INVENTORY_INDENT..size.0-INVENTORY_INDENT {
         ext::put_char((i as u16, INVENTORY_INDENT), &Shape::new('=', (255, 255, 255), (0, 0, 0)));
@@ -214,14 +213,16 @@ fn draw_inventory(inv: &AtInventory, size: (u16, u16)) {
         (255, 255, 255), (0, 0, 0));
 
     // Draw inventory
-    if let Ok(game) = GAME.try_lock() {
-        if let GameState::Playing(ref ww) = game.state {
-            if let Some(entity::EntityWrapper::WPlayer(ref player)) =
-                ww.world.get_player_id().and_then(|x| ww.world.entities.get(&x)) {
-                for (i, (item, count)) in player.inventory.iter().enumerate() {
-                    // TODO
-                }
-            }
+    if let Some(entity::EntityWrapper::WPlayer(ref player)) =
+        ww.world.get_player_id().and_then(|x| ww.world.entities.get(&x)) {
+        for (i, (item, count)) in player.inventory.iter().enumerate() {
+            ext::put_char(
+                (INVENTORY_INDENT + 1, INVENTORY_INDENT + i as u16 + 2),
+                &item.shape);
+            ext::put_text(
+                (INVENTORY_INDENT + 2, INVENTORY_INDENT + i as u16 + 2),
+                &format!("x{}", count),
+                (255, 255, 255), (0, 0, 0));
         }
     }
 }

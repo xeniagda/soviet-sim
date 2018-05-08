@@ -12,7 +12,7 @@ lazy_static! {
 
 #[derive(Debug, Clone)]
 pub struct Block {
-    shape: Shape,
+    pub shape: Shape,
     id: usize,
     passable: bool,
     breakable: bool
