@@ -232,17 +232,19 @@ fn draw_inventory(inv: &AtInventory, ww: &WorldWrapper, size: (u16, u16)) {
     // Draw recipes
     for (i, recipe) in crafting::RECIPES.iter().enumerate() {
         ext::put_char((size.0 / 2 + 1, INVENTORY_INDENT + y), &recipe.out.shape);
-        ext::put_text((size.0 / 2 + 4, INVENTORY_INDENT + y), &recipe.out.name, (255, 255, 255), (0, 0, 0));
-        y += 1;
         if i == inv.selected_recipe {
+            ext::put_text((size.0 / 2 + 4, INVENTORY_INDENT + y), &recipe.out.name, (255, 255, 255), (0, 0, 0));
             for (needed, amount) in recipe.needed.iter() {
+                y += 1;
                 ext::put_char((size.0 / 2 + 3, INVENTORY_INDENT + y), &needed.shape);
                 ext::put_text((size.0 / 2 + 4, INVENTORY_INDENT + y),
                               &format!("x{}", amount),
                               (255, 255, 255), (0, 0, 0));
-                y += 1;
             }
+        } else {
+            ext::put_text((size.0 / 2 + 4, INVENTORY_INDENT + y), &recipe.out.name, (120, 120, 120), (0, 0, 0));
         }
+        y += 3;
     }
 }
 

@@ -12,6 +12,10 @@ lazy_static! {
         Recipe {
             out: block::MOVER.clone(),
             needed: vec![(block::WALL.clone(), 20), (block::TELEPORTER.clone(), 1)]
-        }
+        },
+        Recipe {
+            out: block::TELEPORTER.clone(),
+            needed: vec![(block::WALL.clone(), 50), (block::STONE.clone(), 10)]
+        },
     ];
 }
