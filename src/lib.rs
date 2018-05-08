@@ -302,10 +302,7 @@ pub fn key_down(key_code: u8) {
                                 }
                             }
                         }
-
-
                         rouge.keys_down.insert(key);
-                        rouge.world.draw(size);
                     }
                     _ => {
 
@@ -323,6 +320,7 @@ pub fn key_down(key_code: u8) {
 pub fn key_up(key_code: u8) {
     let mut start: Option<Difficulty> = None;
     let mut next_state: Option<GameState> = None;
+
     match key::parse_key(key_code) {
         Some(key) => {
             // log(&format!("Released key: {} -> {:?}", key_code, key));
