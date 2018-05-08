@@ -47,7 +47,12 @@ struct WorldWrapper {
     world: World,
     action_receiver: Receiver<MetaAction>,
     keys_down: HashSet<key::Key>,
-    at_inventory: bool
+    at_inventory: Option<AtInventory>
+}
+
+#[derive(Default, Debug)]
+struct AtInventory {
+    scroll: usize
 }
 
 lazy_static! {
@@ -91,9 +96,9 @@ pub fn tick() {
         let size = game.size;
         match game.state {
             GameState::Playing(ref mut rouge) => {
-                if rouge.at_inventory {
+                if let Some(ref inv) = rouge.at_inventory {
                     rouge.world.draw(size);
-                    draw_inventory(size);
+                    draw_inventory(inv, size);
                 } else {
                     rouge.world.tick();
                     rouge.world.draw(size);
@@ -176,7 +181,7 @@ fn draw_game_over(difficulty: Difficulty, msg: RestartMessage, size: (u16, u16))
     }
 }
 
-fn draw_inventory(size: (u16, u16)) {
+fn draw_inventory(inv: &AtInventory, size: (u16, u16)) {
     // Border
     for i in INVENTORY_INDENT..size.0-INVENTORY_INDENT {
         ext::put_char((i as u16, INVENTORY_INDENT), &Shape::new('=', (255, 255, 255), (0, 0, 0)));
@@ -247,7 +252,7 @@ pub fn init_game(difficulty: Difficulty) {
             world: World::empty(difficulty, send),
             action_receiver: recv,
             keys_down: HashSet::new(),
-            at_inventory: false,
+            at_inventory: None,
         };
 
         rouge.world.generate(game.size.0 as usize, (game.size.1 - world::HOTBAR_HEIGHT) as usize);
@@ -270,9 +275,13 @@ pub fn key_down(key_code: u8) {
                         if let Some(ref cont) = controls::parse_control(&key, &rouge.keys_down) {
                             ext::log(&format!("Control: {:?}", cont));
                             if let controls::Action::ToggleInventory = cont.action {
-                                rouge.at_inventory = !rouge.at_inventory;
+                                if rouge.at_inventory.is_some() {
+                                    rouge.at_inventory = None;
+                                } else {
+                                    rouge.at_inventory = Some(AtInventory::default());
+                                }
                             }
-                            if !rouge.at_inventory {
+                            if rouge.at_inventory.is_none() {
                                 rouge.world.do_action(&cont.action);
                             }
                         }
