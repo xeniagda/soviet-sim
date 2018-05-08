@@ -22,6 +22,9 @@ use std::collections::HashSet;
 use std::panic::set_hook;
 
 const TITLE: &str = "☭☭☭ COMMUNISM SIMULATOR ☭☭☭";
+const INVENTORY_TITLE: &str = "☭☭☭ INVENTORY ☭☭☭";
+const INVENTORY_INVENTORY: &str = "Your inventory";
+const INVENTORY_CRAFTING: &str = "Crafting";
 const INVENTORY_INDENT: u16 = 5;
 
 struct Game {
@@ -188,9 +191,50 @@ fn draw_inventory(size: (u16, u16)) {
         ext::put_char((size.0 - INVENTORY_INDENT - 1, i as u16), &Shape::new('|', (255, 255, 255), (0, 0, 0)));
     }
 
+    // Clear inside
     for x in INVENTORY_INDENT+1..size.0-INVENTORY_INDENT-1 {
         for y in INVENTORY_INDENT+1..size.1-INVENTORY_INDENT-1 {
             ext::put_char((x, y), &Shape::new(' ', (0, 0, 0), (0, 0, 0)))
+        }
+    }
+
+    // Draw title
+    for (i, ch) in INVENTORY_TITLE.chars().enumerate() {
+        ext::put_char(
+            (i as u16 + (size.0 - INVENTORY_TITLE.chars().count() as u16) / 2, INVENTORY_INDENT),
+            &Shape::new(ch, (255, 255, 0), (255, 0, 0))
+            );
+    }
+
+
+    // Draw bar
+    for i in INVENTORY_INDENT+1..size.1-INVENTORY_INDENT-1 {
+        ext::put_char((size.0 / 2, i), &Shape::new('|', (255, 255, 255), (0, 0, 0)));
+    }
+
+    // Draw titles
+    for (i, ch) in INVENTORY_INVENTORY.chars().enumerate() {
+        ext::put_char(
+            (i as u16 + (size.0 - INVENTORY_INVENTORY.chars().count() as u16) / 2 - size.0 / 4, INVENTORY_INDENT + 1),
+            &Shape::new(ch, (255, 255, 255), (0, 0, 0))
+            );
+    }
+    for (i, ch) in INVENTORY_CRAFTING.chars().enumerate() {
+        ext::put_char(
+            (i as u16 + (size.0 - INVENTORY_CRAFTING.chars().count() as u16) / 2 + size.0 / 4, INVENTORY_INDENT + 1),
+            &Shape::new(ch, (255, 255, 255), (0, 0, 0))
+            );
+    }
+
+    // Draw inventory
+    if let Ok(game) = GAME.try_lock() {
+        if let GameState::Playing(ref ww) = game.state {
+            if let Some(entity::EntityWrapper::WPlayer(ref player)) =
+                ww.world.get_player_id().and_then(|x| ww.world.entities.get(&x)) {
+                for (i, (item, count)) in player.inventory.iter().enumerate() {
+                    // TODO
+                }
+            }
         }
     }
 }
