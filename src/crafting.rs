@@ -1,21 +1,27 @@
 use block;
-use block::Block;
+use inventory::InventoryItem;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Recipe {
-    pub out: Block,
-    pub needed: Vec<(Block, u64)>,
+    pub out: InventoryItem,
+    pub needed: Vec<(InventoryItem, u64)>,
 }
 
 lazy_static! {
     pub static ref RECIPES: Vec<Recipe> = vec![
         Recipe {
-            out: block::MOVER.clone(),
-            needed: vec![(block::WALL.clone(), 20), (block::BOMB.clone(), 1)]
+            out: InventoryItem::Block(block::MOVER.clone()),
+            needed: vec![
+                (InventoryItem::Block(block::WALL.clone()), 20),
+                (InventoryItem::Block(block::BOMB.clone()), 1),
+            ]
         },
         Recipe {
-            out: block::BOMB.clone(),
-            needed: vec![(block::WALL.clone(), 50), (block::STONE.clone(), 10)]
+            out: InventoryItem::Block(block::BOMB.clone()),
+            needed: vec![
+                (InventoryItem::Block(block::WALL.clone()), 50),
+                (InventoryItem::Block(block::STONE.clone()), 10),
+            ]
         },
     ];
 }

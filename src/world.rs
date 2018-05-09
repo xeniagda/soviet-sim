@@ -5,6 +5,7 @@ use entity;
 use entity::{EntityWrapper, Player, Josef};
 use shape::Shape;
 use difficulty::Difficulty;
+use inventory::InventoryItem;
 
 use std::collections::HashMap;
 use std::mem;
@@ -166,58 +167,8 @@ impl World {
             _                  => { None }
         };
         if let Some(place_dir) = place_dir {
-            self.place_dir(place_dir);
-        }
-    }
-
-    fn place_dir(&mut self, place_dir: MoveDir) {
-        let new_pos;
-
-        if let Some(player) = self.get_player_id().and_then(|id| self.entities.get(&id)) {
-            let pl_pos = player.get_pos();
-            let (dx, dy) = place_dir.to_vec();
-
-            new_pos = (pl_pos.0 + dx as u16, pl_pos.1 + dy as u16);
-        } else {
-            return;
-        }
-
-        if let Some(block_at) = self.blocks
-            .get(new_pos.0 as usize)
-            .and_then(|x| x.get(new_pos.1 as usize))
-        {
-            if block_at != &*block::GROUND {
-                return;
-            }
-        }
-
-        let to_replace;
-
-        if let Some(&mut EntityWrapper::WPlayer(ref mut player)) = self.get_player_id()
-            .and_then(|id| self.entities.get_mut(&id))
-        {
-            if let Some(&mut (ref block, ref mut count)) = player.inventory.get_mut(player.active) {
-                to_replace = block.clone();
-                if *count > 1 {
-                    *count -= 1;
-                } else {
-                    player.inventory.remove(player.active);
-                    if player.active > 0 {
-                        player.active -= 1;
-                    }
-                }
-            } else {
-                return;
-            }
-        } else {
-            return;
-        }
-
-        if let Some(block_at) = self.blocks
-            .get_mut(new_pos.0 as usize)
-            .and_then(|x| x.get_mut(new_pos.1 as usize))
-        {
-            mem::replace(block_at, to_replace);
+            // TODO: Move into player.rs
+            // self.place_dir(place_dir);
         }
     }
 
@@ -250,7 +201,7 @@ impl World {
         if let Some(&mut EntityWrapper::WPlayer(ref mut player)) =
             self.get_player_id().and_then(|id| self.entities.get_mut(&id))
         {
-            player.pick_up(block_pickup.clone());
+            player.pick_up(InventoryItem::Block(block_pickup.clone()));
         }
 
         self.get_player_id().map(|id| self.move_entity(id, &break_dir));

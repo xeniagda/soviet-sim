@@ -33,8 +33,9 @@ impl Police {
 impl Entity for Police {
     fn get_pos(&self) -> (u16, u16) { self.pos }
     fn get_pos_mut(&mut self) -> &mut (u16, u16) { &mut self.pos }
-    fn get_shape(&self) -> Shape { Shape { ch: 'T', col: (255, 0, 0), bg: (0, 0, 0) } }
 
+    fn get_shape(&self) -> Shape { Shape { ch: 'T', col: (255, 0, 0), bg: (0, 0, 0) } }
+    fn get_name(&self) -> String { "Player".into() }
 
     fn tick(world: &mut World, en_id: u64) where Self: Sized {
         let should_walk = {

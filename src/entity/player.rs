@@ -2,7 +2,7 @@ use world::{World, HOTBAR_HEIGHT};
 use shape::Shape;
 use ext::*;
 use crafting::Recipe;
-use block;
+use inventory::InventoryItem;
 
 use super::Entity;
 
@@ -11,7 +11,7 @@ const COMMUNISM_WIDTH: u16 = 10;
 #[derive(PartialEq, Eq, Clone)]
 pub struct Player {
     pub pos: (u16, u16),
-    pub inventory: Vec<(block::Block, u64)>,
+    pub inventory: Vec<(InventoryItem, u64)>,
     pub active: usize,
     pub hunger: u16
 }
@@ -27,18 +27,16 @@ impl Player {
         }
     }
 
-    pub fn pick_up(&mut self, block: block::Block) {
+    pub fn pick_up(&mut self, item: InventoryItem) {
         if let Some(&mut (_, ref mut count)) = self.inventory.iter_mut()
-                .find(|x| x.0 == block) {
+                .find(|x| x.0 == item) {
             *count += 1;
         } else {
-            self.inventory.push((block, 1));
+            self.inventory.push((item, 1));
         }
-        log(&format!("Inventory: {:?}", self.inventory));
     }
 
     pub fn craft(&mut self, rec: &Recipe) -> bool {
-        log(&format!("Crafting {:?}", rec));
 
         // Is craftable?
         for (c_item, c_amount) in rec.needed.iter() {
@@ -49,7 +47,6 @@ impl Player {
                 .map(|(_, amount)| amount < c_amount)
                 .unwrap_or(true)
             {
-                log(&format!("Not enough {:?}", c_item));
                 return false;
             }
         }
@@ -78,6 +75,7 @@ impl Entity for Player {
     fn get_pos_mut(&mut self) -> &mut (u16, u16) { &mut self.pos }
 
     fn get_shape(&self) -> Shape { Shape { ch: '@', col: (0, 255, 0), bg: (0, 0, 0) } }
+    fn get_name(&self) -> String { "Player".into() }
 
     fn pre_draw(&self, _world: &World, size: &(u16, u16)) {
         if self.hunger > HOTBAR_HEIGHT * COMMUNISM_WIDTH {

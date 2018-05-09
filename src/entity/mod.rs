@@ -102,6 +102,7 @@ pub trait Entity {
     }
 
     fn get_shape(&self) -> Shape;
+    fn get_name(&self) -> String;
 
     fn pre_draw(&self, _world: &World, _size: &(u16, u16)) {
     }

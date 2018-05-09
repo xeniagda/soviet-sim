@@ -12,6 +12,7 @@ mod entity;
 mod shape;
 mod difficulty;
 mod crafting;
+mod inventory;
 
 use world::*;
 use difficulty::Difficulty;
@@ -221,7 +222,7 @@ fn draw_inventory(inv: &AtInventory, ww: &WorldWrapper, size: (u16, u16)) {
         for (i, (item, count)) in player.inventory.iter().enumerate() {
             ext::put_char(
                 (INVENTORY_INDENT + 1, INVENTORY_INDENT + i as u16 + 2),
-                &item.shape);
+                &item.get_shape());
             ext::put_text(
                 (INVENTORY_INDENT + 2, INVENTORY_INDENT + i as u16 + 2),
                 &format!("x{}", count),
@@ -232,18 +233,18 @@ fn draw_inventory(inv: &AtInventory, ww: &WorldWrapper, size: (u16, u16)) {
     let mut y = 2;
     // Draw recipes
     for (i, recipe) in crafting::RECIPES.iter().enumerate() {
-        ext::put_char((size.0 / 2 + 1, INVENTORY_INDENT + y), &recipe.out.shape);
+        ext::put_char((size.0 / 2 + 1, INVENTORY_INDENT + y), &recipe.out.get_shape());
         if i == inv.selected_recipe {
-            ext::put_text((size.0 / 2 + 4, INVENTORY_INDENT + y), &recipe.out.name, (255, 255, 255), (0, 0, 0));
+            ext::put_text((size.0 / 2 + 4, INVENTORY_INDENT + y), &recipe.out.get_name(), (255, 255, 255), (0, 0, 0));
             for (needed, amount) in recipe.needed.iter() {
                 y += 1;
-                ext::put_char((size.0 / 2 + 3, INVENTORY_INDENT + y), &needed.shape);
+                ext::put_char((size.0 / 2 + 3, INVENTORY_INDENT + y), &needed.get_shape());
                 ext::put_text((size.0 / 2 + 4, INVENTORY_INDENT + y),
                               &format!("x{}", amount),
                               (255, 255, 255), (0, 0, 0));
             }
         } else {
-            ext::put_text((size.0 / 2 + 4, INVENTORY_INDENT + y), &recipe.out.name, (120, 120, 120), (0, 0, 0));
+            ext::put_text((size.0 / 2 + 4, INVENTORY_INDENT + y), &recipe.out.get_name(), (120, 120, 120), (0, 0, 0));
         }
         y += 3;
     }
