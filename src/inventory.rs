@@ -10,7 +10,7 @@ pub enum InventoryItem {
 }
 
 impl InventoryItem {
-    fn place_dir(&self, world: &mut World, pos: (u16, u16)) -> bool {
+    pub fn place_pos(&self, world: &mut World, pos: (u16, u16)) -> bool {
         match self {
             InventoryItem::Block(ref block) => {
                 if let Some(last) =
@@ -22,7 +22,9 @@ impl InventoryItem {
                     }
                 }
             }
-            _ => {}
+            InventoryItem::Entity(ref enw) => {
+                world.add_entity(enw.clone());
+            }
         }
         false
     }

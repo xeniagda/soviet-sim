@@ -154,8 +154,8 @@ impl World {
             _                  => { None }
         };
         if let Some(place_dir) = place_dir {
-            // TODO: Move into player.rs
-            // self.place_dir(place_dir);
+            self.get_player_id()
+                .map(|id| Player::place(self, place_dir, id));
         }
     }
 
