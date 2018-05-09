@@ -11,10 +11,10 @@ lazy_static! {
     pub static ref RECIPES: Vec<Recipe> = vec![
         Recipe {
             out: block::MOVER.clone(),
-            needed: vec![(block::WALL.clone(), 20), (block::TELEPORTER.clone(), 1)]
+            needed: vec![(block::WALL.clone(), 20), (block::BOMB.clone(), 1)]
         },
         Recipe {
-            out: block::TELEPORTER.clone(),
+            out: block::BOMB.clone(),
             needed: vec![(block::WALL.clone(), 50), (block::STONE.clone(), 10)]
         },
     ];
