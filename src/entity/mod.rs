@@ -118,70 +118,67 @@ pub trait Entity {
     }
 }
 
-#[derive(PartialEq, Eq, Clone)]
-pub enum EntityWrapper {
-    WPlayer(Player),
-    WJosef(Josef),
-    WPolice(Police),
-    WBomb(Bomb),
-}
 
-impl EntityWrapper {
-    pub fn get_tick_fn(&self) -> impl Fn(&mut World, u64) {
-        use self::EntityWrapper::*;
-        match *self {
-            WPlayer(_) => Player::tick,
-            WJosef(_) => Josef::tick,
-            WPolice(_) => Police::tick,
-            WBomb(_) => Bomb::tick,
+
+macro_rules! MakeEntityWrapper {
+    ( $($name:ident = $wname:ident),+ ) => {
+
+        #[derive(PartialEq, Eq, Clone)]
+        pub enum EntityWrapper {
+            $($wname($name)),+
         }
-    }
 
-    pub fn get_move_fn(&self) -> impl Fn(&mut World, u64, MoveDir) -> bool {
-        use self::EntityWrapper::*;
-        match *self {
-            WPlayer(_) => Player::move_dir,
-            WJosef(_) => Josef::move_dir,
-            WPolice(_) => Police::move_dir,
-            WBomb(_) => Bomb::move_dir,
+        impl EntityWrapper {
+            pub fn get_tick_fn(&self) -> impl Fn(&mut World, u64) {
+                use self::EntityWrapper::*;
+                match *self {
+                    $( $wname(_) => $name::tick ),+
+                }
+            }
+
+            pub fn get_move_fn(&self) -> impl Fn(&mut World, u64, MoveDir) -> bool {
+                use self::EntityWrapper::*;
+                match *self {
+                    $( $wname(_) => $name::move_dir ),+
+                }
+            }
+
+            pub fn get_collision_fn(&self) -> impl Fn(&mut World, u64, u64) -> bool {
+                use self::EntityWrapper::*;
+                match *self {
+                    $( $wname(_) => $name::on_collision ),+
+                }
+            }
         }
-    }
 
-    pub fn get_collision_fn(&self) -> impl Fn(&mut World, u64, u64) -> bool {
-        use self::EntityWrapper::*;
-        match *self {
-            WPlayer(_) => Player::on_collision,
-            WJosef(_) => Josef::on_collision,
-            WPolice(_) => Police::on_collision,
-            WBomb(_) => Bomb::on_collision,
+        impl Deref for EntityWrapper {
+            type Target = Entity;
+
+            fn deref(&self) -> &Self::Target {
+                use self::EntityWrapper::*;
+
+                match *self {
+                    $( $wname(ref e) => e ),+
+                }
+            }
         }
-    }
-}
 
-impl Deref for EntityWrapper {
-    type Target = Entity;
+        impl DerefMut for EntityWrapper {
+            fn deref_mut(&mut self) -> &mut Self::Target {
+                use self::EntityWrapper::*;
 
-    fn deref(&self) -> &Self::Target {
-        use self::EntityWrapper::*;
-
-        match *self {
-            WPlayer(ref e) => e,
-            WJosef(ref e) => e,
-            WPolice(ref e) => e,
-            WBomb(ref e) => e,
-        }
-    }
-}
-
-impl DerefMut for EntityWrapper {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        use self::EntityWrapper::*;
-
-        match *self {
-            WPlayer(ref mut e) => e,
-            WJosef(ref mut e) => e,
-            WPolice(ref mut e) => e,
-            WBomb(ref mut e) => e,
+                match *self {
+                    $( $wname(ref mut e) => e ),+
+                }
+            }
         }
     }
 }
+
+MakeEntityWrapper!(
+    Player=WPlayer,
+    Josef=WJosef,
+    Police=WPolice,
+    Bomb=WBomb
+    );
+
