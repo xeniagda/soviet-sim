@@ -23,7 +23,8 @@ impl InventoryItem {
                 }
             }
             InventoryItem::Bomb => {
-                world.add_entity(EntityWrapper::WBomb(Bomb::new(pos, 600)));
+                world.add_entity(EntityWrapper::WBomb(Bomb::new(pos, 300)));
+                return true;
             }
         }
         false
