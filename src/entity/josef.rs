@@ -1,6 +1,7 @@
-use world::{MoveDir, World, MetaAction};
+use world::{World, MetaAction};
 use shape::Shape;
 use ext::*;
+use move_dir::MoveDir;
 
 use super::{Entity, EntityWrapper, Police};
 

@@ -6,6 +6,7 @@ use entity::{EntityWrapper, Player, Josef};
 use shape::Shape;
 use difficulty::Difficulty;
 use inventory::InventoryItem;
+use move_dir::{MoveDir, random_dir};
 
 use std::collections::HashMap;
 use std::mem;
@@ -27,20 +28,6 @@ pub struct World {
     action_sender: Sender<MetaAction>,
 }
 
-#[derive(PartialEq, Eq, Clone, Copy)]
-pub enum MoveDir { Up, Left, Down, Right }
-
-impl MoveDir {
-    pub fn to_vec(&self) -> (i8, i8) {
-        match self {
-            &MoveDir::Up => (0, -1),
-            &MoveDir::Down => (0, 1),
-            &MoveDir::Left => (-1, 0),
-            &MoveDir::Right => (1, 0),
-        }
-    }
-
-}
 
 impl World {
     pub fn empty(difficulty: Difficulty, action_sender: Sender<MetaAction>) -> World {
@@ -375,12 +362,3 @@ impl World {
     }
 }
 
-pub fn random_dir() -> MoveDir {
-    match (rand() * 4.) as usize {
-        0 => MoveDir::Left,
-        1 => MoveDir::Right,
-        2 => MoveDir::Up,
-        3 => MoveDir::Down,
-        _ => MoveDir::Left
-    }
-}

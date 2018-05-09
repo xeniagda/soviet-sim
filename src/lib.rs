@@ -13,6 +13,7 @@ mod shape;
 mod difficulty;
 mod crafting;
 mod inventory;
+mod move_dir;
 
 use world::*;
 use difficulty::Difficulty;

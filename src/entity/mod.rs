@@ -1,8 +1,9 @@
-use world::{MoveDir, World};
+use std::ops::{Deref, DerefMut};
+
+use world::World;
 use shape::Shape;
 use block;
-
-use std::ops::{Deref, DerefMut};
+use move_dir::MoveDir;
 
 mod player;
 mod josef;

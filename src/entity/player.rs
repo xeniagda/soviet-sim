@@ -3,6 +3,9 @@ use shape::Shape;
 use ext::*;
 use crafting::Recipe;
 use inventory::InventoryItem;
+use move_dir::MoveDir;
+use block;
+use super::EntityWrapper;
 
 use super::Entity;
 
