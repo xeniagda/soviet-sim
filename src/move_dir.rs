@@ -1,5 +1,8 @@
 use ext::rand;
 
+pub const DIRECTIONS: [MoveDir; 4] = [ MoveDir::Up, MoveDir::Left, MoveDir::Down, MoveDir::Right ];
+
+
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub enum MoveDir { Up, Left, Down, Right }
 
@@ -13,6 +16,11 @@ impl MoveDir {
         }
     }
 
+    pub fn move_vec(&self, other: (u16, u16)) -> (u16, u16) {
+        let (dx, dy) = self.to_vec();
+
+        (other.0.wrapping_add(dx as u16), other.1.wrapping_add(dy as u16))
+    }
 }
 
 pub fn random_dir() -> MoveDir {

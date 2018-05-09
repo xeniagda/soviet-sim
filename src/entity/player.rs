@@ -1,4 +1,4 @@
-use world::{World, HOTBAR_HEIGHT};
+use world::{World, HOTBAR_HEIGHT, MetaAction};
 use shape::Shape;
 use ext::*;
 use crafting::Recipe;
@@ -122,6 +122,25 @@ impl Entity for Player {
 
     fn get_shape(&self) -> Shape { Shape { ch: '@', col: (0, 255, 0), bg: (0, 0, 0) } }
     fn get_name(&self) -> String { "Player".into() }
+
+    fn hurt(world: &mut World, en_id: u64, amount: u16) where Self: Sized {
+        let mut action_restart = None;
+        if let Some(EntityWrapper::WPlayer(ref mut this)) = world.entities.get_mut(&en_id) {
+            this.hunger -= amount;
+
+            if this.hunger == 0 {
+                action_restart = Some(true);
+            } else {
+                action_restart = Some(false);
+            }
+        }
+
+        if let Some(restart) = action_restart {
+            if restart {
+                world.do_metaaction(MetaAction::Die);
+            }
+        }
+    }
 
     fn pre_draw(&self, _world: &World, size: &(u16, u16)) {
         if self.hunger > HOTBAR_HEIGHT * COMMUNISM_WIDTH {

@@ -21,6 +21,8 @@ pub trait Entity {
     fn get_pos(&self) -> (u16, u16);
     fn get_pos_mut(&mut self) -> &mut (u16, u16);
 
+    fn hurt(_world: &mut World, _en_id: u64, _amount: u16) where Self: Sized {}
+
     /// Try to move an entity in a specific direction
     /// Returns if the entity successfully moved
     fn move_dir(world: &mut World, en_id: u64, dir: MoveDir) -> bool
@@ -118,8 +120,6 @@ pub trait Entity {
     }
 }
 
-
-
 macro_rules! MakeEntityWrapper {
     ( $($name:ident = $wname:ident),+ ) => {
 
@@ -147,6 +147,12 @@ macro_rules! MakeEntityWrapper {
                 use self::EntityWrapper::*;
                 match *self {
                     $( $wname(_) => $name::on_collision ),+
+                }
+            }
+            pub fn get_hurt_fn(&self) -> impl Fn(&mut World, u64, u16) {
+                use self::EntityWrapper::*;
+                match *self {
+                    $( $wname(_) => $name::hurt ),+
                 }
             }
         }

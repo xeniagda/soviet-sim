@@ -1,8 +1,9 @@
-use world::{World, MetaAction};
+use world::World;
 use shape::Shape;
 use ext::*;
 use block;
-use move_dir::MoveDir;
+use move_dir::{MoveDir, DIRECTIONS};
+use inventory;
 
 use super::{Entity, EntityWrapper};
 
@@ -37,6 +38,29 @@ impl Entity for Police {
 
     fn get_shape(&self) -> Shape { Shape { ch: 'T', col: (255, 0, 0), bg: (0, 0, 0) } }
     fn get_name(&self) -> String { "Police".into() }
+
+    fn hurt(world: &mut World, en_id: u64, _amount: u16) {
+        let mut drops: Vec<(u16, u16)> = Vec::new();
+
+        if let Some(en) = world.entities.get(&en_id) {
+            drops.push(en.get_pos());
+        }
+
+        world.entities.remove(&en_id);
+
+        for _i in 0..5 {
+            if drops.is_empty() { break; }
+
+            let idx = (rand() * drops.len() as f64) as usize;
+            let (x, y) = drops[idx];
+            if inventory::InventoryItem::Block(block::COMMUNISM.clone()).place_pos(world, (x, y)) {
+                for dir in &DIRECTIONS {
+                    drops.push(dir.move_vec((x, y)));
+                }
+            }
+        }
+
+    }
 
     fn tick(world: &mut World, en_id: u64) where Self: Sized {
         let should_walk = {
@@ -153,23 +177,13 @@ impl Entity for Police {
     fn on_collision(world: &mut World, me_id: u64, other_id: u64) -> bool
         where Self: Sized {
 
-        let mut action_restart = None;
-        if let Some(EntityWrapper::WPlayer(ref mut player)) = world.entities.get_mut(&other_id) {
-            if player.hunger == 0 {
-                action_restart = Some(true);
-            } else {
-                player.hunger -= 1;
-                action_restart = Some(false);
-            }
+        if let Some(en) = world.entities.get(&other_id) {
+            en.get_hurt_fn()(world, other_id, 1);
         }
-
-        if let Some(restart) = action_restart {
-            world.entities.remove(&me_id);
-            if restart {
-                world.do_metaaction(MetaAction::Die);
-            }
+        if let Some(en) = world.entities.get(&me_id) {
+            // Begå livet av sig
+            en.get_hurt_fn()(world, me_id, 1);
         }
-
         false
     }
 
