@@ -8,9 +8,11 @@ use move_dir::MoveDir;
 mod player;
 mod josef;
 mod police;
+mod bomb;
 pub use self::player::*;
 pub use self::josef::*;
 pub use self::police::*;
+pub use self::bomb::*;
 
 pub trait Entity {
 
@@ -121,6 +123,7 @@ pub enum EntityWrapper {
     WPlayer(Player),
     WJosef(Josef),
     WPolice(Police),
+    WBomb(Bomb),
 }
 
 impl EntityWrapper {
@@ -130,6 +133,7 @@ impl EntityWrapper {
             WPlayer(_) => Player::tick,
             WJosef(_) => Josef::tick,
             WPolice(_) => Police::tick,
+            WBomb(_) => Bomb::tick,
         }
     }
 
@@ -139,6 +143,7 @@ impl EntityWrapper {
             WPlayer(_) => Player::move_dir,
             WJosef(_) => Josef::move_dir,
             WPolice(_) => Police::move_dir,
+            WBomb(_) => Bomb::move_dir,
         }
     }
 
@@ -148,6 +153,7 @@ impl EntityWrapper {
             WPlayer(_) => Player::on_collision,
             WJosef(_) => Josef::on_collision,
             WPolice(_) => Police::on_collision,
+            WBomb(_) => Bomb::on_collision,
         }
     }
 }
@@ -162,6 +168,7 @@ impl Deref for EntityWrapper {
             WPlayer(ref e) => e,
             WJosef(ref e) => e,
             WPolice(ref e) => e,
+            WBomb(ref e) => e,
         }
     }
 }
@@ -174,6 +181,7 @@ impl DerefMut for EntityWrapper {
             WPlayer(ref mut e) => e,
             WJosef(ref mut e) => e,
             WPolice(ref mut e) => e,
+            WBomb(ref mut e) => e,
         }
     }
 }

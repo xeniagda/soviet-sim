@@ -31,17 +31,24 @@ impl Player {
     }
 
     pub fn place(world: &mut World, dir: MoveDir, en_id: u64) where Self: Sized {
+        let mut entity_positions = world.entities.clone().into_iter().map(|(_, x)| x.get_pos());
+
         let mut to_place: Option<(InventoryItem, (u16, u16))> = None;
 
         if let Some(EntityWrapper::WPlayer(ref mut this)) = world.entities.get_mut(&en_id) {
-
             let place_pos = (this.pos.0 + dir.to_vec().0 as u16, this.pos.1 + dir.to_vec().1 as u16);
 
             if world.blocks
                 .get(place_pos.0 as usize)
                     .and_then(|x| x.get(place_pos.1 as usize)) != Some(&block::GROUND)
             {
-                log("Not ground");
+                return;
+            }
+
+            if entity_positions
+                .any(|x| x == place_pos)
+            {
+                log("entity on tile");
                 return;
             }
 

@@ -78,26 +78,6 @@ lazy_static! {
         |_, _| {}
         );
 
-    pub static ref BOMB: Block = Block::new(
-        Shape::new('B', (255, 30, 255), (0, 100, 0)),
-        "Bomb".into(),
-        true,
-        true,
-        |world, id| {
-            if let Some(ent) = world.entities.clone().get(&id) {
-                let (x, y) = ent.get_pos();
-                for (ent_idx, ent_) in world.entities.clone() {
-                    let (x_, y_) = ent_.get_pos();
-                    let (dx, dy) = (x - x_, y - y_);
-                    if dx * dx + dy * dy < 25 {
-                        world.entities.remove(&ent_idx);
-                    }
-                }
-                world.blocks[x as usize][y as usize] = GROUND.clone();
-            }
-        }
-        );
-
     pub static ref MOVER: Block = Block::new(
         Shape::new('^', (255, 240, 30), (0, 0, 0)),
         "Mover".into(),

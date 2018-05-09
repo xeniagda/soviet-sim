@@ -1,12 +1,12 @@
 use block::{Block, GROUND};
 use world::World;
-use entity::EntityWrapper;
+use entity::{EntityWrapper, Bomb};
 use shape::Shape;
 
 #[derive(PartialEq, Eq, Clone)]
 pub enum InventoryItem {
     Block(Block),
-    Entity(EntityWrapper)
+    Bomb,
 }
 
 impl InventoryItem {
@@ -22,8 +22,8 @@ impl InventoryItem {
                     }
                 }
             }
-            InventoryItem::Entity(ref enw) => {
-                world.add_entity(enw.clone());
+            InventoryItem::Bomb => {
+                world.add_entity(EntityWrapper::WBomb(Bomb::new(pos, 600)));
             }
         }
         false
@@ -32,14 +32,14 @@ impl InventoryItem {
     pub fn get_shape(&self) -> Shape {
         match self {
             InventoryItem::Block(ref block) => block.shape,
-            InventoryItem::Entity(ref en) => en.get_shape(),
+            InventoryItem::Bomb => Shape::new('B', (255, 30, 255), (0, 100, 0)),
         }
     }
 
     pub fn get_name(&self) -> String {
         match self {
             InventoryItem::Block(ref block) => block.name.clone(),
-            InventoryItem::Entity(ref en) => en.get_name(),
+            InventoryItem::Bomb => "Bomb".into(),
         }
     }
 }
