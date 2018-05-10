@@ -59,7 +59,7 @@ impl Player {
 
                 if amount == &0 {
                     this.inventory.remove(this.active);
-                    if this.active >= this.inventory.len() {
+                    if this.active >= this.inventory.len() && this.inventory.len() > 0 {
                         this.active = this.inventory.len() - 1;
                     }
                 }
