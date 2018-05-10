@@ -104,7 +104,7 @@ impl Entity for Police {
             let mut best_score = u16::max_value();
 
             // Find closest path to player
-            'outer: loop {
+            'outer: for _ in 0..100 {
                 if let Some((ref pos, ref path)) = paths.clone().into_iter()
                     .min_by_key(|&(ref pos, ref path)| {
                         let delta = (pos.0 - player_pos.0, pos.1 - player_pos.1);
@@ -155,9 +155,6 @@ impl Entity for Police {
                     } else {
                         break 'outer;
                     }
-                if paths.len() > 100 {
-                    break;
-                }
             }
 
             if let Some(best_path) = best_path.clone() {
