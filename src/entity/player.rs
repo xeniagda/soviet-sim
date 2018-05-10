@@ -59,6 +59,9 @@ impl Player {
 
                 if amount == &0 {
                     this.inventory.remove(this.active);
+                    if this.active >= this.inventory.len() {
+                        this.active = this.inventory.len() - 1;
+                    }
                 }
             }
         }
@@ -107,6 +110,9 @@ impl Player {
 
             if amount == &0 {
                 self.inventory.remove(i);
+                if self.active >= self.inventory.len() {
+                    self.active = self.inventory.len() - 1;
+                }
             }
         }
 
