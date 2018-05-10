@@ -1,11 +1,8 @@
 use world::{World, MetaAction};
 use shape::Shape;
-use ext::*;
 use move_dir::MoveDir;
 
 use super::{Entity, EntityWrapper, Police};
-
-const SHOW_PATH_FINDING: bool = false;
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct Josef {
@@ -58,23 +55,6 @@ impl Entity for Josef {
             world.do_metaaction(MetaAction::Win);
         }
         false
-    }
-
-    fn pre_draw(&self, _world: &World, _size: &(u16, u16)) {
-        if SHOW_PATH_FINDING {
-            let mut pos = self.get_pos();
-
-            for pos in &self.visited {
-                recolor(*pos, (0, 255, 0), (0, 0, 0));
-            }
-
-            for dir in self.path.iter().skip(1) {
-                let (dx, dy) = dir.to_vec();
-                pos = (pos.0 + dx as u16, pos.1 + dy as u16);
-
-                recolor(pos, (255, 0, 0), (0, 0, 0));
-            }
-        }
     }
 }
 

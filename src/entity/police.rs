@@ -155,6 +155,9 @@ impl Entity for Police {
                     } else {
                         break 'outer;
                     }
+                if paths.len() > 100 {
+                    break;
+                }
             }
 
             if let Some(best_path) = best_path.clone() {
@@ -179,19 +182,19 @@ impl Entity for Police {
         false
     }
 
-    fn pre_draw(&self, _world: &World, _size: &(u16, u16)) {
+    fn pre_draw(&self, _world: &World, _size: &(u16, u16), scroll: &(i16, i16)) {
         if SHOW_PATH_FINDING {
             let mut pos = self.get_pos();
 
             for pos in &self.visited {
-                recolor(*pos, (0, 255, 0), (0, 0, 0));
+                recolor((pos.0 - scroll.0 as u16, pos.1 - scroll.1 as u16), (0, 255, 0), (0, 0, 0));
             }
 
             for dir in self.path.iter().skip(1) {
                 let (dx, dy) = dir.to_vec();
                 pos = (pos.0 + dx as u16, pos.1 + dy as u16);
 
-                recolor(pos, (255, 0, 0), (0, 0, 0));
+                recolor((pos.0 - scroll.0 as u16, pos.1 - scroll.1 as u16), (255, 0, 0), (0, 0, 0));
             }
         }
     }

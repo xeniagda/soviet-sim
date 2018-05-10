@@ -111,7 +111,7 @@ pub trait Entity {
     fn get_shape(&self) -> Shape;
     fn get_name(&self) -> String;
 
-    fn pre_draw(&self, _world: &World, _size: &(u16, u16)) {
+    fn pre_draw(&self, _world: &World, _size: &(u16, u16), _scroll: &(i16, i16)) {
     }
 
     /// When another entity moves on top of this entity, what should happen?

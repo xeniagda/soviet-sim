@@ -110,7 +110,7 @@ impl Player {
 
             if amount == &0 {
                 self.inventory.remove(i);
-                if self.active >= self.inventory.len() {
+                if self.active >= self.inventory.len() && self.inventory.len() > 0 {
                     self.active = self.inventory.len() - 1;
                 }
             }
@@ -148,7 +148,7 @@ impl Entity for Player {
         }
     }
 
-    fn pre_draw(&self, _world: &World, size: &(u16, u16)) {
+    fn pre_draw(&self, _world: &World, size: &(u16, u16), _scroll: &(i16, i16)) {
         if self.hunger > HOTBAR_HEIGHT * COMMUNISM_WIDTH {
             put_char((0, size.1 - HOTBAR_HEIGHT as u16), &Shape::new('☭', (180, 0, 0), (0, 0, 0)));
             let x = format!("x{}", self.hunger);

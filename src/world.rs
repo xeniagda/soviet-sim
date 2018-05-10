@@ -324,7 +324,7 @@ impl World {
 
         // Draw entities
         self.entities.iter()
-            .for_each(|(_, x)| x.pre_draw(self, &size));
+            .for_each(|(_, x)| x.pre_draw(self, &size, &self.scroll));
 
         self.entities.iter()
             .for_each(|(_, en)| {
