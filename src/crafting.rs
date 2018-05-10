@@ -19,7 +19,7 @@ lazy_static! {
         Recipe {
             out: InventoryItem::Bomb,
             needed: vec![
-                (InventoryItem::Block(block::WALL.clone()), 50),
+                (InventoryItem::Bullet, 7),
                 (InventoryItem::Block(block::STONE.clone()), 10),
             ]
         },
