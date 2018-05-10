@@ -13,6 +13,7 @@ use std::mem;
 use std::sync::mpsc::Sender;
 
 pub const HOTBAR_HEIGHT: u16 = 5;
+pub const SCROLL_FOLLOW_DIST: i16 = 10;
 
 #[derive(Debug)]
 pub enum MetaAction {
@@ -26,6 +27,7 @@ pub struct World {
     auto: Option<MoveDir>,
     last: Option<MoveDir>,
     action_sender: Sender<MetaAction>,
+    pub scroll: (i16, i16),
 }
 
 
@@ -38,6 +40,7 @@ impl World {
             last: None,
             difficulty: difficulty,
             action_sender: action_sender,
+            scroll: (0, 0),
         }
     }
 
@@ -53,6 +56,25 @@ impl World {
             if !self.move_player_side(&auto) {
                 self.auto = None;
                 self.last = None;
+            }
+        }
+    }
+
+    pub fn update_scroll(&mut self, size: (u16, u16)) {
+        if let Some(id) = self.get_player_id() {
+            if let Some(en) = self.entities.get(&id) {
+                if  self.scroll.0 > (en.get_pos().0 as i16) - SCROLL_FOLLOW_DIST {
+                    self.scroll.0 = (en.get_pos().0 as i16) - SCROLL_FOLLOW_DIST;
+                }
+                if  self.scroll.1 > (en.get_pos().1 as i16) - SCROLL_FOLLOW_DIST {
+                    self.scroll.1 = (en.get_pos().1 as i16) - SCROLL_FOLLOW_DIST;
+                }
+                if  self.scroll.0 < (en.get_pos().0 as i16) + SCROLL_FOLLOW_DIST - size.0 as i16 - 1 {
+                    self.scroll.0 = (en.get_pos().0 as i16) + SCROLL_FOLLOW_DIST - size.0 as i16 - 1;
+                }
+                if  self.scroll.1 < (en.get_pos().1 as i16) + SCROLL_FOLLOW_DIST - (size.1 - 1 - HOTBAR_HEIGHT) as i16 {
+                    self.scroll.1 = (en.get_pos().1 as i16) + SCROLL_FOLLOW_DIST - (size.1 - 1 - HOTBAR_HEIGHT) as i16;
+                }
             }
         }
     }
@@ -263,17 +285,28 @@ impl World {
     }
 
     pub fn draw(&self, size: (u16, u16)) {
-        // Clear below world
+
+        // Draw world
         for x in 0..size.0 {
-            for y in self.blocks[0].len()..size.1 as usize {
-                put_char((x as u16, y as u16), &Shape::empty());
+            for y in 0..size.1 - HOTBAR_HEIGHT {
+                if let (Some(x_), Some(y_)) =
+                    ((x as i16).checked_add(self.scroll.0), (y as i16).checked_add(self.scroll.1))
+                {
+                    if let Some(block) = self.blocks.get(x_ as usize)
+                        .and_then(|col| col.get(y_ as usize))
+                    {
+                        block.get_shape().draw((x, y));
+                    } else {
+                        put_char((x as u16, y as u16), &Shape::empty());
+                    }
+                }
             }
         }
 
-        // Draw world
-        for (x, col) in self.blocks.iter().enumerate() {
-            for (y, block) in col.iter().enumerate() {
-                block.get_shape().draw((x as u16, y as u16));
+        // Clear hotbar
+        for x in 0..size.0 {
+            for y in size.1 - HOTBAR_HEIGHT..size.1 {
+                put_char((x as u16, y as u16), &Shape::empty());
             }
         }
 
@@ -282,7 +315,17 @@ impl World {
             .for_each(|(_, x)| x.pre_draw(self, &size));
 
         self.entities.iter()
-            .for_each(|(_, x)| x.get_shape().draw(x.get_pos()));
+            .for_each(|(_, en)| {
+                let (x, y) = en.get_pos();
+                if let (Some(x_), Some(y_)) =
+                    ((x as i16).checked_sub(self.scroll.0), (y as i16).checked_sub(self.scroll.1))
+                {
+                    if x_ >= 0 && x_ < size.0 as i16 && y_ >= 0 && y_ < size.1 as i16 - HOTBAR_HEIGHT as i16 {
+                        en.get_shape().draw((x_ as u16, y_ as u16));
+                    }
+                }
+            }
+            );
     }
 
     pub fn generate(&mut self, width: usize, height: usize) {
@@ -305,7 +348,7 @@ impl World {
         self.entities = HashMap::new();
 
         let mut placed = vec![];
-        for _ in 0..20000 {
+        for _ in 0..10 * width * height {
             if rand() < 0.01 || placed.is_empty() {
                 let x = (rand() * width as f64) as usize;
                 let y = (rand() * height as f64) as usize;

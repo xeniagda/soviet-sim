@@ -104,6 +104,7 @@ pub fn tick() {
                     draw_inventory(inv, rouge, size);
                 } else {
                     rouge.world.tick();
+                    rouge.world.update_scroll(size);
                     rouge.world.draw(size);
                 }
 
@@ -262,7 +263,7 @@ pub fn init_game(difficulty: Difficulty) {
             at_inventory: None,
         };
 
-        rouge.world.generate(game.size.0 as usize, (game.size.1 - world::HOTBAR_HEIGHT) as usize);
+        rouge.world.generate(3 * game.size.0 as usize, 3 * (game.size.1 - world::HOTBAR_HEIGHT) as usize);
 
         rouge.world.draw(game.size);
 
@@ -278,6 +279,7 @@ pub fn key_down(key_code: u8) {
             if let Ok(mut game) = GAME.try_lock() {
                 match game.state {
                     GameState::Playing(ref mut rouge) => {
+
                         if let Some(ref cont) = controls::parse_control(&key, &rouge.keys_down) {
                             ext::log(&format!("Control: {:?}", cont));
                             if let controls::Action::ToggleInventory = cont.action {
