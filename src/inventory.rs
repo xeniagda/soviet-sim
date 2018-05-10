@@ -38,7 +38,7 @@ impl InventoryItem {
 
     pub fn get_shape(&self) -> Shape {
         match self {
-            InventoryItem::Block(ref block) => block.shape,
+            InventoryItem::Block(ref block) => block.get_shape(),
             InventoryItem::Bomb => Shape::new('B', (255, 30, 255), (0, 100, 0)),
             InventoryItem::Bullet => Shape::new('^', (255, 255, 255), (0, 0, 0)),
         }
