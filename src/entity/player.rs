@@ -64,7 +64,7 @@ impl Player {
         }
 
         if let Some((to_place, (x, y))) = to_place {
-            if !to_place.place_pos(world, (x, y)) {
+            if !to_place.place_pos(world, (x, y), dir) {
                 // Give back
                 if let Some(EntityWrapper::WPlayer(ref mut this)) = world.entities.get_mut(&en_id) {
                     this.pick_up(to_place);

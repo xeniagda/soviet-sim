@@ -53,7 +53,7 @@ impl Entity for Police {
 
             let idx = (rand() * drops.len() as f64) as usize;
             let (x, y) = drops[idx];
-            if inventory::InventoryItem::Block(block::COMMUNISM.clone()).place_pos(world, (x, y)) {
+            if inventory::InventoryItem::Block(block::COMMUNISM.clone()).place_pos(world, (x, y), MoveDir::Up) {
                 for dir in &DIRECTIONS {
                     drops.push(dir.move_vec((x, y)));
                 }
@@ -157,33 +157,18 @@ impl Entity for Police {
                 this.path = best_path.unwrap_or(vec![]);
                 this.visited = visited;
             }
-            if let Some(&mut EntityWrapper::WPolice(ref mut this)) = world.entities.get_mut(&en_id) {
-                this.drop_countdown += 1;
-
-                let should_drop =
-                    this.drop_countdown as f64 >
-                    world.difficulty.get_communism_drop_rate() as f64 * ((rand() - 0.5) / 4. + 1.);
-
-                if should_drop {
-                    this.drop_countdown = 0;
-                    world.blocks[this.pos.0 as usize][this.pos.1 as usize] = block::COMMUNISM.clone();
-                }
-            }
         }
 
 
     }
 
-    fn on_collision(world: &mut World, me_id: u64, other_id: u64) -> bool
+    fn on_collision(world: &mut World, _me_id: u64, other_id: u64) -> bool
         where Self: Sized {
 
         if let Some(en) = world.entities.get(&other_id) {
             en.get_hurt_fn()(world, other_id, 1);
         }
-        if let Some(en) = world.entities.get(&me_id) {
-            // Begå livet av sig
-            en.get_hurt_fn()(world, me_id, 1);
-        }
+
         false
     }
 

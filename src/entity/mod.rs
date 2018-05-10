@@ -9,10 +9,12 @@ mod player;
 mod josef;
 mod police;
 mod bomb;
+mod bullet;
 pub use self::player::*;
 pub use self::josef::*;
 pub use self::police::*;
 pub use self::bomb::*;
+pub use self::bullet::*;
 
 pub trait Entity {
 
@@ -185,6 +187,7 @@ MakeEntityWrapper!(
     Player=WPlayer,
     Josef=WJosef,
     Police=WPolice,
-    Bomb=WBomb
+    Bomb=WBomb,
+    Bullet=WBullet
     );
 

@@ -23,5 +23,11 @@ lazy_static! {
                 (InventoryItem::Block(block::STONE.clone()), 10),
             ]
         },
+        Recipe {
+            out: InventoryItem::Bullet,
+            needed: vec![
+                (InventoryItem::Block(block::WALL.clone()), 5),
+            ]
+        },
     ];
 }

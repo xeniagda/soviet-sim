@@ -21,6 +21,15 @@ impl MoveDir {
 
         (other.0.wrapping_add(dx as u16), other.1.wrapping_add(dy as u16))
     }
+
+    pub fn to_ch(&self) -> char {
+        match self {
+            &MoveDir::Up => '^',
+            &MoveDir::Down => 'v',
+            &MoveDir::Left => '<',
+            &MoveDir::Right => '>',
+        }
+    }
 }
 
 pub fn random_dir() -> MoveDir {
