@@ -89,8 +89,10 @@ impl Entity for Bomb {
     fn on_collision(world: &mut World, me_id: u64, _other_id: u64) -> bool
         where Self: Sized {
 
+        if let Some(EntityWrapper::WBomb(this)) = world.entities.get_mut(&me_id) {
+            this.countdown = this.explode_time - BOMB_RADIUS + 1;
+        }
 
-        Bomb::boom(world, me_id);
         true
     }
 
