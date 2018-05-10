@@ -48,7 +48,8 @@ impl Entity for Police {
 
         world.entities.remove(&en_id);
 
-        for _i in 0..5 {
+        let mut i = 0;
+        loop {
             if drops.is_empty() { break; }
 
             let idx = (rand() * drops.len() as f64) as usize;
@@ -57,6 +58,12 @@ impl Entity for Police {
                 for dir in &DIRECTIONS {
                     drops.push(dir.move_vec((x, y)));
                 }
+                i += 1;
+            }
+
+            if i >= world.difficulty.get_communism_drop_rate() as usize ||
+                rand() < 1. / world.difficulty.get_communism_drop_rate() {
+                break;
             }
         }
 
