@@ -72,7 +72,7 @@ impl Entity for Bullet {
             let passable = world.blocks.get(pos.0 as usize)
                         .and_then(|x| x.get(pos.1 as usize))
                         .map(|x| x.is_passable())
-                        .unwrap_or(false);
+                        .unwrap_or(true);
 
             if !passable {
                 world.blocks[pos.0 as usize][pos.1 as usize] = block::GROUND.clone();
