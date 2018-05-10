@@ -77,6 +77,18 @@ impl World {
                 }
             }
         }
+        if self.scroll.0 < 0 {
+            self.scroll.0 = 0;
+        }
+        if self.scroll.1 < 0 {
+            self.scroll.1 = 0;
+        }
+        if self.scroll.0 > self.blocks.len() as i16 - size.0 as i16 {
+            self.scroll.0 = self.blocks.len() as i16 - size.0 as i16;
+        }
+        if self.scroll.1 > self.blocks[0].len() as i16 - size.1 as i16 + HOTBAR_HEIGHT as i16 {
+            self.scroll.1 = self.blocks[0].len() as i16 - size.1 as i16 + HOTBAR_HEIGHT as i16;
+        }
     }
 
     pub fn get_player_id(&self) -> Option<u64> {
