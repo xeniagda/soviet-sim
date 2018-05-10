@@ -37,7 +37,7 @@ impl Bomb {
             let (x_, y_) = entity.get_pos();
             let (dx, dy) = (x - x_, y - y_);
             if dx * dx + dy * dy < BOMB_RADIUS * BOMB_RADIUS {
-                world.entities.remove(&i);
+                entity.get_hurt_fn()(world, i, 5);
             }
         }
     }
