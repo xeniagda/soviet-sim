@@ -132,12 +132,11 @@ impl Entity for Player {
     fn hurt(world: &mut World, en_id: u64, amount: u16) where Self: Sized {
         let mut action_restart = None;
         if let Some(EntityWrapper::WPlayer(ref mut this)) = world.entities.get_mut(&en_id) {
-            this.hunger -= amount;
-
-            if this.hunger == 0 {
+            if this.hunger <= amount {
                 action_restart = Some(true);
             } else {
                 action_restart = Some(false);
+                this.hunger -= amount;
             }
         }
 
