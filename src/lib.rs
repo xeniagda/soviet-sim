@@ -95,10 +95,13 @@ pub fn start(width: u16, height: u16) {
 #[no_mangle]
 pub fn tick() {
     if let Ok(mut game) = GAME.try_lock() {
+        let mut diff = Difficulty::Easy;
+
         let mut actions_to_process = vec![];
         let size = game.size;
         match game.state {
             GameState::Playing(ref mut rouge) => {
+                diff = rouge.world.difficulty;
                 if let Some(ref inv) = rouge.at_inventory {
                     rouge.world.draw(size);
                     draw_inventory(inv, rouge, size);
@@ -123,10 +126,10 @@ pub fn tick() {
         for action in actions_to_process {
             match action {
                 MetaAction::Die => {
-                    game.state = GameState::GameOver(Difficulty::Easy, RestartMessage::Died);
+                    game.state = GameState::GameOver(diff, RestartMessage::Died);
                 }
                 MetaAction::Win => {
-                    game.state = GameState::GameOver(Difficulty::Easy, RestartMessage::Won);
+                    game.state = GameState::GameOver(diff, RestartMessage::Won);
                 }
             }
         }
