@@ -15,7 +15,6 @@ pub struct Control<'a> {
 pub enum Action {
     MoveUp,   MoveDown,   MoveLeft,   MoveRight,
     RunUp,    RunDown,    RunLeft,    RunRight,
-    SideUp,   SideDown,   SideLeft,   SideRight,
     PlaceUp,  PlaceDown,  PlaceLeft,  PlaceRight,
     BreakUp,  BreakDown,  BreakLeft,  BreakRight,
     IncActive, DecActive,
@@ -24,62 +23,46 @@ pub enum Action {
 
 const CONTROLS: &[Control] = &[
     Control {
-        modifiers: &[Key::Letter(18)],
-        key: Key::Up,
-        desc: "Run upwards",
-        action: Action::SideUp
-    },
-
-    Control {
-        modifiers: &[Key::Letter(18)],
-        key: Key::Down,
-        desc: "Run downwards",
-        action: Action::SideDown
-    },
-
-    Control {
-        modifiers: &[Key::Letter(18)],
-        key: Key::Left,
-        desc: "Run left",
-        action: Action::SideLeft
-    },
-
-    Control {
-        modifiers: &[Key::Letter(18)],
-        key: Key::Right,
-        desc: "Run right",
-        action: Action::SideRight
-    },
-
-
-    Control {
-        modifiers: &[Key::Shift],
+        modifiers: &[Key::Shift, Key::Ctrl],
         key: Key::Up,
         desc: "Run upwards",
         action: Action::RunUp
     },
 
     Control {
-        modifiers: &[Key::Shift],
+        modifiers: &[Key::Shift, Key::Ctrl],
         key: Key::Down,
         desc: "Run downwards",
         action: Action::RunDown
     },
 
     Control {
-        modifiers: &[Key::Shift],
+        modifiers: &[Key::Shift, Key::Ctrl],
         key: Key::Left,
         desc: "Run left",
         action: Action::RunLeft
     },
 
     Control {
-        modifiers: &[Key::Shift],
+        modifiers: &[Key::Shift, Key::Ctrl],
         key: Key::Right,
         desc: "Run right",
         action: Action::RunRight
     },
 
+    Control {
+        modifiers: &[Key::Shift],
+        key: Key::Right,
+        desc: "Increase the active slot",
+        action: Action::IncActive
+    },
+
+    Control {
+        modifiers: &[Key::Shift],
+        key: Key::Left,
+        desc: "Decrease the active slot",
+        action: Action::DecActive
+    },
 
     Control {
         modifiers: &[Key::Letter(12)],
@@ -165,20 +148,6 @@ const CONTROLS: &[Control] = &[
         key: Key::Right,
         desc: "Move the character right",
         action: Action::MoveRight
-    },
-
-    Control {
-        modifiers: &[],
-        key: Key::Plus,
-        desc: "Increase the active slot",
-        action: Action::IncActive
-    },
-
-    Control {
-        modifiers: &[],
-        key: Key::Minus,
-        desc: "Decrease the active slot",
-        action: Action::DecActive
     },
 
     Control {

@@ -156,19 +156,6 @@ impl World {
             self.last = Some(x);
         }
 
-        let move_dir_side: Option<MoveDir> = match *action {
-            Action::SideDown  => { Some(MoveDir::Down) }
-            Action::SideUp    => { Some(MoveDir::Up) }
-            Action::SideLeft  => { Some(MoveDir::Left) }
-            Action::SideRight => { Some(MoveDir::Right) }
-            _                 => { None }
-        };
-
-        if let Some(x) = move_dir_side {
-            self.auto = None;
-            self.move_player_side(&x);
-        }
-
         let break_dir: Option<MoveDir> = match *action {
             Action::BreakDown  => { Some(MoveDir::Down) }
             Action::BreakUp    => { Some(MoveDir::Up) }
