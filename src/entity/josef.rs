@@ -1,6 +1,5 @@
 use world::{World, MetaAction};
 use shape::Shape;
-use move_dir::MoveDir;
 
 use super::{Entity, EntityWrapper, Police};
 
@@ -8,8 +7,6 @@ use super::{Entity, EntityWrapper, Police};
 pub struct Josef {
     pub countdown: u16,
     pub speed: u16,
-    pub path: Vec<MoveDir>,
-    pub visited: Vec<(u16, u16)>,
     pub pos: (u16, u16),
 }
 
@@ -18,8 +15,6 @@ impl Josef {
         Josef {
             countdown: 0,
             speed: speed,
-            path: vec! [],
-            visited: vec! [],
             pos: pos
         }
     }

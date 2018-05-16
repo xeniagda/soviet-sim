@@ -12,7 +12,6 @@ const SHOW_PATH_FINDING: bool = false;
 #[derive(PartialEq, Eq, Clone)]
 pub struct Police {
     pub countdown: u16,
-    pub drop_countdown: u16,
     pub speed: u16,
     pub path: Vec<MoveDir>,
     pub visited: Vec<(u16, u16)>,
@@ -24,7 +23,6 @@ impl Police {
         Police {
             countdown: 0,
             speed: speed,
-            drop_countdown: 0,
             path: vec! [],
             visited: vec! [],
             pos: pos
@@ -196,4 +194,3 @@ impl Entity for Police {
         }
     }
 }
-
