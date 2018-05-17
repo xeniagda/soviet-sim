@@ -3,7 +3,7 @@ use ext::rand;
 pub const DIRECTIONS: [MoveDir; 4] = [ MoveDir::Up, MoveDir::Left, MoveDir::Down, MoveDir::Right ];
 
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum MoveDir { Up, Left, Down, Right }
 
 impl MoveDir {

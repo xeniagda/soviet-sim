@@ -387,7 +387,7 @@ impl World {
         placed.remove(idx);
         self.add_entity(
             EntityWrapper::WJosef(
-                Josef::new((x as u16, y as u16), self.difficulty.get_josef_speed())
+                Josef::new((x as u16, y as u16), self.difficulty.get_josef_speed(), 30)
             ));
 
         log("Done!");
