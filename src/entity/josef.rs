@@ -106,7 +106,11 @@ impl Entity for Josef {
 
                                     let (dx, dy) = (new_pos.0 - player_pos.0, new_pos.1 - player_pos.1);
 
-                                    let score = (dx * dx + dy * dy) * 3 - new_from.len() as u16;
+                                    let dist = dx * dx + dy * dy;
+                                    let mut score = dist * 3 - new_from.len() as u16;
+                                    if dist > 100 {
+                                        score -= 50;
+                                    }
 
                                     for i in 0..paths.len() + 1 {
                                         if paths.get(i).map(|x| x.0).unwrap_or(u16::MAX) > score {
