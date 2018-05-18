@@ -1,6 +1,3 @@
-// TODO: Add Josef speed
-
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(unused)]
 pub enum Difficulty {
@@ -39,13 +36,24 @@ impl Difficulty {
     }
 
     #[inline(always)]
-    pub fn get_josef_speed(self) -> u16 {
+    pub fn get_josef_police_rate(self) -> u16 {
         match self {
             Difficulty::Easy => 1000,
             Difficulty::Medium => 700,
             Difficulty::Hard => 400,
             Difficulty::Extreme => 200,
             Difficulty::Reality => 50
+        }
+    }
+
+    #[inline(always)]
+    pub fn get_josef_speed(self) -> u16 {
+        match self {
+            Difficulty::Easy => 60,
+            Difficulty::Medium => 40,
+            Difficulty::Hard => 30,
+            Difficulty::Extreme => 20,
+            Difficulty::Reality => 15
         }
     }
 
