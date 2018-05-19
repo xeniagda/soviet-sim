@@ -16,6 +16,7 @@ use std::sync::mpsc::Sender;
 
 pub const HOTBAR_HEIGHT: u16 = 5;
 pub const SCROLL_FOLLOW_DIST: i16 = 10;
+pub const ALLOW_RUN: bool = false;
 
 #[derive(Debug)]
 pub enum MetaAction {
@@ -26,7 +27,7 @@ pub struct World {
     pub blocks: Vec<Vec<block::Block>>,
     pub entities: HashMap<u64, entity::EntityWrapper>,
     pub difficulty: Difficulty,
-    pub auto: Option<Vec<MoveDir>>,
+    pub auto: Vec<MoveDir>,
     action_sender: Sender<MetaAction>,
     pub scroll: (i16, i16),
 }
@@ -38,7 +39,7 @@ impl World {
             blocks: vec![],
             entities: HashMap::new(),
             difficulty: difficulty,
-            auto: None,
+            auto: vec![],
             action_sender: action_sender,
             scroll: (0, 0),
         }
@@ -49,6 +50,11 @@ impl World {
             if let Some(f) = self.entities.get(k).map(|x| x.get_tick_fn()) {
                 f(self, *k);
             }
+        }
+
+        if !self.auto.is_empty() {
+            let dir = self.auto.remove(0);
+            self.get_player_id().map(|id| self.move_entity(id, &dir));
         }
     }
 
@@ -100,12 +106,15 @@ impl World {
         match *action {
             Action::Move(dir) => {
                 self.get_player_id().map(|id| self.move_entity(id, &dir));
+                self.auto = vec![];
             }
             Action::Break(dir)  => {
                 self.break_dir(dir);
+                self.auto = vec![];
             }
             Action::Place(dir)  => {
                 self.get_player_id() .map(|id| Player::place(self, dir, id));
+                self.auto = vec![];
             }
             Action::Die => {
                 self.do_metaaction(MetaAction::Die);
@@ -120,6 +129,21 @@ impl World {
                             }
                         }
                     });
+            }
+            Action::Run(dir) if ALLOW_RUN => {
+                if let Some(EntityWrapper::WPlayer(p)) = self.get_player_id().and_then(|id| self.entities.get(&id)) {
+                    let pos = p.pos;
+                    let heur = |(x, y)| {
+                        let score = match dir {
+                            MoveDir::Left => pos.0.saturating_sub(x),
+                            MoveDir::Right => x.saturating_sub(pos.0),
+                            MoveDir::Up => pos.1.saturating_sub(y),
+                            MoveDir::Down => y.saturating_sub(pos.1),
+                        };
+                        Some(score * 3)
+                    };
+                    self.auto = self.find_path(pos, heur, 1000).into_iter().take(20).collect();
+                }
             }
             Action::DecActive => {
                 self.get_player_id()
@@ -305,7 +329,7 @@ impl World {
     }
 
     // Find a path using a heuristics function. If it returns None, it means that the best path is
-    // found.
+    // found. Higher value in the heuristics function means closer to the goal.
     pub fn find_path(
         &self,
         from: (u16, u16),
@@ -346,7 +370,7 @@ impl World {
                                 else { return new_from; };
 
 
-                            let total_score = score - new_from.len() as u16;
+                            let total_score = score.saturating_sub(new_from.len() as u16);
 
                             for i in 0..paths.len() + 1 {
                                 if paths.get(i).map(|x| x.0).unwrap_or(u16::MAX) > total_score {
