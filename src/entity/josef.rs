@@ -1,5 +1,3 @@
-use std::u16;
-
 use world::{World, MetaAction};
 use shape::Shape;
 use ext::*;
@@ -8,7 +6,7 @@ use move_dir::MoveDir;
 use super::{Entity, EntityWrapper, Police};
 
 const SHOW_PATH_FINDING: bool = false;
-const PLAYER_SAFE_DIST: u16 = 50;
+const PLAYER_SAFE_DIST: i32 = 50;
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct Josef {
@@ -88,9 +86,9 @@ impl Entity for Josef {
         if let Some(my_pos) = my_pos {
             let heur = |(x, y)| {
                 let (dx, dy) = (x - player_pos.0, y - player_pos.1);
-                let dist = dx * dx + dy * dy;
+                let dist = (dx * dx + dy * dy) as i32;
                 if dist > PLAYER_SAFE_DIST * PLAYER_SAFE_DIST {
-                    Some(u16::MAX - dist)
+                    Some(-dist)
                 } else {
                     Some(dist * 3)
                 }

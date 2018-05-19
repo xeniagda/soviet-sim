@@ -1,4 +1,4 @@
-use std::u16;
+use std::i32;
 
 use ext::*;
 use controls::Action;
@@ -160,10 +160,10 @@ impl World {
                     let pos = p.pos;
                     let heur = |(x, y)| {
                         let score = match dir {
-                            MoveDir::Left => pos.0.saturating_sub(x),
-                            MoveDir::Right => x.saturating_sub(pos.0),
-                            MoveDir::Up => pos.1.saturating_sub(y),
-                            MoveDir::Down => y.saturating_sub(pos.1),
+                            MoveDir::Left =>  pos.0 as i32 - x as i32,
+                            MoveDir::Right => x as i32 - pos.0 as i32,
+                            MoveDir::Up =>    pos.1 as i32 - y as i32,
+                            MoveDir::Down =>  y as i32 - pos.1 as i32,
                         };
                         Some(score * 3)
                     };
@@ -358,14 +358,14 @@ impl World {
     pub fn find_path(
         &self,
         from: (u16, u16),
-        heuristics: impl Fn((u16, u16)) -> Option<u16>,
+        heuristics: impl Fn((u16, u16)) -> Option<i32>,
         steps: u16
         ) ->
         Vec<MoveDir>
     {
 
-        let mut paths: Vec<(u16, Vec<MoveDir>, (u16, u16))> = vec![(0, vec![], from)];
-        let mut best_path: Option<(u16, (Vec<MoveDir>, (u16, u16)))> = None;
+        let mut paths: Vec<(i32, Vec<MoveDir>, (u16, u16))> = vec![(0, vec![], from)];
+        let mut best_path: Option<(i32, (Vec<MoveDir>, (u16, u16)))> = None;
 
         for _ in 0..steps {
             if paths.len() == 0 {
@@ -395,10 +395,10 @@ impl World {
                                 else { return new_from; };
 
 
-                            let total_score = score.saturating_sub(new_from.len() as u16);
+                            let total_score = score - new_from.len() as i32;
 
                             for i in 0..paths.len() + 1 {
-                                if paths.get(i).map(|x| x.0).unwrap_or(u16::MAX) > total_score {
+                                if paths.get(i).map(|x| x.0).unwrap_or(i32::MAX) > total_score {
                                     paths.insert(i, (total_score, new_from.clone(), new_pos));
                                     break;
                                 }
