@@ -29,5 +29,12 @@ lazy_static! {
                 (InventoryItem::Block(block::WALL.clone()), 5),
             ]
         },
+        Recipe {
+            out: InventoryItem::SuperBoots(1000, 1001),
+            needed: vec![
+                (InventoryItem::Block(block::MOVER.clone()), 2),
+                (InventoryItem::Bullet, 10),
+            ]
+        },
     ];
 }

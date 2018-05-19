@@ -16,7 +16,6 @@ use std::sync::mpsc::Sender;
 
 pub const HOTBAR_HEIGHT: u16 = 5;
 pub const SCROLL_FOLLOW_DIST: i16 = 10;
-pub const ALLOW_RUN: bool = false;
 
 #[derive(Debug)]
 pub enum MetaAction {
@@ -53,6 +52,32 @@ impl World {
         }
 
         if !self.auto.is_empty() {
+            if let Some(EntityWrapper::WPlayer(ref mut p)) =
+                self.get_player_id().and_then(|id| self.entities.get_mut(&id))
+            {
+                let mut to_remove = None;
+                if let Some((i, (InventoryItem::SuperBoots(ref mut d, max), ref mut count))) =
+                    p.inventory.iter_mut()
+                    .enumerate()
+                    .find(|x| match (x.1).0 { InventoryItem::SuperBoots(_, _) => true, _ => false })
+                {
+                    *d -= 1;
+                    if *d == 0 {
+                        *count -= 1;
+                        *d = *max;
+                        if *count == 0 {
+                            to_remove = Some(i);
+                        }
+                    }
+                } else {
+                    self.auto.clear();
+                    return;
+                }
+                if let Some(to_remove) = to_remove {
+                    p.inventory.remove(to_remove);
+                }
+            }
+
             let dir = self.auto.remove(0);
             self.get_player_id().map(|id| self.move_entity(id, &dir));
         }
@@ -130,7 +155,7 @@ impl World {
                         }
                     });
             }
-            Action::Run(dir) if ALLOW_RUN => {
+            Action::Run(dir) => {
                 if let Some(EntityWrapper::WPlayer(p)) = self.get_player_id().and_then(|id| self.entities.get(&id)) {
                     let pos = p.pos;
                     let heur = |(x, y)| {
