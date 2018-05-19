@@ -25,31 +25,39 @@ pub fn log(x: &str) {
 
 lazy_static! {
     static ref SCREEN: Mutex<Vec<Vec<Shape>>> = Mutex::new(vec![]);
+    static ref UNFLIPPED: Mutex<Vec<Vec<Shape>>> = Mutex::new(vec![]);
+}
+
+pub fn flip() {
+    if let Ok(mut screen) = SCREEN.lock() {
+        if let Ok(unflipped) = UNFLIPPED.lock() {
+            for (x, col) in unflipped.iter().enumerate() {
+                for (y, shape) in col.iter().enumerate() {
+                    if Some(shape) != screen.get(x as usize).and_then(|col| col.get(y as usize)) {
+                        unsafe {
+                            u_put_char(
+                                x as u16, y as u16, shape.ch as usize,
+                                shape.col.0, shape.col.1, shape.col.2, shape.bg.0, shape.bg.1, shape.bg.2);
+                        }
+                    }
+                }
+            }
+            *screen = unflipped.clone();
+        }
+    }
 }
 
 pub fn put_char(pos: (u16, u16), shape: &Shape) {
-    let should_draw = match SCREEN.try_lock() {
-        Ok(mut screen) => {
-            while screen.len() <= pos.0 as usize {
-                screen.push(vec![]);
-            }
-            while screen[pos.0 as usize].len() <= pos.1 as usize {
-                screen[pos.0 as usize].push(Shape::new(' ', (0,0,0), (0,0,0)));
-            }
-
-            if screen[pos.0 as usize][pos.1 as usize] != *shape {
-                screen[pos.0 as usize][pos.1 as usize] = *shape;
-                true
-            } else {
-                false
-            }
+    if let Ok(mut unflipped) = UNFLIPPED.lock() {
+        while unflipped.len() <= pos.0 as usize {
+            unflipped.push(vec![]);
         }
-        _ => true
-    };
+        while unflipped[pos.0 as usize].len() <= pos.1 as usize {
+            unflipped[pos.0 as usize].push(Shape::new(' ', (0,0,0), (0,0,0)));
+        }
 
-    if should_draw {
-        unsafe {
-            u_put_char(pos.0, pos.1, shape.ch as usize, shape.col.0, shape.col.1, shape.col.2, shape.bg.0, shape.bg.1, shape.bg.2);
+        if unflipped[pos.0 as usize][pos.1 as usize] != *shape {
+            unflipped[pos.0 as usize][pos.1 as usize] = *shape;
         }
     }
 }

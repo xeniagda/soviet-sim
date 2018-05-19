@@ -124,8 +124,9 @@ pub fn tick() {
             GameState::GameOver(_, msg) => {
                 draw_game_over(msg, size);
             }
-
         }
+        ext::flip();
+
         for action in actions_to_process {
             match action {
                 MetaAction::Die => {
