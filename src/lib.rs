@@ -31,6 +31,8 @@ const INVENTORY_INVENTORY: &str = "Your inventory";
 const INVENTORY_CRAFTING: &str = "Crafting";
 const INVENTORY_INDENT: u16 = 5;
 
+const WORLD_SIZE: (usize, usize) = (180, 111);
+
 struct Game {
     state: GameState,
     size: (u16, u16),
@@ -134,6 +136,14 @@ pub fn tick() {
                 }
             }
         }
+    }
+}
+
+#[no_mangle]
+pub fn resize(width: u16, height: u16) {
+    if let Ok(mut game) = GAME.try_lock() {
+        game.size = (width, height);
+        ext::clear();
     }
 }
 
@@ -281,7 +291,7 @@ pub fn init_game(difficulty: Difficulty) {
             at_inventory: None,
         };
 
-        rouge.world.generate(3 * game.size.0 as usize, 3 * (game.size.1 - world::HOTBAR_HEIGHT) as usize);
+        rouge.world.generate(WORLD_SIZE.0, WORLD_SIZE.1);;
 
         rouge.world.draw(game.size);
 

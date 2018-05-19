@@ -19,10 +19,17 @@ body {
         <canvas id="soviet_sim"></canvas>
     </body>
     <script>
-        var width = 60;
-        var height = 37;
+        function get_size() {
+            var w =  window.innerWidth / squaresize_x * 0.9 | 0;
+            var h = window.innerHeight / squaresize_y * 0.9 | 0;
+
+            return [w, h];
+        }
+
         var squaresize_x = 15;
         var squaresize_y = 20;
+        var width = get_size()[0];
+        var height = get_size()[1];
 
         var canvas = document.getElementById("soviet_sim");
         var ctx = canvas.getContext("2d");
@@ -73,6 +80,18 @@ body {
                 });
                 setInterval(result.instance.exports.tick, 1000 / 60);
                 setInterval(result.instance.exports.redraw, 1000 * 10);
+                setInterval(() => {
+                    if (get_size()[0] !== width || get_size()[1] !== height) {
+                        width = get_size()[0];
+                        height = get_size()[1];
+                        canvas.width = width * squaresize_x;
+                        canvas.height = height * squaresize_y;
+                        ctx.textAlign = "center";
+                        ctx.font = (squaresize_y * 0.8 | 0) + "px monospace";
+
+                        result.instance.exports.resize(width, height);
+                    }
+                }, 50);
             })
     </script>
 </html>
