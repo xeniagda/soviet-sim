@@ -2,12 +2,13 @@ use std::u16;
 
 use world::{World, MetaAction};
 use shape::Shape;
-use move_dir::{MoveDir, DIRECTIONS};
 use ext::*;
+use move_dir::MoveDir;
 
 use super::{Entity, EntityWrapper, Police};
 
 const SHOW_PATH_FINDING: bool = false;
+const PLAYER_SAFE_DIST: u16 = 50;
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct Josef {
@@ -41,6 +42,7 @@ impl Entity for Josef {
 
 
     fn tick(world: &mut World, en_id: u64) where Self: Sized {
+
         // Place police
         let mut pos_to_place = None;
         if let Some(EntityWrapper::WJosef(ref mut this)) = world.entities.get_mut(&en_id) {
@@ -68,6 +70,8 @@ impl Entity for Josef {
 
         let mut to_move = None;
 
+        let mut my_pos = None;
+
         if let Some(EntityWrapper::WJosef(ref mut this)) = world.entities.get_mut(&en_id) {
             if this.path.len() > 1 {
                 if this.walk_countdown == 0 {
@@ -77,67 +81,28 @@ impl Entity for Josef {
                     this.walk_countdown -= 1;
                 }
             } else {
-                // Walk away from player
-                let mut paths: Vec<(u16, Vec<MoveDir>, (u16, u16))> = vec![(0, vec![], this.pos)];
-                let mut best_path: Option<(u16, (Vec<MoveDir>, (u16, u16)))> = None;
-
-                for _ in 0..1000 {
-                    if paths.len() == 0 {
-                        break;
-                    }
-
-                    if let Some((_, from, pos)) = paths.pop() {
-                        for direction in &DIRECTIONS {
-                            let new_pos = direction.move_vec(pos);
-
-                            if paths.iter().any(|x| x.2 == new_pos) {
-                                continue;
-                            }
-
-                            if let Some(block) = world.blocks
-                                .get(new_pos.0 as usize)
-                                    .and_then(|x| x.get(new_pos.1 as usize))
-                            {
-                                if block.is_passable() {
-                                    let mut new_from = from.clone();
-                                    new_from.push(*direction);
-
-                                    // Check score
-
-                                    let (dx, dy) = (new_pos.0 - player_pos.0, new_pos.1 - player_pos.1);
-
-                                    let dist = dx * dx + dy * dy;
-                                    let mut score = dist * 3 - new_from.len() as u16;
-                                    if dist > 100 {
-                                        score -= 50;
-                                    }
-
-                                    for i in 0..paths.len() + 1 {
-                                        if paths.get(i).map(|x| x.0).unwrap_or(u16::MAX) > score {
-                                            paths.insert(i, (score, new_from.clone(), new_pos));
-                                            break;
-                                        }
-                                    }
-
-
-                                    let best_score =
-                                        if let Some((best_score, _)) = best_path {
-                                            best_score
-                                        } else {
-                                            0
-                                        };
-
-                                    if score > best_score {
-                                        this.path = new_from.clone();
-                                        best_path = Some((score, (new_from, new_pos)));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                my_pos = Some(this.pos);
             }
         }
+
+        if let Some(my_pos) = my_pos {
+            let heur = |(x, y)| {
+                let (dx, dy) = (x - player_pos.0, y - player_pos.1);
+                let dist = dx * dx + dy * dy;
+                if dist > PLAYER_SAFE_DIST * PLAYER_SAFE_DIST {
+                    Some(u16::MAX - dist)
+                } else {
+                    Some(dist * 3)
+                }
+            };
+
+            let path = world.find_path(my_pos, heur, 1000);
+
+            if let Some(EntityWrapper::WJosef(ref mut this)) = world.entities.get_mut(&en_id) {
+                this.path = path;
+            }
+        }
+
 
         if let Some(to_move) = to_move {
             if !Josef::move_dir(world, en_id, to_move) || rand() < 0.25 {

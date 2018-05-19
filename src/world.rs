@@ -1,3 +1,5 @@
+use std::u16;
+
 use ext::*;
 use controls::Action;
 use block;
@@ -6,7 +8,7 @@ use entity::{EntityWrapper, Player, Josef};
 use shape::Shape;
 use difficulty::Difficulty;
 use inventory::InventoryItem;
-use move_dir::{MoveDir, random_dir};
+use move_dir::{MoveDir, random_dir, DIRECTIONS};
 
 use std::collections::HashMap;
 use std::mem;
@@ -405,5 +407,76 @@ impl World {
                 break;
             }
         }
+    }
+
+    // Find a path using a heuristics function. If it returns None, it means that the best path is
+    // found.
+    pub fn find_path(
+        &self,
+        from: (u16, u16),
+        heuristics: impl Fn((u16, u16)) -> Option<u16>,
+        steps: u16
+        ) ->
+        Vec<MoveDir>
+    {
+
+        let mut paths: Vec<(u16, Vec<MoveDir>, (u16, u16))> = vec![(0, vec![], from)];
+        let mut best_path: Option<(u16, (Vec<MoveDir>, (u16, u16)))> = None;
+
+        for _ in 0..steps {
+            if paths.len() == 0 {
+                break;
+            }
+
+            if let Some((_, from, pos)) = paths.pop() {
+                for direction in &DIRECTIONS {
+                    let new_pos = direction.move_vec(pos);
+
+                    if paths.iter().any(|x| x.2 == new_pos) {
+                        continue;
+                    }
+
+                    if let Some(block) = self.blocks
+                        .get(new_pos.0 as usize)
+                            .and_then(|x| x.get(new_pos.1 as usize))
+                    {
+                        if block.is_passable() {
+                            let mut new_from = from.clone();
+                            new_from.push(*direction);
+
+                            // Check score
+
+                            let score =
+                                if let Some(score) = heuristics(new_pos) { score }
+                                else { return new_from; };
+
+
+                            let total_score = score - new_from.len() as u16;
+
+                            for i in 0..paths.len() + 1 {
+                                if paths.get(i).map(|x| x.0).unwrap_or(u16::MAX) > total_score {
+                                    paths.insert(i, (total_score, new_from.clone(), new_pos));
+                                    break;
+                                }
+                            }
+
+
+                            let best_score =
+                                if let Some((best_score, _)) = best_path {
+                                    best_score
+                                } else {
+                                    0
+                                };
+
+                            if total_score > best_score {
+                                best_path = Some((total_score, (new_from, new_pos)));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        best_path.map(|x| (x.1).0).unwrap_or(vec![])
     }
 }
