@@ -26,8 +26,7 @@ pub struct World {
     pub blocks: Vec<Vec<block::Block>>,
     pub entities: HashMap<u64, entity::EntityWrapper>,
     pub difficulty: Difficulty,
-    auto: Option<MoveDir>,
-    last: Option<MoveDir>,
+    pub auto: Option<Vec<MoveDir>>,
     action_sender: Sender<MetaAction>,
     pub scroll: (i16, i16),
 }
@@ -38,9 +37,8 @@ impl World {
         World {
             blocks: vec![],
             entities: HashMap::new(),
-            auto: None,
-            last: None,
             difficulty: difficulty,
+            auto: None,
             action_sender: action_sender,
             scroll: (0, 0),
         }
@@ -50,14 +48,6 @@ impl World {
         for k in self.entities.clone().keys() {
             if let Some(f) = self.entities.get(k).map(|x| x.get_tick_fn()) {
                 f(self, *k);
-            }
-        }
-
-        // Automove
-        if let Some(auto) = self.auto {
-            if !self.move_player_side(&auto) {
-                self.auto = None;
-                self.last = None;
             }
         }
     }
@@ -135,14 +125,6 @@ impl World {
                 });
         }
 
-        self.auto = match *action {
-            Action::RunDown  => { Some(MoveDir::Down) }
-            Action::RunUp    => { Some(MoveDir::Up) }
-            Action::RunLeft  => { Some(MoveDir::Left) }
-            Action::RunRight => { Some(MoveDir::Right) }
-            _                => { None }
-        };
-
 
         let move_dir: Option<MoveDir> = match *action {
             Action::MoveDown  => { Some(MoveDir::Down) }
@@ -153,9 +135,7 @@ impl World {
         };
 
         if let Some(x) = move_dir {
-            self.auto = None;
             self.get_player_id().map(|id| self.move_entity(id, &x));
-            self.last = Some(x);
         }
 
         let break_dir: Option<MoveDir> = match *action {
@@ -217,66 +197,7 @@ impl World {
         self.get_player_id().map(|id| self.move_entity(id, &break_dir));
     }
 
-    fn move_player_side(&mut self, move_dir: &MoveDir) -> bool {
-        if self.get_player_id().map(|id| self.move_entity(id, move_dir)) == Some(false) {
-            match *move_dir {
-                MoveDir::Up | MoveDir::Down => {
-                    let mut d1 = MoveDir::Left;
-                    let mut d2 = MoveDir::Right;
-                    if let Some(last) = self.last {
-                        if last == d2 {
-                            d1 = MoveDir::Right;
-                            d2 = MoveDir::Left;
-                        }
-                    } else if rand() < 0.5 {
-                        d1 = MoveDir::Right;
-                        d2 = MoveDir::Left;
-                    }
-
-                    self.last = Some(d1);
-                    if self.get_player_id()
-                        .map(|id| self.move_entity(id, &d1))
-                            == Some(false) {
-                        if self.get_player_id()
-                            .map(|id| self.move_entity(id, &d2))
-                                == Some(false) {
-                            return false;
-                        }
-                    }
-                }
-                MoveDir::Left | MoveDir::Right => {
-                    let mut d1 = MoveDir::Up;
-                    let mut d2 = MoveDir::Down;
-                    if let Some(last) = self.last {
-                        if last == d2 {
-                            d1 = MoveDir::Down;
-                            d2 = MoveDir::Right;
-                        }
-                    } else if rand() < 0.5 {
-                        d1 = MoveDir::Down;
-                        d2 = MoveDir::Up;
-                    }
-
-                    self.last = Some(d1);
-                    if self.get_player_id()
-                        .map(|id| self.move_entity(id, &d1))
-                            == Some(false) {
-                        if self.get_player_id()
-                            .map(|id| self.move_entity(id, &d2))
-                                == Some(false) {
-                            return false;
-                        }
-                    }
-                }
-            }
-        }
-        true
-    }
-
-
     fn move_entity(&mut self, en_id: u64, move_dir: &MoveDir) -> bool {
-
-        self.last = Some(*move_dir);
         if let Some(en_move_fn) = self.entities.get(&en_id).map(|x| x.get_move_fn()) {
             en_move_fn(self, en_id, *move_dir)
         } else {
@@ -333,7 +254,6 @@ impl World {
         log("Generating!");
 
         self.blocks = vec![];
-        self.auto = None;
 
         for x in 0..width {
             self.blocks.push(vec![]);
