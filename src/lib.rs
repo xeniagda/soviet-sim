@@ -18,6 +18,7 @@ mod move_dir;
 use world::*;
 use difficulty::Difficulty;
 use shape::Shape;
+use move_dir::MoveDir;
 
 use std::sync::Mutex;
 use std::sync::mpsc::{Receiver, channel};
@@ -296,10 +297,10 @@ pub fn key_down(key_code: u8) {
                                 rouge.world.do_action(&cont.action);
                             } else if let Some(ref mut inv) = rouge.at_inventory {
                                 match cont.action {
-                                    controls::Action::MoveUp if inv.selected_recipe > 0 => {
+                                    controls::Action::Move(MoveDir::Up) if inv.selected_recipe > 0 => {
                                         inv.selected_recipe -= 1;
                                     }
-                                    controls::Action::MoveDown if inv.selected_recipe < crafting::RECIPES.len() - 1 => {
+                                    controls::Action::Move(MoveDir::Down) if inv.selected_recipe < crafting::RECIPES.len() - 1 => {
                                         inv.selected_recipe += 1;
                                     }
                                     controls::Action::Select => {

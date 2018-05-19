@@ -1,4 +1,4 @@
-
+use move_dir::MoveDir;
 use key::Key;
 
 use std::collections::HashSet;
@@ -13,10 +13,10 @@ pub struct Control<'a> {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Action {
-    MoveUp,   MoveDown,   MoveLeft,   MoveRight,
-    RunUp,    RunDown,    RunLeft,    RunRight,
-    PlaceUp,  PlaceDown,  PlaceLeft,  PlaceRight,
-    BreakUp,  BreakDown,  BreakLeft,  BreakRight,
+    Move(MoveDir),
+    Run(MoveDir),
+    Place(MoveDir),
+    Break(MoveDir),
     IncActive, DecActive,
     ToggleInventory, Die, Select
 }
@@ -26,28 +26,28 @@ const CONTROLS: &[Control] = &[
         modifiers: &[Key::Shift, Key::Ctrl],
         key: Key::Up,
         desc: "Run upwards",
-        action: Action::RunUp
+        action: Action::Run(MoveDir::Up)
     },
 
     Control {
         modifiers: &[Key::Shift, Key::Ctrl],
         key: Key::Down,
         desc: "Run downwards",
-        action: Action::RunDown
+        action: Action::Run(MoveDir::Down)
     },
 
     Control {
         modifiers: &[Key::Shift, Key::Ctrl],
         key: Key::Left,
         desc: "Run left",
-        action: Action::RunLeft
+        action: Action::Run(MoveDir::Left)
     },
 
     Control {
         modifiers: &[Key::Shift, Key::Ctrl],
         key: Key::Right,
         desc: "Run right",
-        action: Action::RunRight
+        action: Action::Run(MoveDir::Right)
     },
 
     Control {
@@ -68,28 +68,28 @@ const CONTROLS: &[Control] = &[
         modifiers: &[Key::Letter(12)],
         key: Key::Up,
         desc: "Break a block upwards",
-        action: Action::BreakUp
+        action: Action::Break(MoveDir::Up)
     },
 
     Control {
         modifiers: &[Key::Letter(12)],
         key: Key::Down,
         desc: "Break a block downwards",
-        action: Action::BreakDown
+        action: Action::Break(MoveDir::Down)
     },
 
     Control {
         modifiers: &[Key::Letter(12)],
         key: Key::Left,
         desc: "Break a block to the left",
-        action: Action::BreakLeft
+        action: Action::Break(MoveDir::Left)
     },
 
     Control {
         modifiers: &[Key::Letter(12)],
         key: Key::Right,
         desc: "Break a block to the right",
-        action: Action::BreakRight
+        action: Action::Break(MoveDir::Right)
     },
 
 
@@ -97,28 +97,28 @@ const CONTROLS: &[Control] = &[
         modifiers: &[Key::Letter(15)],
         key: Key::Up,
         desc: "Place a block upwards",
-        action: Action::PlaceUp
+        action: Action::Place(MoveDir::Up)
     },
 
     Control {
         modifiers: &[Key::Letter(15)],
         key: Key::Down,
         desc: "Place a block downwards",
-        action: Action::PlaceDown
+        action: Action::Place(MoveDir::Down)
     },
 
     Control {
         modifiers: &[Key::Letter(15)],
         key: Key::Left,
         desc: "Place a block to the left",
-        action: Action::PlaceLeft
+        action: Action::Place(MoveDir::Left)
     },
 
     Control {
         modifiers: &[Key::Letter(15)],
         key: Key::Right,
         desc: "Place a block to the right",
-        action: Action::PlaceRight
+        action: Action::Place(MoveDir::Right)
     },
 
 
@@ -126,28 +126,28 @@ const CONTROLS: &[Control] = &[
         modifiers: &[],
         key: Key::Up,
         desc: "Move the character upwards",
-        action: Action::MoveUp
+        action: Action::Move(MoveDir::Up)
     },
 
     Control {
         modifiers: &[],
         key: Key::Down,
         desc: "Move the character downwards",
-        action: Action::MoveDown
+        action: Action::Move(MoveDir::Down)
     },
 
     Control {
         modifiers: &[],
         key: Key::Left,
         desc: "Move the character left",
-        action: Action::MoveLeft
+        action: Action::Move(MoveDir::Left)
     },
 
     Control {
         modifiers: &[],
         key: Key::Right,
         desc: "Move the character right",
-        action: Action::MoveRight
+        action: Action::Move(MoveDir::Right)
     },
 
     Control {

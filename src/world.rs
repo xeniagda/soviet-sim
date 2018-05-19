@@ -97,69 +97,44 @@ impl World {
     }
 
     pub fn do_action(&mut self, action: &Action) {
-        if let &Action::Die = action {
-            self.do_metaaction(MetaAction::Die);
-        }
-
-        if let &Action::IncActive = action {
-            self.get_player_id()
-                .and_then(|id| self.entities.get_mut(&id))
-                .map(|en| {
-                    if let &mut EntityWrapper::WPlayer(ref mut pl) = en {
-                        if pl.active < pl.inventory.len() - 1{
-                            pl.active += 1;
+        match *action {
+            Action::Move(dir) => {
+                self.get_player_id().map(|id| self.move_entity(id, &dir));
+            }
+            Action::Break(dir)  => {
+                self.break_dir(dir);
+            }
+            Action::Place(dir)  => {
+                self.get_player_id() .map(|id| Player::place(self, dir, id));
+            }
+            Action::Die => {
+                self.do_metaaction(MetaAction::Die);
+            }
+            Action::IncActive => {
+                self.get_player_id()
+                    .and_then(|id| self.entities.get_mut(&id))
+                    .map(|en| {
+                        if let &mut EntityWrapper::WPlayer(ref mut pl) = en {
+                            if pl.active < pl.inventory.len() - 1{
+                                pl.active += 1;
+                            }
                         }
-                    }
-                });
-        }
-
-        if let &Action::DecActive = action {
-            self.get_player_id()
-                .and_then(|id| self.entities.get_mut(&id))
-                .map(|en| {
-                    if let &mut EntityWrapper::WPlayer(ref mut pl) = en {
-                        if pl.active > 0 {
-                            pl.active -= 1;
+                    });
+            }
+            Action::DecActive => {
+                self.get_player_id()
+                    .and_then(|id| self.entities.get_mut(&id))
+                    .map(|en| {
+                        if let &mut EntityWrapper::WPlayer(ref mut pl) = en {
+                            if pl.active > 0 {
+                                pl.active -= 1;
+                            }
                         }
-                    }
-                });
-        }
-
-
-        let move_dir: Option<MoveDir> = match *action {
-            Action::MoveDown  => { Some(MoveDir::Down) }
-            Action::MoveUp    => { Some(MoveDir::Up) }
-            Action::MoveLeft  => { Some(MoveDir::Left) }
-            Action::MoveRight => { Some(MoveDir::Right) }
-            _                 => { None }
+                    });
+            }
+            _ => {}
         };
 
-        if let Some(x) = move_dir {
-            self.get_player_id().map(|id| self.move_entity(id, &x));
-        }
-
-        let break_dir: Option<MoveDir> = match *action {
-            Action::BreakDown  => { Some(MoveDir::Down) }
-            Action::BreakUp    => { Some(MoveDir::Up) }
-            Action::BreakLeft  => { Some(MoveDir::Left) }
-            Action::BreakRight => { Some(MoveDir::Right) }
-            _                  => { None }
-        };
-        if let Some(break_dir) = break_dir {
-            self.break_dir(break_dir);
-        }
-
-        let place_dir: Option<MoveDir> = match *action {
-            Action::PlaceDown  => { Some(MoveDir::Down) }
-            Action::PlaceUp    => { Some(MoveDir::Up) }
-            Action::PlaceLeft  => { Some(MoveDir::Left) }
-            Action::PlaceRight => { Some(MoveDir::Right) }
-            _                  => { None }
-        };
-        if let Some(place_dir) = place_dir {
-            self.get_player_id()
-                .map(|id| Player::place(self, place_dir, id));
-        }
     }
 
     fn break_dir(&mut self, break_dir: MoveDir) {
