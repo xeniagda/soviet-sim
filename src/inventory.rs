@@ -58,4 +58,12 @@ impl InventoryItem {
             InventoryItem::SuperBoots(_, _) => "Super Boots".into(),
         }
     }
+    pub fn get_desc(&self) -> String {
+        match self {
+            InventoryItem::Block(ref block) => block.desc.clone(),
+            InventoryItem::Bomb => "Blows up enemies (and you)".into(),
+            InventoryItem::Bullet => "Shoots things".into(),
+            InventoryItem::SuperBoots(_, _) => "Makes you able to run very fast. Ctrl+Alt+Arrow key to use".into(),
+        }
+    }
 }

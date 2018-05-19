@@ -13,6 +13,7 @@ lazy_static! {
 #[derive(Debug, Clone)]
 pub struct Block {
     pub name: String,
+    pub desc: String,
     shape: Shape,
     id: usize,
     passable: bool,
@@ -27,13 +28,16 @@ impl PartialEq for Block {
 impl Eq for Block {}
 
 impl Block {
-    fn new(shape: Shape, name: String, passable: bool, breakable: bool, on_walk: fn(&mut World, u64)) -> Block {
+    fn new(shape: Shape, name: String, desc: String, passable: bool, breakable: bool, on_walk: fn(&mut World, u64))
+        -> Block
+    {
         let mut blkf = BLOCK_FUNCS.lock().unwrap();
         blkf.push(on_walk);
 
         Block {
             id: blkf.len() - 1,
             name: name,
+            desc: desc,
             passable: passable,
             breakable: breakable,
             shape: shape
@@ -57,6 +61,7 @@ lazy_static! {
     pub static ref GROUND: Block = Block::new(
         Shape::new('.', (128, 128, 128), (0, 0, 0)),
         "Ground".into(),
+        "Passive ground".into(),
         true,
         false,
         |_, _| {}
@@ -65,6 +70,7 @@ lazy_static! {
     pub static ref WALL: Block = Block::new(
         Shape::new('#', (202, 195, 210), (0, 0, 0)),
         "Wall".into(),
+        "An wall".into(),
         false,
         true,
         |_, _| {}
@@ -73,6 +79,7 @@ lazy_static! {
     pub static ref STONE: Block = Block::new(
         Shape::new('&', (120, 140, 160), (10, 30, 50)),
         "Stone".into(),
+        "A stone".into(),
         false,
         true,
         |_, _| {}
@@ -81,6 +88,7 @@ lazy_static! {
     pub static ref MOVER: Block = Block::new(
         Shape::new('^', (255, 240, 30), (0, 0, 0)),
         "Mover".into(),
+        "Moves anything that walks on it randomly to somewhere on the map".into(),
         true,
         true,
         |world, id| {
@@ -110,6 +118,7 @@ lazy_static! {
     pub static ref COMMUNISM: Block = Block::new(
         Shape::new('☭', (253, 233, 54), (0, 0, 0)),
         "COMMUNISM".into(),
+        "Heals you".into(),
         true,
         true,
         |world, id| {
