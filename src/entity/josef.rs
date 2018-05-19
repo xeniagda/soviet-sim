@@ -67,7 +67,6 @@ impl Entity for Josef {
             };
 
         let mut to_move = None;
-
         let mut my_pos = None;
 
         if let Some(EntityWrapper::WJosef(ref mut this)) = world.entities.get_mut(&en_id) {
@@ -94,7 +93,14 @@ impl Entity for Josef {
                 }
             };
 
-            let path = world.find_path(my_pos, heur, 1000);
+            let path = world.find_path(
+                my_pos,
+                |block, _|
+                    if block.is_passable()
+                        { Some(1) }
+                        else { None },
+                heur,
+                1000);
 
             if let Some(EntityWrapper::WJosef(ref mut this)) = world.entities.get_mut(&en_id) {
                 this.path = path;

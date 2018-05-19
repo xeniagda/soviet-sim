@@ -167,7 +167,17 @@ impl World {
                         };
                         Some(score * 3)
                     };
-                    self.auto = self.find_path(pos, heur, 1000).into_iter().take(20).collect();
+                    self.auto = self.find_path(
+                        pos,
+                        |block, _|
+                            if block.is_passable()
+                                { Some(1) }
+                                else { None },
+                        heur,
+                        1000)
+                        .into_iter()
+                        .take(20)
+                        .collect();
                 }
             }
             Action::DecActive => {
@@ -353,67 +363,76 @@ impl World {
         }
     }
 
-    // Find a path using a heuristics function. If it returns None, it means that the best path is
-    // found. Higher value in the heuristics function means closer to the goal.
+    // Find a path using a cost and heuristics function.
+    // Cost: Takes a block and returns the cost of passing that block. If None is returned, the
+    // block is considered not passable. Positive here is considered bad.
+    // Heuristics: Takes a world and position and gives back a heuristics of going to that
+    // position. If None, that position is return. Positive here is considered good.
     pub fn find_path(
         &self,
         from: (u16, u16),
+        cost: impl Fn(block::Block, (u16, u16)) -> Option<i32>,
         heuristics: impl Fn((u16, u16)) -> Option<i32>,
-        steps: u16
+        steps: u16,
         ) ->
         Vec<MoveDir>
     {
 
-        let mut paths: Vec<(i32, Vec<MoveDir>, (u16, u16))> = vec![(0, vec![], from)];
-        let mut best_path: Option<(i32, (Vec<MoveDir>, (u16, u16)))> = None;
+        let mut paths: Vec<((i32, i32), Vec<MoveDir>, (u16, u16))> = vec![((0, 0), vec![], from)];
+        let mut visited: Vec<(u16, u16)> = vec![];
+        let mut best_path: Option<((i32, i32), (Vec<MoveDir>, (u16, u16)))> = None;
 
         for _ in 0..steps {
             if paths.len() == 0 {
                 break;
             }
 
-            if let Some((_, from, pos)) = paths.pop() {
+            if let Some(((last_cost, _), from, pos)) = paths.pop() {
                 for direction in &DIRECTIONS {
                     let new_pos = direction.move_vec(pos);
 
-                    if paths.iter().any(|x| x.2 == new_pos) {
+                    if visited.contains(&new_pos) {
+                        continue;
+                    }
+                    visited.push(new_pos);
+
+                    // Check for entities
+                    if self.entities.values().any(|en| en.get_pos() == new_pos) {
                         continue;
                     }
 
-                    if let Some(block) = self.blocks
-                        .get(new_pos.0 as usize)
-                            .and_then(|x| x.get(new_pos.1 as usize))
-                    {
-                        if block.is_passable() {
+                    if let Some(block) = self.blocks.get(pos.0 as usize).and_then(|c| c.get(pos.1 as usize)) {
+                        if let Some(cost) = cost(block.clone(), new_pos) {
+                            let new_cost = last_cost + cost;
                             let mut new_from = from.clone();
                             new_from.push(*direction);
 
-                            // Check score
+                            // Check cost
 
-                            let score =
-                                if let Some(score) = heuristics(new_pos) { score }
+                            let heur =
+                                if let Some(heur) = heuristics(new_pos) { heur }
                                 else { return new_from; };
 
 
-                            let total_score = score - new_from.len() as i32;
+                            let total_cost = heur - new_cost;
 
                             for i in 0..paths.len() + 1 {
-                                if paths.get(i).map(|x| x.0).unwrap_or(i32::MAX) > total_score {
-                                    paths.insert(i, (total_score, new_from.clone(), new_pos));
+                                if paths.get(i).map(|x| (x.0).1).unwrap_or(i32::MAX) > total_cost {
+                                    paths.insert(i, ((new_cost, total_cost), new_from.clone(), new_pos));
                                     break;
                                 }
                             }
 
 
-                            let best_score =
-                                if let Some((best_score, _)) = best_path {
-                                    best_score
+                            let best_cost =
+                                if let Some(((_, best_cost), _)) = best_path {
+                                    best_cost
                                 } else {
                                     0
                                 };
 
-                            if total_score > best_score {
-                                best_path = Some((total_score, (new_from, new_pos)));
+                            if total_cost > best_cost {
+                                best_path = Some(((new_cost, total_cost), (new_from, new_pos)));
                             }
                         }
                     }
