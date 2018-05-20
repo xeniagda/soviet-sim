@@ -11,18 +11,22 @@ const SHOW_PATH_FINDING: bool = false;
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct Police {
-    pub countdown: u16,
-    pub speed: u16,
+    pub walk_countdown: u16,
+    pub walk_speed: u16,
+    pub hurt_countdown: u16,
+    pub hurt_speed: u16,
     pub path: Vec<MoveDir>,
     pub visited: Vec<(u16, u16)>,
     pub pos: (u16, u16),
 }
 
 impl Police {
-    pub fn new(pos: (u16, u16), speed: u16) -> Police {
+    pub fn new(pos: (u16, u16), walk_speed: u16, hurt_speed: u16) -> Police {
         Police {
-            countdown: 0,
-            speed: speed,
+            walk_countdown: 0,
+            walk_speed: walk_speed,
+            hurt_countdown: 0,
+            hurt_speed: hurt_speed,
             path: vec! [],
             visited: vec! [],
             pos: pos
@@ -70,11 +74,11 @@ impl Entity for Police {
     fn tick(world: &mut World, en_id: u64) where Self: Sized {
         let should_walk = {
             if let Some(&mut EntityWrapper::WPolice(ref mut this)) = world.entities.get_mut(&en_id) {
-                if this.countdown == 0 {
-                    this.countdown = this.speed;
+                if this.walk_countdown == 0 {
+                    this.walk_countdown = this.walk_speed;
                     true
                 } else {
-                    this.countdown -= 1;
+                    this.walk_countdown -= 1;
                     false
                 }
             } else {
@@ -167,11 +171,18 @@ impl Entity for Police {
 
     }
 
-    fn on_collision(world: &mut World, _me_id: u64, other_id: u64) -> bool
+    fn on_collision(world: &mut World, me_id: u64, other_id: u64) -> bool
         where Self: Sized {
 
-        if let Some(en) = world.entities.get(&other_id) {
-            en.get_hurt_fn()(world, other_id, 1);
+        if let Some(EntityWrapper::WPolice(ref mut me)) = world.entities.get_mut(&me_id) {
+            if me.hurt_countdown == 0 {
+                me.hurt_countdown = me.hurt_speed;
+                if let Some(en) = world.entities.get(&other_id) {
+                    en.get_hurt_fn()(world, other_id, 1);
+                }
+            } else {
+                me.hurt_countdown -= 1;
+            }
         }
 
         false

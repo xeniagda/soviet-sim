@@ -69,6 +69,17 @@ impl Difficulty {
     }
 
     #[inline(always)]
+    pub fn get_police_hurt_rate(self) -> u16 {
+        match self {
+            Difficulty::Easy => 7,
+            Difficulty::Medium => 5,
+            Difficulty::Hard => 4,
+            Difficulty::Extreme => 3,
+            Difficulty::Reality => 1
+        }
+    }
+
+    #[inline(always)]
     pub fn get_communism_drop_rate(self) -> f64 {
         match self {
             Difficulty::Easy => 5.,

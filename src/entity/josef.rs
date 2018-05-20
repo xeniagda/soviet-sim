@@ -53,7 +53,9 @@ impl Entity for Josef {
         }
         if let Some(to_place) = pos_to_place {
             world.add_entity(
-                EntityWrapper::WPolice(Police::new(to_place, world.difficulty.get_police_speed()))
+                EntityWrapper::WPolice(
+                    Police::new(to_place, world.difficulty.get_police_speed(), world.difficulty.get_police_hurt_rate())
+                    )
                 );
         }
 
