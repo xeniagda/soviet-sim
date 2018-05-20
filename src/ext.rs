@@ -98,8 +98,11 @@ pub fn recolor(pos: (u16, u16), fg: (u8, u8, u8), bg: (u8, u8, u8)) {
 pub fn clear() {
     if let Ok(ref mut screen) = SCREEN.try_lock() {
         screen.clear();
-        unsafe {
-            u_clear();
-        }
+    }
+    if let Ok(ref mut unflipped) = UNFLIPPED.try_lock() {
+        unflipped.clear();
+    }
+    unsafe {
+        u_clear();
     }
 }

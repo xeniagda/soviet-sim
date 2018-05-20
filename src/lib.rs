@@ -406,9 +406,8 @@ pub fn redraw() {
             GameState::Playing(ref rouge) => {
                 rouge.world.draw(game.size);
             }
-            _ => {
-
-            }
+            _ => { }
         }
+        ext::flip();
     }
 }
