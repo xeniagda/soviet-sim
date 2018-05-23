@@ -79,7 +79,7 @@ impl World {
             }
 
             let dir = self.auto.remove(0);
-            self.get_player_id().map(|id| self.move_entity(id, &dir));
+            self.get_player_id().map(|id| self.move_entity(id, dir));
         }
     }
 
@@ -100,27 +100,28 @@ impl World {
                 }
             }
         }
-        if self.scroll.0 < 0 {
+        if  self.scroll.0 < 0 {
             self.scroll.0 = 0;
         }
-        if self.scroll.1 < 0 {
+        if  self.scroll.1 < 0 {
             self.scroll.1 = 0;
         }
-        if self.scroll.0 > self.blocks.len() as i16 - size.0 as i16 {
+        if  self.scroll.0 > self.blocks.len() as i16 - size.0 as i16 {
             self.scroll.0 = self.blocks.len() as i16 - size.0 as i16;
         }
-        if self.scroll.1 > self.blocks[0].len() as i16 - size.1 as i16 + HOTBAR_HEIGHT as i16 {
+        if  self.scroll.1 > self.blocks[0].len() as i16 - size.1 as i16 + HOTBAR_HEIGHT as i16 {
             self.scroll.1 = self.blocks[0].len() as i16 - size.1 as i16 + HOTBAR_HEIGHT as i16;
         }
     }
 
     pub fn get_player_id(&self) -> Option<u64> {
-        for (k, x) in &self.entities {
-            if let &entity::EntityWrapper::WPlayer(_) = x {
-                return Some(*k);
-            }
-        }
-        None
+        self.entities
+            .iter()
+            .find(|(_, en)|
+                   if let EntityWrapper::WPlayer(_) = en { true }
+                   else { false }
+                   )
+            .map(|(id, _)| *id)
     }
 
     pub fn do_metaaction(&mut self, action: MetaAction) {
@@ -130,7 +131,7 @@ impl World {
     pub fn do_action(&mut self, action: &Action) {
         match *action {
             Action::Move(dir) => {
-                self.get_player_id().map(|id| self.move_entity(id, &dir));
+                self.get_player_id().map(|id| self.move_entity(id, dir));
                 self.auto = vec![];
             }
             Action::Break(dir)  => {
@@ -207,50 +208,46 @@ impl World {
             return;
         }
 
-        let block_pickup;
-        if let Some(block_at) = self.blocks
-            .get_mut(new_pos.0 as usize)
-            .and_then(|x| x.get_mut(new_pos.1 as usize))
-        {
-            if block_at.is_breakable() {
-                // Break block
-                block_pickup = mem::replace(block_at, block::GROUND.clone());
+        let block_pickup =
+            if let Some(block_at) = self.blocks
+                .get_mut(new_pos.0 as usize)
+                .and_then(|x| x.get_mut(new_pos.1 as usize))
+            {
+                if block_at.is_breakable() {
+                    // Break block
+                    mem::replace(block_at, block::GROUND.clone())
+                } else {
+                    return;
+                }
             } else {
                 return;
-            }
-        } else {
-            return;
-        }
+            };
 
-        if let Some(&mut EntityWrapper::WPlayer(ref mut player)) =
-            self.get_player_id().and_then(|id| self.entities.get_mut(&id))
+        if let Some(EntityWrapper::WPlayer(ref mut player)) =
+            self.get_player_id().and_then(|x| self.entities.get_mut(&x))
         {
-            player.pick_up(InventoryItem::Block(block_pickup.clone()));
+            player.pick_up(InventoryItem::Block(block_pickup));
         }
 
-        self.get_player_id().map(|id| self.move_entity(id, &break_dir));
+        self.get_player_id().map(|id| self.move_entity(id, break_dir));
     }
 
-    fn move_entity(&mut self, en_id: u64, move_dir: &MoveDir) -> bool {
-        if let Some(en_move_fn) = self.entities.get(&en_id).map(|x| x.get_move_fn()) {
-            en_move_fn(self, en_id, *move_dir)
+    fn move_entity(&mut self, en_id: u64, move_dir: MoveDir) -> bool {
+        if let Some(en) = self.entities.get(&en_id) {
+            en.get_move_fn()(self, en_id, move_dir)
         } else {
             false
         }
-
     }
 
     pub fn draw(&self, size: (u16, u16)) {
-
         // Draw world
         for x in 0..size.0 {
             for y in 0..size.1 - HOTBAR_HEIGHT {
                 if let (Some(x_), Some(y_)) =
                     ((x as i16).checked_add(self.scroll.0), (y as i16).checked_add(self.scroll.1))
                 {
-                    if let Some(block) = self.blocks.get(x_ as usize)
-                        .and_then(|col| col.get(y_ as usize))
-                    {
+                    if let Some(block) = self.blocks.get(x_ as usize).and_then(|col| col.get(y_ as usize)) {
                         block.get_shape().draw((x, y));
                     } else {
                         put_char((x as u16, y as u16), &Shape::empty());
@@ -287,6 +284,7 @@ impl World {
     pub fn generate(&mut self, width: usize, height: usize) {
         log("Generating!");
 
+        self.entities = HashMap::new();
         self.blocks = vec![];
 
         for x in 0..width {
@@ -299,8 +297,6 @@ impl World {
                 }
             }
         }
-
-        self.entities = HashMap::new();
 
         let mut placed = vec![];
         for _ in 0..10 * width * height {
@@ -322,7 +318,7 @@ impl World {
                 let (nx, ny) = (x + dirv.0 as usize, y + dirv.1 as usize);
 
                 let block_at = self.blocks.get(nx).and_then(|x| x.get(ny));
-                if block_at == Some(&&*block::WALL) || block_at == Some(&&*block::WALL){
+                if block_at == Some(&block::WALL) || block_at == Some(&block::WALL){
                     self.blocks[nx][ny] = block::GROUND.clone();
                     placed.push((nx, ny, dir));
                 }
@@ -346,7 +342,8 @@ impl World {
                 Josef::new(
                     (x as u16, y as u16),
                     self.difficulty.get_josef_police_rate(),
-                    self.difficulty.get_josef_speed()
+                    self.difficulty.get_josef_speed(),
+                    self.difficulty.get_josef_health()
                     )
             ));
 

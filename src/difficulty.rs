@@ -80,6 +80,17 @@ impl Difficulty {
     }
 
     #[inline(always)]
+    pub fn get_josef_health(self) -> u16 {
+        match self {
+            Difficulty::Easy => 3,
+            Difficulty::Medium => 5,
+            Difficulty::Hard => 7,
+            Difficulty::Extreme => 13,
+            Difficulty::Reality => 17
+        }
+    }
+
+    #[inline(always)]
     pub fn get_communism_drop_rate(self) -> f64 {
         match self {
             Difficulty::Easy => 5.,

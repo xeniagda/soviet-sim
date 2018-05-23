@@ -16,16 +16,18 @@ pub struct Josef {
     pub walk_speed: u16,
     pub path: Vec<MoveDir>,
     pub pos: (u16, u16),
+    pub health: u16
 }
 
 impl Josef {
-    pub fn new(pos: (u16, u16), police_speed: u16, walk_speed: u16) -> Josef {
+    pub fn new(pos: (u16, u16), police_speed: u16, walk_speed: u16, health: u16) -> Josef {
         Josef {
             police_countdown: 0,
             police_speed: police_speed,
             walk_countdown: 0,
             walk_speed: walk_speed,
             path: vec![],
+            health: health,
             pos: pos
         }
     }
@@ -38,6 +40,18 @@ impl Entity for Josef {
     fn get_shape(&self) -> Shape { Shape { ch: 'J', col: (255, 0, 0), bg: (0, 0, 0) } }
     fn get_name(&self) -> String { "Josef".into() }
 
+
+    fn hurt(world: &mut World, en_id: u64, amount: u16) where Self: Sized {
+        if let Some(EntityWrapper::WJosef(ref mut this)) = world.entities.get_mut(&en_id) {
+            if this.health < amount {
+                world.do_metaaction(MetaAction::Win);
+            }
+            else {
+                this.health -= amount;
+                this.police_countdown = 0;
+            }
+        }
+    }
 
     fn tick(world: &mut World, en_id: u64) where Self: Sized {
 
@@ -119,12 +133,9 @@ impl Entity for Josef {
         }
     }
 
-    fn on_collision(world: &mut World, _me_id: u64, other_id: u64) -> bool
+    fn on_collision(_world: &mut World, _me_id: u64, _other_id: u64) -> bool
         where Self: Sized {
 
-        if let Some(EntityWrapper::WPlayer(_)) = world.entities.get(&other_id) {
-            world.do_metaaction(MetaAction::Win);
-        }
         false
     }
 
