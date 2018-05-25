@@ -176,7 +176,7 @@ fn draw_menu(difficulty: Difficulty, size: (u16, u16)) {
 fn draw_game_over(msg: RestartMessage, _size: (u16, u16)) {
     ext::clear();
 
-    ext::put_text((0, 0), "game over lol. press enter to continue", (255, 255, 255), (0, 0, 0));
+    ext::put_text((0, 3), "game over lol. press enter to continue", (255, 255, 255), (0, 0, 0));
 
     let (text, col) = match msg {
         RestartMessage::Died => (&"u ded lol!", (255, 0, 0)),
