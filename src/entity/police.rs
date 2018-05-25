@@ -178,7 +178,12 @@ impl Entity for Police {
             if me.hurt_countdown == 0 {
                 me.hurt_countdown = me.hurt_speed;
                 if let Some(en) = world.entities.get(&other_id) {
-                    en.get_hurt_fn()(world, other_id, 1);
+                    match en {
+                        EntityWrapper::WPlayer(_) => {
+                            en.get_hurt_fn()(world, other_id, 1);
+                        }
+                        _ => {}
+                    }
                 }
             } else {
                 me.hurt_countdown -= 1;
