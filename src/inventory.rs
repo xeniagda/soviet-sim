@@ -9,7 +9,9 @@ pub enum InventoryItem {
     Block(Block),
     Bomb,
     Bullet,
-    SuperBoots(u16, u16), // (durability_left, max_durability)
+    // (durability_left, max_durability)
+    SuperBoots(u16, u16),
+    Pickaxe(u16, u16),
 }
 
 impl InventoryItem {
@@ -33,7 +35,7 @@ impl InventoryItem {
                 world.add_entity(EntityWrapper::WBullet(Bullet::new(pos, dir)));
                 return true;
             }
-            InventoryItem::SuperBoots(_, _) => {}
+            InventoryItem::SuperBoots(_, _) | InventoryItem::Pickaxe(_, _) => {}
         }
         false
     }
@@ -47,6 +49,10 @@ impl InventoryItem {
                 let d: u8 = ((255 * *durability as u32) / *max as u32) as u8;
                 Shape::new('b', (255, 0, 255), (d, d, d))
             },
+            InventoryItem::Pickaxe(durability, max) => {
+                let d: u8 = ((255 * *durability as u32) / *max as u32) as u8;
+                Shape::new('Y', (255, 0, 255), (d, d, d))
+            },
         }
     }
 
@@ -56,6 +62,7 @@ impl InventoryItem {
             InventoryItem::Bomb => "Bomb".into(),
             InventoryItem::Bullet => "Bullet".into(),
             InventoryItem::SuperBoots(_, _) => "Super Boots".into(),
+            InventoryItem::Pickaxe(_, _) => "Pickaxe".into(),
         }
     }
     pub fn get_desc(&self) -> String {
@@ -64,6 +71,7 @@ impl InventoryItem {
             InventoryItem::Bomb => "Blows up enemies (and you)".into(),
             InventoryItem::Bullet => "Shoots things".into(),
             InventoryItem::SuperBoots(_, _) => "Makes you able to run very fast. Ctrl+Alt+Arrow key to use".into(),
+            InventoryItem::Pickaxe(_, _) => "Makes you able to mine very fast. Alt+M+Arrow key to use".into(),
         }
     }
 }

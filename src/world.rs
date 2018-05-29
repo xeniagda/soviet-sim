@@ -84,31 +84,31 @@ impl World {
             self.get_player_id().map(|id| self.move_entity(id, dir));
         }
         if !self.auto_mine.is_empty() {
-            // if let Some(EntityWrapper::WPlayer(ref mut p)) =
-                // self.get_player_id().and_then(|id| self.entities.get_mut(&id))
-            // {
-                // let mut to_remove = None;
-                // if let Some((i, (InventoryItem::SuperBoots(ref mut d, max), ref mut count))) =
-                    // p.inventory.iter_mut()
-                    // .enumerate()
-                    // .find(|x| match (x.1).0 { InventoryItem::SuperBoots(_, _) => true, _ => false })
-                // {
-                    // *d -= 1;
-                    // if *d == 0 {
-                        // *count -= 1;
-                        // *d = *max;
-                        // if *count == 0 {
-                            // to_remove = Some(i);
-                        // }
-                    // }
-                // } else {
-                    // self.auto_mine.clear();
-                    // return;
-                // }
-                // if let Some(to_remove) = to_remove {
-                    // p.inventory.remove(to_remove);
-                // }
-            // }
+            if let Some(EntityWrapper::WPlayer(ref mut p)) =
+                self.get_player_id().and_then(|id| self.entities.get_mut(&id))
+            {
+                let mut to_remove = None;
+                if let Some((i, (InventoryItem::Pickaxe(ref mut d, max), ref mut count))) =
+                    p.inventory.iter_mut()
+                    .enumerate()
+                    .find(|x| match (x.1).0 { InventoryItem::Pickaxe(_, _) => true, _ => false })
+                {
+                    *d -= 1;
+                    if *d == 0 {
+                        *count -= 1;
+                        *d = *max;
+                        if *count == 0 {
+                            to_remove = Some(i);
+                        }
+                    }
+                } else {
+                    self.auto_mine.clear();
+                    return;
+                }
+                if let Some(to_remove) = to_remove {
+                    p.inventory.remove(to_remove);
+                }
+            }
 
             let dir = self.auto_mine.remove(0);
             self.break_dir(dir);

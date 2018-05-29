@@ -36,5 +36,16 @@ lazy_static! {
                 (InventoryItem::Bullet, 10),
             ]
         },
+        Recipe {
+            out: InventoryItem::Pickaxe(500, 501),
+            needed: vec![
+                (InventoryItem::SuperBoots(1000, 1001), 1),
+                (InventoryItem::Block(block::MOVER.clone()), 2),
+                (InventoryItem::Bomb, 4),
+                (InventoryItem::Block(block::WALL.clone()), 8),
+                (InventoryItem::Bullet, 16),
+                (InventoryItem::Block(block::STONE.clone()), 32),
+            ]
+        },
     ];
 }
