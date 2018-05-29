@@ -26,7 +26,8 @@ pub struct World {
     pub blocks: Vec<Vec<block::Block>>,
     pub entities: HashMap<u64, entity::EntityWrapper>,
     pub difficulty: Difficulty,
-    pub auto: Vec<MoveDir>,
+    pub auto_walk: Vec<MoveDir>,
+    pub auto_mine: Vec<MoveDir>,
     action_sender: Sender<MetaAction>,
     pub scroll: (i16, i16),
 }
@@ -38,7 +39,8 @@ impl World {
             blocks: vec![],
             entities: HashMap::new(),
             difficulty: difficulty,
-            auto: vec![],
+            auto_walk: vec![],
+            auto_mine: vec![],
             action_sender: action_sender,
             scroll: (0, 0),
         }
@@ -51,7 +53,7 @@ impl World {
             }
         }
 
-        if !self.auto.is_empty() {
+        if !self.auto_walk.is_empty() {
             if let Some(EntityWrapper::WPlayer(ref mut p)) =
                 self.get_player_id().and_then(|id| self.entities.get_mut(&id))
             {
@@ -70,7 +72,7 @@ impl World {
                         }
                     }
                 } else {
-                    self.auto.clear();
+                    self.auto_walk.clear();
                     return;
                 }
                 if let Some(to_remove) = to_remove {
@@ -78,8 +80,38 @@ impl World {
                 }
             }
 
-            let dir = self.auto.remove(0);
+            let dir = self.auto_walk.remove(0);
             self.get_player_id().map(|id| self.move_entity(id, dir));
+        }
+        if !self.auto_mine.is_empty() {
+            // if let Some(EntityWrapper::WPlayer(ref mut p)) =
+                // self.get_player_id().and_then(|id| self.entities.get_mut(&id))
+            // {
+                // let mut to_remove = None;
+                // if let Some((i, (InventoryItem::SuperBoots(ref mut d, max), ref mut count))) =
+                    // p.inventory.iter_mut()
+                    // .enumerate()
+                    // .find(|x| match (x.1).0 { InventoryItem::SuperBoots(_, _) => true, _ => false })
+                // {
+                    // *d -= 1;
+                    // if *d == 0 {
+                        // *count -= 1;
+                        // *d = *max;
+                        // if *count == 0 {
+                            // to_remove = Some(i);
+                        // }
+                    // }
+                // } else {
+                    // self.auto_mine.clear();
+                    // return;
+                // }
+                // if let Some(to_remove) = to_remove {
+                    // p.inventory.remove(to_remove);
+                // }
+            // }
+
+            let dir = self.auto_mine.remove(0);
+            self.break_dir(dir);
         }
     }
 
@@ -132,15 +164,42 @@ impl World {
         match *action {
             Action::Move(dir) => {
                 self.get_player_id().map(|id| self.move_entity(id, dir));
-                self.auto = vec![];
+                self.auto_walk = vec![];
+                self.auto_mine = vec![];
             }
             Action::Break(dir)  => {
                 self.break_dir(dir);
-                self.auto = vec![];
+                self.auto_walk = vec![];
+                self.auto_mine = vec![];
+            }
+            Action::SuperMine(dir) => {
+                if let Some(EntityWrapper::WPlayer(p)) = self.get_player_id().and_then(|id| self.entities.get(&id)) {
+                    let start_pos = dir.move_vec(p.pos);
+
+                    let heur = |(x, y)| {
+                        let (dx, dy) = (x as i32 - start_pos.0 as i32, y as i32 - start_pos.1 as i32);
+                        let score = dx * dx + dy * dy;
+                        Some(-score / 3)
+                    };
+                    self.auto_mine = self.find_path(
+                        start_pos,
+                        |block, _|
+                            if block.is_passable()
+                                { None }
+                                else { Some(-3) },
+                        heur,
+                        1000)
+                        .into_iter()
+                        .collect();
+
+                    self.break_dir(dir);
+                    log(&format!("Path: {:?}", self.auto_mine));
+                }
             }
             Action::Place(dir)  => {
                 self.get_player_id() .map(|id| Player::place(self, dir, id));
-                self.auto = vec![];
+                self.auto_walk = vec![];
+                self.auto_mine = vec![];
             }
             Action::Die => {
                 self.do_metaaction(MetaAction::Die);
@@ -168,7 +227,7 @@ impl World {
                         };
                         Some(score * 3)
                     };
-                    self.auto = self.find_path(
+                    self.auto_walk = self.find_path(
                         pos,
                         |block, _|
                             if block.is_passable()

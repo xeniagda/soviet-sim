@@ -17,6 +17,7 @@ pub enum Action {
     Run(MoveDir),
     Place(MoveDir),
     Break(MoveDir),
+    SuperMine(MoveDir),
     IncActive, DecActive,
     ToggleInventory, Die, Select
 }
@@ -65,6 +66,34 @@ const CONTROLS: &[Control] = &[
     },
 
     Control {
+        modifiers: &[Key::Letter(12), Key::Alt],
+        key: Key::Up,
+        desc: "Supermine a block upwards",
+        action: Action::SuperMine(MoveDir::Up)
+    },
+
+    Control {
+        modifiers: &[Key::Letter(12), Key::Alt],
+        key: Key::Down,
+        desc: "Supermine a block downwards",
+        action: Action::SuperMine(MoveDir::Down)
+    },
+
+    Control {
+        modifiers: &[Key::Letter(12), Key::Alt],
+        key: Key::Left,
+        desc: "Supermine a block to the left",
+        action: Action::SuperMine(MoveDir::Left)
+    },
+
+    Control {
+        modifiers: &[Key::Letter(12), Key::Alt],
+        key: Key::Right,
+        desc: "Supermine a block to the right",
+        action: Action::SuperMine(MoveDir::Right)
+    },
+
+    Control {
         modifiers: &[Key::Letter(12)],
         key: Key::Up,
         desc: "Break a block upwards",
@@ -91,7 +120,6 @@ const CONTROLS: &[Control] = &[
         desc: "Break a block to the right",
         action: Action::Break(MoveDir::Right)
     },
-
 
     Control {
         modifiers: &[Key::Letter(15)],
