@@ -4,6 +4,9 @@ use entity::{EntityWrapper, Bomb, Bullet};
 use shape::Shape;
 use move_dir::MoveDir;
 
+pub const SUPER_BOOTS: InventoryItem = InventoryItem::SuperBoots(1000, 1001);
+pub const PICKAXE: InventoryItem = InventoryItem::Pickaxe(1000, 1001);
+
 #[derive(PartialEq, Eq, Clone)]
 pub enum InventoryItem {
     Block(Block),

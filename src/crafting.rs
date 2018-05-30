@@ -1,5 +1,5 @@
 use block;
-use inventory::InventoryItem;
+use inventory::{InventoryItem, PICKAXE, SUPER_BOOTS};
 
 #[derive(Clone)]
 pub struct Recipe {
@@ -30,16 +30,16 @@ lazy_static! {
             ]
         },
         Recipe {
-            out: InventoryItem::SuperBoots(1000, 1001),
+            out: PICKAXE,
             needed: vec![
                 (InventoryItem::Block(block::MOVER.clone()), 2),
                 (InventoryItem::Bullet, 10),
             ]
         },
         Recipe {
-            out: InventoryItem::Pickaxe(500, 501),
+            out: SUPER_BOOTS,
             needed: vec![
-                (InventoryItem::SuperBoots(1000, 1001), 1),
+                (PICKAXE, 1),
                 (InventoryItem::Block(block::MOVER.clone()), 2),
                 (InventoryItem::Bomb, 4),
                 (InventoryItem::Block(block::WALL.clone()), 8),
