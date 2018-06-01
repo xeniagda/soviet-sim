@@ -39,11 +39,10 @@ lazy_static! {
         Recipe {
             out: PICKAXE,
             needed: vec![
-                (PICKAXE, 1),
+                (InventoryItem::Bomb, 1),
                 (InventoryItem::Block(block::MOVER.clone()), 2),
-                (InventoryItem::Bomb, 4),
                 (InventoryItem::Block(block::WALL.clone()), 8),
-                (InventoryItem::Bullet, 16),
+                (InventoryItem::Bullet, 7),
                 (InventoryItem::Block(block::STONE.clone()), 32),
             ]
         },
