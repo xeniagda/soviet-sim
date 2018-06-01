@@ -29,7 +29,7 @@ const TITLE: &str = "☭☭☭ COMMUNISM SIMULATOR ☭☭☭";
 const INVENTORY_TITLE: &str = "☭☭☭ INVENTORY ☭☭☭";
 const INVENTORY_INVENTORY: &str = "Your inventory";
 const INVENTORY_CRAFTING: &str = "Crafting";
-const INVENTORY_INDENT: u16 = 5;
+const INVENTORY_INDENT: u16 = 3;
 
 const WORLD_SIZE: (usize, usize) = (180, 111);
 
@@ -191,17 +191,26 @@ fn draw_game_over(msg: RestartMessage, _size: (u16, u16)) {
 
 fn draw_inventory(inv: AtInventory, ww: &mut WorldWrapper, size: (u16, u16)) {
     // Border
+
+    // Top
     for i in INVENTORY_INDENT..size.0-INVENTORY_INDENT {
         ext::put_char((i as u16, INVENTORY_INDENT), &Shape::new('=', (255, 255, 255), (0, 0, 0)));
+        ext::erase((i as u16, INVENTORY_INDENT - 1));
     }
+    // Bottom
     for i in INVENTORY_INDENT..size.0-INVENTORY_INDENT {
         ext::put_char((i as u16, size.1 - INVENTORY_INDENT - world::HOTBAR_HEIGHT - 1), &Shape::new('=', (255, 255, 255), (0, 0, 0)));
+        ext::erase((i as u16, size.1 - INVENTORY_INDENT - world::HOTBAR_HEIGHT));
     }
+    // Left
     for i in INVENTORY_INDENT..size.1 - INVENTORY_INDENT - world::HOTBAR_HEIGHT {
         ext::put_char((INVENTORY_INDENT, i as u16), &Shape::new('|', (255, 255, 255), (0, 0, 0)));
+        ext::erase((INVENTORY_INDENT - 1, i as u16));
     }
+    // Right
     for i in INVENTORY_INDENT..size.1 - INVENTORY_INDENT - world::HOTBAR_HEIGHT {
         ext::put_char((size.0 - INVENTORY_INDENT - 1, i as u16), &Shape::new('|', (255, 255, 255), (0, 0, 0)));
+        ext::erase((size.0 - INVENTORY_INDENT, i as u16));
     }
 
     // Clear inside
