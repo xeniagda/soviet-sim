@@ -56,9 +56,10 @@ struct WorldWrapper {
     at_inventory: Option<AtInventory>
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone, Copy)]
 struct AtInventory {
-    selected_recipe: usize
+    selected_recipe: usize,
+    scroll: u16,
 }
 
 lazy_static! {
@@ -105,7 +106,7 @@ pub fn tick() {
         match game.state {
             GameState::Playing(ref mut rouge) => {
                 diff = rouge.world.difficulty;
-                if let Some(ref inv) = rouge.at_inventory {
+                if let Some(inv) = rouge.at_inventory {
                     rouge.world.draw(size);
                     draw_inventory(inv, rouge, size);
                 } else {
@@ -188,7 +189,7 @@ fn draw_game_over(msg: RestartMessage, _size: (u16, u16)) {
 
 }
 
-fn draw_inventory(inv: &AtInventory, ww: &WorldWrapper, size: (u16, u16)) {
+fn draw_inventory(inv: AtInventory, ww: &mut WorldWrapper, size: (u16, u16)) {
     // Border
     for i in INVENTORY_INDENT..size.0-INVENTORY_INDENT {
         ext::put_char((i as u16, INVENTORY_INDENT), &Shape::new('=', (255, 255, 255), (0, 0, 0)));
@@ -247,33 +248,51 @@ fn draw_inventory(inv: &AtInventory, ww: &WorldWrapper, size: (u16, u16)) {
         }
     }
 
-    // Helpers to keep in bounds
+    // Helpers to keep in bounds. Returns:
+    //     None - The text was placed
+    //     Some(false) - The text is to far up to be placed
+    //     Some(true) - The text is to far down to be placed
     let draw_crafting_str = move |pos: (u16, u16), text: &str, fg: (u8, u8, u8), bg: (u8, u8, u8)| {
-        let pos_ = (pos.0 + size.0 / 2, INVENTORY_INDENT + pos.1);
+        let pos_ = (pos.0 + size.0 / 2, INVENTORY_INDENT + pos.1 - inv.scroll);
+        if pos_.1 <= INVENTORY_INDENT + 1 {
+            return Some(false);
+        }
         if pos_.1 >= size.1 - INVENTORY_INDENT - 1 {
-            return;
+            return Some(true);
         }
         ext::put_text(pos_, text, fg, bg);
+        None
     };
 
     let draw_crafting_shape = move |pos: (u16, u16), sh: &Shape| {
-        let pos_ = (pos.0 + size.0 / 2, INVENTORY_INDENT + pos.1);
+        let pos_ = (pos.0 + size.0 / 2, INVENTORY_INDENT + pos.1 - inv.scroll);
+        if pos_.1 <= INVENTORY_INDENT + 1 {
+            return Some(false);
+        }
         if pos_.1 >= size.1 - INVENTORY_INDENT - 1 {
-            return;
+            return Some(true);
         }
         ext::put_char(pos_, sh);
+        None
     };
+
+    let mut scroll_move: i16 = 0;
 
     let mut y = 2;
     // Draw recipes
     for (i, recipe) in crafting::RECIPES.iter().enumerate() {
-        draw_crafting_shape((1, y), &recipe.out.get_shape());
+        let mut drawn: Option<bool> = None;
+        drawn = drawn.or(
+            draw_crafting_shape((1, y), &recipe.out.get_shape())
+            );
         if i == inv.selected_recipe {
-            draw_crafting_str(
-                (4, y),
-                &recipe.out.get_name(),
-                (255, 255, 255),
-                (0, 0, 0));
+            drawn = drawn.or(
+                draw_crafting_str(
+                    (4, y),
+                    &recipe.out.get_name(),
+                    (255, 255, 255),
+                    (0, 0, 0))
+                );
             let desc = recipe.out.get_desc();
             let mut desc_words = desc.split(" ");
 
@@ -285,15 +304,24 @@ fn draw_inventory(inv: &AtInventory, ww: &WorldWrapper, size: (u16, u16)) {
                     x = 2;
                     y += 1;
                 }
-                draw_crafting_str((x, y), word, (150, 150, 255), (0, 0, 0));
+                drawn = drawn.or(draw_crafting_str((x, y), word, (150, 150, 255), (0, 0, 0)));
                 x += word.len() as u16 + 1;
             }
             for (needed, amount) in recipe.needed.iter() {
                 y += 1;
-                draw_crafting_shape((3, y), &needed.get_shape());
-                draw_crafting_str((4, y),
+                drawn = drawn.or(draw_crafting_shape((3, y), &needed.get_shape()));
+                drawn = drawn.or(
+                    draw_crafting_str(
+                              (4, y),
                               &format!("x{}", amount),
-                              (255, 255, 255), (0, 0, 0));
+                              (255, 255, 255),
+                              (0, 0, 0)
+                          ));
+            }
+            match drawn {
+                Some(false) => scroll_move = -1,
+                Some(true)  => scroll_move = 1,
+                None => {}
             }
         } else {
             draw_crafting_str(
@@ -303,6 +331,14 @@ fn draw_inventory(inv: &AtInventory, ww: &WorldWrapper, size: (u16, u16)) {
                 (0, 0, 0));
         }
         y += 3;
+    }
+    if let Some(ref mut i) = ww.at_inventory {
+        if scroll_move < 0 {
+            i.scroll = i.scroll.saturating_sub(-scroll_move as u16);
+        } else {
+            i.scroll = i.scroll.saturating_add(scroll_move as u16);
+        }
+        ext::log(&format!("Scroll: {}", i.scroll));
     }
 }
 
