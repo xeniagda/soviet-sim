@@ -247,12 +247,33 @@ fn draw_inventory(inv: &AtInventory, ww: &WorldWrapper, size: (u16, u16)) {
         }
     }
 
+    // Helpers to keep in bounds
+    let draw_crafting_str = move |pos: (u16, u16), text: &str, fg: (u8, u8, u8), bg: (u8, u8, u8)| {
+        let pos_ = (pos.0 + size.0 / 2, INVENTORY_INDENT + pos.1);
+        if pos_.1 >= size.1 - INVENTORY_INDENT - 1 {
+            return;
+        }
+        ext::put_text(pos_, text, fg, bg);
+    };
+
+    let draw_crafting_shape = move |pos: (u16, u16), sh: &Shape| {
+        let pos_ = (pos.0 + size.0 / 2, INVENTORY_INDENT + pos.1);
+        if pos_.1 >= size.1 - INVENTORY_INDENT - 1 {
+            return;
+        }
+        ext::put_char(pos_, sh);
+    };
+
     let mut y = 2;
     // Draw recipes
     for (i, recipe) in crafting::RECIPES.iter().enumerate() {
-        ext::put_char((size.0 / 2 + 1, INVENTORY_INDENT + y), &recipe.out.get_shape());
+        draw_crafting_shape((1, y), &recipe.out.get_shape());
         if i == inv.selected_recipe {
-            ext::put_text((size.0 / 2 + 4, INVENTORY_INDENT + y), &recipe.out.get_name(), (255, 255, 255), (0, 0, 0));
+            draw_crafting_str(
+                (4, y),
+                &recipe.out.get_name(),
+                (255, 255, 255),
+                (0, 0, 0));
             let desc = recipe.out.get_desc();
             let mut desc_words = desc.split(" ");
 
@@ -264,18 +285,22 @@ fn draw_inventory(inv: &AtInventory, ww: &WorldWrapper, size: (u16, u16)) {
                     x = 2;
                     y += 1;
                 }
-                ext::put_text((size.0 / 2 + x, INVENTORY_INDENT + y), word, (150, 150, 255), (0, 0, 0));
+                draw_crafting_str((x, y), word, (150, 150, 255), (0, 0, 0));
                 x += word.len() as u16 + 1;
             }
             for (needed, amount) in recipe.needed.iter() {
                 y += 1;
-                ext::put_char((size.0 / 2 + 3, INVENTORY_INDENT + y), &needed.get_shape());
-                ext::put_text((size.0 / 2 + 4, INVENTORY_INDENT + y),
+                draw_crafting_shape((3, y), &needed.get_shape());
+                draw_crafting_str((4, y),
                               &format!("x{}", amount),
                               (255, 255, 255), (0, 0, 0));
             }
         } else {
-            ext::put_text((size.0 / 2 + 4, INVENTORY_INDENT + y), &recipe.out.get_name(), (120, 120, 120), (0, 0, 0));
+            draw_crafting_str(
+                (4, y),
+                &recipe.out.get_name(),
+                (120, 120, 120),
+                (0, 0, 0));
         }
         y += 3;
     }
