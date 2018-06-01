@@ -195,18 +195,18 @@ fn draw_inventory(inv: AtInventory, ww: &mut WorldWrapper, size: (u16, u16)) {
         ext::put_char((i as u16, INVENTORY_INDENT), &Shape::new('=', (255, 255, 255), (0, 0, 0)));
     }
     for i in INVENTORY_INDENT..size.0-INVENTORY_INDENT {
-        ext::put_char((i as u16, size.1 - INVENTORY_INDENT - 1), &Shape::new('=', (255, 255, 255), (0, 0, 0)));
+        ext::put_char((i as u16, size.1 - INVENTORY_INDENT - world::HOTBAR_HEIGHT - 1), &Shape::new('=', (255, 255, 255), (0, 0, 0)));
     }
-    for i in INVENTORY_INDENT..size.1-INVENTORY_INDENT {
+    for i in INVENTORY_INDENT..size.1 - INVENTORY_INDENT - world::HOTBAR_HEIGHT {
         ext::put_char((INVENTORY_INDENT, i as u16), &Shape::new('|', (255, 255, 255), (0, 0, 0)));
     }
-    for i in INVENTORY_INDENT..size.1-INVENTORY_INDENT {
+    for i in INVENTORY_INDENT..size.1 - INVENTORY_INDENT - world::HOTBAR_HEIGHT {
         ext::put_char((size.0 - INVENTORY_INDENT - 1, i as u16), &Shape::new('|', (255, 255, 255), (0, 0, 0)));
     }
 
     // Clear inside
     for x in INVENTORY_INDENT+1..size.0-INVENTORY_INDENT-1 {
-        for y in INVENTORY_INDENT+1..size.1-INVENTORY_INDENT-1 {
+        for y in INVENTORY_INDENT+1..size.1 - INVENTORY_INDENT - world::HOTBAR_HEIGHT-1 {
             ext::put_char((x, y), &Shape::new(' ', (0, 0, 0), (0, 0, 0)))
         }
     }
@@ -218,7 +218,7 @@ fn draw_inventory(inv: AtInventory, ww: &mut WorldWrapper, size: (u16, u16)) {
         (255, 255, 0), (255, 0, 0));
 
     // Draw bar
-    for i in INVENTORY_INDENT+1..size.1-INVENTORY_INDENT-1 {
+    for i in INVENTORY_INDENT+1..size.1 - INVENTORY_INDENT - world::HOTBAR_HEIGHT-1 {
         ext::put_char((size.0 / 2, i), &Shape::new('|', (255, 255, 255), (0, 0, 0)));
     }
 
@@ -257,7 +257,7 @@ fn draw_inventory(inv: AtInventory, ww: &mut WorldWrapper, size: (u16, u16)) {
         if pos_.1 <= INVENTORY_INDENT + 1 {
             return Some(false);
         }
-        if pos_.1 >= size.1 - INVENTORY_INDENT - 1 {
+        if pos_.1 >= size.1 - INVENTORY_INDENT - world::HOTBAR_HEIGHT - 1 {
             return Some(true);
         }
         ext::put_text(pos_, text, fg, bg);
@@ -269,7 +269,7 @@ fn draw_inventory(inv: AtInventory, ww: &mut WorldWrapper, size: (u16, u16)) {
         if pos_.1 <= INVENTORY_INDENT + 1 {
             return Some(false);
         }
-        if pos_.1 >= size.1 - INVENTORY_INDENT - 1 {
+        if pos_.1 >= size.1 - INVENTORY_INDENT - world::HOTBAR_HEIGHT - 1 {
             return Some(true);
         }
         ext::put_char(pos_, sh);
