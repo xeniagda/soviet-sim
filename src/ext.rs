@@ -53,13 +53,17 @@ pub fn put_char(pos: (u16, u16), shape: &Shape) {
             unflipped.push(vec![]);
         }
         while unflipped[pos.0 as usize].len() <= pos.1 as usize {
-            unflipped[pos.0 as usize].push(Shape::new(' ', (0,0,0), (0,0,0)));
+            unflipped[pos.0 as usize].push(Shape::empty());
         }
 
         if unflipped[pos.0 as usize][pos.1 as usize] != *shape {
             unflipped[pos.0 as usize][pos.1 as usize] = *shape;
         }
     }
+}
+
+pub fn erase(pos: (u16, u16)) {
+    put_char(pos, &Shape::empty());
 }
 
 pub fn put_text(pos: (u16, u16), text: &str, fg: (u8, u8, u8), bg: (u8, u8, u8)) {
@@ -75,7 +79,7 @@ pub fn recolor(pos: (u16, u16), fg: (u8, u8, u8), bg: (u8, u8, u8)) {
                 screen.push(vec![]);
             }
             while screen[pos.0 as usize].len() <= pos.1 as usize {
-                screen[pos.0 as usize].push(Shape::new(' ', (0,0,0), (0,0,0)));
+                screen[pos.0 as usize].push(Shape::empty());
             }
             let current = screen[pos.0 as usize][pos.1 as usize];
 

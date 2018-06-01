@@ -207,7 +207,7 @@ fn draw_inventory(inv: AtInventory, ww: &mut WorldWrapper, size: (u16, u16)) {
     // Clear inside
     for x in INVENTORY_INDENT+1..size.0-INVENTORY_INDENT-1 {
         for y in INVENTORY_INDENT+1..size.1 - INVENTORY_INDENT - world::HOTBAR_HEIGHT-1 {
-            ext::put_char((x, y), &Shape::new(' ', (0, 0, 0), (0, 0, 0)))
+            ext::erase((x, y))
         }
     }
 
