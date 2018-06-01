@@ -30,14 +30,14 @@ lazy_static! {
             ]
         },
         Recipe {
-            out: PICKAXE,
+            out: SUPER_BOOTS,
             needed: vec![
                 (InventoryItem::Block(block::MOVER.clone()), 2),
                 (InventoryItem::Bullet, 10),
             ]
         },
         Recipe {
-            out: SUPER_BOOTS,
+            out: PICKAXE,
             needed: vec![
                 (PICKAXE, 1),
                 (InventoryItem::Block(block::MOVER.clone()), 2),
