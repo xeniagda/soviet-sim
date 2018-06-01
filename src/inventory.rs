@@ -64,8 +64,8 @@ impl InventoryItem {
             InventoryItem::Block(ref block) => block.name.clone(),
             InventoryItem::Bomb => "Bomb".into(),
             InventoryItem::Bullet => "Bullet".into(),
-            InventoryItem::SuperBoots(_, _) => "Super Boots".into(),
-            InventoryItem::Pickaxe(_, _) => "Pickaxe".into(),
+            InventoryItem::SuperBoots(dur, tot) => format!("Super Boots {}/{}", dur + 1, tot),
+            InventoryItem::Pickaxe(dur, tot) => format!("Pickaxe {}/{}", dur + 1, tot),
         }
     }
     pub fn get_desc(&self) -> String {

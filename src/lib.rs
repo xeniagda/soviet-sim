@@ -248,11 +248,11 @@ fn draw_inventory(inv: AtInventory, ww: &mut WorldWrapper, size: (u16, u16)) {
         ww.world.get_player_id().and_then(|x| ww.world.entities.get(&x)) {
         for (i, (item, count)) in player.inventory.iter().enumerate() {
             ext::put_char(
-                (INVENTORY_INDENT + 1, INVENTORY_INDENT + i as u16 + 2),
+                (INVENTORY_INDENT + 2, INVENTORY_INDENT + i as u16 + 2),
                 &item.get_shape());
             ext::put_text(
-                (INVENTORY_INDENT + 2, INVENTORY_INDENT + i as u16 + 2),
-                &format!("x{}", count),
+                (INVENTORY_INDENT + 3, INVENTORY_INDENT + i as u16 + 2),
+                &format!("x{} - {}", count, item.get_name()),
                 (255, 255, 255), (0, 0, 0));
         }
     }
