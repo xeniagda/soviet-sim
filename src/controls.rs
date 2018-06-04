@@ -1,14 +1,27 @@
 use move_dir::MoveDir;
 use key::Key;
 
-use std::collections::HashSet;
+use std::collections::{HashSet, HashMap};
+
+// From https://stackoverflow.com/a/27582993/1753929
+macro_rules! hashmap(
+    { $($key:expr => $value:expr),+, } => {
+        {
+            let mut m = ::std::collections::HashMap::new();
+            $(
+                m.insert($key, $value);
+            )+
+            m
+        }
+    };
+    { $x:tt } => { hashmap{ $x, } };
+);
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Control<'a> {
     pub modifiers: &'a [Key],
-    pub key: Key,
+    pub keys: HashMap<Key, Action>,
     pub desc: &'a str,
-    pub action: Action,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -22,196 +35,103 @@ pub enum Action {
     ToggleInventory, Die, Select
 }
 
-pub const CONTROLS: &[Control] = &[
-    Control {
-        modifiers: &[Key::Shift, Key::Ctrl],
-        key: Key::Up,
-        desc: "Run upwards",
-        action: Action::Run(MoveDir::Up)
-    },
+lazy_static! {
+    pub static ref CONTROLS: Vec<Control<'static>> = vec![
+        Control {
+            modifiers: &[Key::Shift, Key::Ctrl],
+            keys: hashmap!{
+                Key::Arrow(MoveDir::Up)    => Action::Run(MoveDir::Up),
+                Key::Arrow(MoveDir::Right) => Action::Run(MoveDir::Right),
+                Key::Arrow(MoveDir::Down)  => Action::Run(MoveDir::Down),
+                Key::Arrow(MoveDir::Left)  => Action::Run(MoveDir::Left),
+            },
+            desc: "Run",
+        },
 
-    Control {
-        modifiers: &[Key::Shift, Key::Ctrl],
-        key: Key::Down,
-        desc: "Run downwards",
-        action: Action::Run(MoveDir::Down)
-    },
+        Control {
+            modifiers: &[Key::Shift],
+            keys: hashmap!{
+                Key::Arrow(MoveDir::Left)  => Action::IncActive,
+                Key::Arrow(MoveDir::Right) => Action::DecActive,
+            },
+            desc: "Change the active slot",
+        },
 
-    Control {
-        modifiers: &[Key::Shift, Key::Ctrl],
-        key: Key::Left,
-        desc: "Run left",
-        action: Action::Run(MoveDir::Left)
-    },
+        Control {
+            modifiers: &[Key::Letter(12), Key::Alt],
+            keys: hashmap!{
+                Key::Arrow(MoveDir::Up)    => Action::SuperMine(MoveDir::Up),
+                Key::Arrow(MoveDir::Right) => Action::SuperMine(MoveDir::Right),
+                Key::Arrow(MoveDir::Down)  => Action::SuperMine(MoveDir::Down),
+                Key::Arrow(MoveDir::Left)  => Action::SuperMine(MoveDir::Left),
+            },
+            desc: "Supermine a block",
+        },
 
-    Control {
-        modifiers: &[Key::Shift, Key::Ctrl],
-        key: Key::Right,
-        desc: "Run right",
-        action: Action::Run(MoveDir::Right)
-    },
+        Control {
+            modifiers: &[Key::Letter(12)],
+            keys: hashmap!{
+                Key::Arrow(MoveDir::Up)    => Action::Break(MoveDir::Up),
+                Key::Arrow(MoveDir::Right) => Action::Break(MoveDir::Right),
+                Key::Arrow(MoveDir::Down)  => Action::Break(MoveDir::Down),
+                Key::Arrow(MoveDir::Left)  => Action::Break(MoveDir::Left),
+            },
+            desc: "Break a block",
+        },
 
-    Control {
-        modifiers: &[Key::Shift],
-        key: Key::Right,
-        desc: "Increase the active slot",
-        action: Action::IncActive
-    },
+        Control {
+            modifiers: &[Key::Letter(15)],
+            keys: hashmap!{
+                Key::Arrow(MoveDir::Up)    => Action::Place(MoveDir::Up),
+                Key::Arrow(MoveDir::Right) => Action::Place(MoveDir::Right),
+                Key::Arrow(MoveDir::Down)  => Action::Place(MoveDir::Down),
+                Key::Arrow(MoveDir::Left)  => Action::Place(MoveDir::Left),
+            },
+            desc: "Place a block",
+        },
 
-    Control {
-        modifiers: &[Key::Shift],
-        key: Key::Left,
-        desc: "Decrease the active slot",
-        action: Action::DecActive
-    },
+        Control {
+            modifiers: &[],
+            keys: hashmap!{
+                Key::Arrow(MoveDir::Up)    => Action::Move(MoveDir::Up),
+                Key::Arrow(MoveDir::Right) => Action::Move(MoveDir::Right),
+                Key::Arrow(MoveDir::Down)  => Action::Move(MoveDir::Down),
+                Key::Arrow(MoveDir::Left)  => Action::Move(MoveDir::Left),
+            },
+            desc: "Move the character",
+        },
 
-    Control {
-        modifiers: &[Key::Letter(12), Key::Alt],
-        key: Key::Up,
-        desc: "Supermine a block upwards",
-        action: Action::SuperMine(MoveDir::Up)
-    },
+        Control {
+            modifiers: &[],
+            keys: hashmap!{ Key::Letter(8) => Action::ToggleInventory, }, // I
+            desc: "Open/close the inventory",
+        },
 
-    Control {
-        modifiers: &[Key::Letter(12), Key::Alt],
-        key: Key::Down,
-        desc: "Supermine a block downwards",
-        action: Action::SuperMine(MoveDir::Down)
-    },
+        Control {
+            modifiers: &[],
+            keys: hashmap!{ Key::Letter(17) => Action::Die, }, // R
+            desc: "Die",
+        },
 
-    Control {
-        modifiers: &[Key::Letter(12), Key::Alt],
-        key: Key::Left,
-        desc: "Supermine a block to the left",
-        action: Action::SuperMine(MoveDir::Left)
-    },
+        Control {
+            modifiers: &[],
+            keys: hashmap!{ Key::Enter => Action::Select, },
+            desc: "Select",
+        },
+    ];
+}
 
-    Control {
-        modifiers: &[Key::Letter(12), Key::Alt],
-        key: Key::Right,
-        desc: "Supermine a block to the right",
-        action: Action::SuperMine(MoveDir::Right)
-    },
-
-    Control {
-        modifiers: &[Key::Letter(12)],
-        key: Key::Up,
-        desc: "Break a block upwards",
-        action: Action::Break(MoveDir::Up)
-    },
-
-    Control {
-        modifiers: &[Key::Letter(12)],
-        key: Key::Down,
-        desc: "Break a block downwards",
-        action: Action::Break(MoveDir::Down)
-    },
-
-    Control {
-        modifiers: &[Key::Letter(12)],
-        key: Key::Left,
-        desc: "Break a block to the left",
-        action: Action::Break(MoveDir::Left)
-    },
-
-    Control {
-        modifiers: &[Key::Letter(12)],
-        key: Key::Right,
-        desc: "Break a block to the right",
-        action: Action::Break(MoveDir::Right)
-    },
-
-    Control {
-        modifiers: &[Key::Letter(15)],
-        key: Key::Up,
-        desc: "Place a block upwards",
-        action: Action::Place(MoveDir::Up)
-    },
-
-    Control {
-        modifiers: &[Key::Letter(15)],
-        key: Key::Down,
-        desc: "Place a block downwards",
-        action: Action::Place(MoveDir::Down)
-    },
-
-    Control {
-        modifiers: &[Key::Letter(15)],
-        key: Key::Left,
-        desc: "Place a block to the left",
-        action: Action::Place(MoveDir::Left)
-    },
-
-    Control {
-        modifiers: &[Key::Letter(15)],
-        key: Key::Right,
-        desc: "Place a block to the right",
-        action: Action::Place(MoveDir::Right)
-    },
-
-
-    Control {
-        modifiers: &[],
-        key: Key::Up,
-        desc: "Move the character upwards",
-        action: Action::Move(MoveDir::Up)
-    },
-
-    Control {
-        modifiers: &[],
-        key: Key::Down,
-        desc: "Move the character downwards",
-        action: Action::Move(MoveDir::Down)
-    },
-
-    Control {
-        modifiers: &[],
-        key: Key::Left,
-        desc: "Move the character left",
-        action: Action::Move(MoveDir::Left)
-    },
-
-    Control {
-        modifiers: &[],
-        key: Key::Right,
-        desc: "Move the character right",
-        action: Action::Move(MoveDir::Right)
-    },
-
-    Control {
-        modifiers: &[],
-        key: Key::Letter(8), // I
-        desc: "Open/close the inventory",
-        action: Action::ToggleInventory
-    },
-
-    Control {
-        modifiers: &[],
-        key: Key::Letter(17), // R
-        desc: "Die",
-        action: Action::Die
-    },
-
-    Control {
-        modifiers: &[],
-        key: Key::Enter,
-        desc: "Select",
-        action: Action::Select
-    },
-];
-
-pub fn parse_control<'a>(key: &'a Key, pressed: &HashSet<Key>) -> Option<&'static Control<'static>> {
-    for control in CONTROLS {
-        if control.key != *key { continue; }
-        let mut all_mods = true;
+pub fn parse_control<'a>(key: &'a Key, pressed: &HashSet<Key>) -> Option<&'static Action> {
+    'outer: for control in CONTROLS.iter() {
         for modifier in control.modifiers {
             if !pressed.contains(modifier) {
-                all_mods = false;
-                break;
+                continue 'outer;
             }
         }
-        if all_mods {
-            return Some(control);
+        for (k, action) in control.keys.iter() {
+            if k == key {
+                return Some(action);
+            }
         }
     }
     None

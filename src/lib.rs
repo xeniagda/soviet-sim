@@ -1,4 +1,4 @@
-#![feature(vec_remove_item, nll)]
+#![feature(vec_remove_item, nll, const_let)]
 
 #[macro_use]
 extern crate lazy_static;
@@ -184,7 +184,10 @@ fn draw_menu(difficulty: Difficulty, size: (u16, u16)) {
                 .collect::<String>();
 
         ext::put_text((2, 10 + i as u16),
-                     &format!("{}{}: {}", modifiers, cont.key, cont.desc),
+                     &format!("{}{}: {}",
+                         modifiers,
+                         cont.keys.keys().map(|x| format!("{}", x)).collect::<String>(),
+                         cont.desc),
                      (255, 255, 255), (0, 0, 0));
     }
 }
@@ -394,9 +397,9 @@ pub fn key_down(key_code: u8) {
                 match game.state {
                     GameState::Playing(ref mut rouge) => {
 
-                        if let Some(ref cont) = controls::parse_control(&key, &rouge.keys_down) {
-                            ext::log(&format!("Control: {:?}", cont));
-                            if let controls::Action::ToggleInventory = cont.action {
+                        if let Some(ref action) = controls::parse_control(&key, &rouge.keys_down) {
+                            ext::log(&format!("Action: {:?}", action));
+                            if let controls::Action::ToggleInventory = action {
                                 if rouge.at_inventory.is_some() {
                                     rouge.at_inventory = None;
                                 } else {
@@ -404,9 +407,9 @@ pub fn key_down(key_code: u8) {
                                 }
                             }
                             if rouge.at_inventory.is_none() {
-                                rouge.world.do_action(&cont.action);
+                                rouge.world.do_action(&action);
                             } else if let Some(ref mut inv) = rouge.at_inventory {
-                                match cont.action {
+                                match action {
                                     controls::Action::Move(MoveDir::Up) if inv.selected_recipe > 0 => {
                                         inv.selected_recipe -= 1;
                                     }
@@ -454,8 +457,8 @@ pub fn key_up(key_code: u8) {
                     }
                     GameState::Menu(ref mut difficulty) => {
                         match key {
-                            key::Key::Right => { *difficulty = difficulty.harder() }
-                            key::Key::Left  => { *difficulty = difficulty.easier() }
+                            key::Key::Arrow(MoveDir::Right) => { *difficulty = difficulty.harder() }
+                            key::Key::Arrow(MoveDir::Left)  => { *difficulty = difficulty.easier() }
                             key::Key::Enter => { start = Some(*difficulty); }
                             _ => {}
                         }
