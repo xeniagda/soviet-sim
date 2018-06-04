@@ -178,26 +178,35 @@ fn draw_menu(difficulty: Difficulty, size: (u16, u16)) {
     let mut controls_actions = vec![];
 
     for cont in controls::CONTROLS.iter().rev() {
-        let modifiers =
+        let mut keys =
                 cont.modifiers.iter()
-                .map(|x| format!("{}+", x))
-                .collect::<String>();
+                .map(|x| format!("{}", x))
+                .collect::<Vec<_>>();
+
+        keys.push(cont.keys.keys().map(|x| format!("{}", x)).collect::<String>());
 
         controls_actions.push(
-            (format!("{}{}:", modifiers, cont.keys.keys().map(|x| format!("{}", x)).collect::<String>()),
+            (keys,
             cont.desc));
     }
 
-    let max_control = controls_actions.iter().map(|(c, _)| c.chars().count() as u16).max().unwrap();
+    let colon_col = size.0 / 2;
 
     let text = "Controls:";
-    ext::put_text((10 + max_control - text.chars().count() as u16, 12), text, (255, 180, 255), (0, 0, 0));
+    ext::put_text((colon_col - text.chars().count() as u16 / 2, 12), text, (255, 180, 255), (0, 0, 0));
 
 
-    for (i, (c, a)) in controls_actions.iter().enumerate() {
-        ext::put_text((10 + max_control - c.chars().count() as u16, 14 + i as u16),
-                     c, (255, 255, 200), (0, 0, 0));
-        ext::put_text((11 + max_control, 14 + i as u16),
+    for (i, (k, a)) in controls_actions.into_iter().enumerate() {
+        let len = k.iter().map(|x| x.chars().count() as u16 + 1).sum::<u16>() - 1;
+        let mut x = colon_col - len;
+        for key in k {
+            ext::put_text((x, 14 + i as u16), &key, (255, 255, 200), (0, 0, 0));
+            ext::put_char((x + key.chars().count() as u16, 14 + i as u16), &Shape::new('+', (150, 255, 255), (0, 0, 0)));
+            x += key.chars().count() as u16 + 1;
+        }
+        ext::put_char((colon_col, 14 + i as u16), &Shape::new(':', (200, 255, 255), (0, 0, 0)));
+
+        ext::put_text((colon_col + 2, 14 + i as u16),
                      a, (255, 255, 255), (0, 0, 0));
     }
 
