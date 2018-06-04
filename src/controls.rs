@@ -22,7 +22,7 @@ pub enum Action {
     ToggleInventory, Die, Select
 }
 
-const CONTROLS: &[Control] = &[
+pub const CONTROLS: &[Control] = &[
     Control {
         modifiers: &[Key::Shift, Key::Ctrl],
         key: Key::Up,

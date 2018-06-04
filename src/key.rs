@@ -1,3 +1,5 @@
+use std::fmt::{Display, Formatter, Error};
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[allow(dead_code)]
 pub enum Key {
@@ -7,6 +9,30 @@ pub enum Key {
     Shift, Alt, Ctrl, Meta,
     Enter, Backspace, Tab,
     Plus, Minus
+}
+
+impl Display for Key {
+    fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
+        use self::Key::*;
+        let text = match self {
+            Down       => "Down".into(),
+            Up         => "Up".into(),
+            Left       => "Left".into(),
+            Right      => "Right".into(),
+            Letter(ch) => format!("'{}'", (ch + 'A' as u8) as char),
+            Digit(ch)  => format!("{}", (ch + '0' as u8) as char),
+            Shift      => "Shift".into(),
+            Alt        => "Alt".into(),
+            Ctrl       => "Ctrl".into(),
+            Meta       => "Meta".into(),
+            Enter      => "Enter".into(),
+            Backspace  => "Backspace".into(),
+            Tab        => "Tab".into(),
+            Plus       => "Plus".into(),
+            Minus      => "Minus".into(),
+        };
+        write!(fmt, "{}", text)
+    }
 }
 
 pub fn parse_key(code: u8) -> Option<Key> {

@@ -172,6 +172,21 @@ fn draw_menu(difficulty: Difficulty, size: (u16, u16)) {
     ext::put_text((1, 3), &format!("Diffiulty: {}", difficulty.to_string()), (255, 255, 255), (0, 0, 0));
 
     ext::put_text((1, 6), "Press enter to start!", (255, 255, 255), (0, 0, 0));
+
+
+    // Controls
+    ext::put_text((2, 9), "Controls:", (255, 255, 255), (0, 0, 0));
+
+    for (i, cont) in controls::CONTROLS.iter().rev().enumerate() {
+        let modifiers =
+                cont.modifiers.iter()
+                .map(|x| format!("{}-", x))
+                .collect::<String>();
+
+        ext::put_text((2, 10 + i as u16),
+                     &format!("{}{}: {}", modifiers, cont.key, cont.desc),
+                     (255, 255, 255), (0, 0, 0));
+    }
 }
 
 fn draw_game_over(msg: RestartMessage, _size: (u16, u16)) {
