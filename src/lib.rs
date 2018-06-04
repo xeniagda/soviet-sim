@@ -183,7 +183,10 @@ fn draw_menu(difficulty: Difficulty, size: (u16, u16)) {
                 .map(|x| format!("{}", x))
                 .collect::<Vec<_>>();
 
-        keys.push(cont.keys.keys().map(|x| format!("{}", x)).collect::<String>());
+        let mut ending = cont.keys.keys().map(|x| format!("{}", x)).collect::<Vec<_>>();
+        ending.sort();
+
+        keys.push(ending.into_iter().collect());
 
         controls_actions.push(
             (keys,

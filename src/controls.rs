@@ -51,8 +51,8 @@ lazy_static! {
         Control {
             modifiers: &[Key::Shift],
             keys: hashmap!{
-                Key::Arrow(MoveDir::Left)  => Action::IncActive,
-                Key::Arrow(MoveDir::Right) => Action::DecActive,
+                Key::Arrow(MoveDir::Right) => Action::IncActive,
+                Key::Arrow(MoveDir::Left)  => Action::DecActive,
             },
             desc: "Change the active slot",
         },
