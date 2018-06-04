@@ -184,20 +184,21 @@ fn draw_menu(difficulty: Difficulty, size: (u16, u16)) {
                 .collect::<String>();
 
         controls_actions.push(
-            (format!("{}{}", modifiers, cont.keys.keys().map(|x| format!("{}", x)).collect::<String>()),
+            (format!("{}{}:", modifiers, cont.keys.keys().map(|x| format!("{}", x)).collect::<String>()),
             cont.desc));
     }
 
     let max_control = controls_actions.iter().map(|(c, _)| c.chars().count() as u16).max().unwrap();
 
     let text = "Controls:";
-    ext::put_text((11 + max_control - text.chars().count() as u16, 9), text, (255, 255, 255), (0, 0, 0));
+    ext::put_text((10 + max_control - text.chars().count() as u16, 12), text, (255, 180, 255), (0, 0, 0));
 
 
     for (i, (c, a)) in controls_actions.iter().enumerate() {
-        ext::put_text((10 + max_control - c.chars().count() as u16, 11 + i as u16),
-                     &format!("{}: {}", c, a),
-                     (255, 255, 255), (0, 0, 0));
+        ext::put_text((10 + max_control - c.chars().count() as u16, 14 + i as u16),
+                     c, (255, 255, 200), (0, 0, 0));
+        ext::put_text((11 + max_control, 14 + i as u16),
+                     a, (255, 255, 255), (0, 0, 0));
     }
 
 
