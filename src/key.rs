@@ -16,7 +16,7 @@ impl Display for Key {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
         let text = match self {
             Key::Arrow(dir) => dir.to_ch().to_string(),
-            Key::Letter(ch) => format!("'{}'", (ch + 'A' as u8) as char),
+            Key::Letter(ch) => format!("{}", (ch + 'A' as u8) as char),
             Key::Digit(ch)  => format!("{}", (ch + '0' as u8) as char),
             Key::Shift      => "Shift".into(),
             Key::Alt        => "Alt".into(),

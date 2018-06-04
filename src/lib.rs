@@ -175,21 +175,32 @@ fn draw_menu(difficulty: Difficulty, size: (u16, u16)) {
 
 
     // Controls
-    ext::put_text((2, 9), "Controls:", (255, 255, 255), (0, 0, 0));
+    let mut controls_actions = vec![];
 
-    for (i, cont) in controls::CONTROLS.iter().rev().enumerate() {
+    for cont in controls::CONTROLS.iter().rev() {
         let modifiers =
                 cont.modifiers.iter()
-                .map(|x| format!("{}-", x))
+                .map(|x| format!("{}+", x))
                 .collect::<String>();
 
-        ext::put_text((2, 10 + i as u16),
-                     &format!("{}{}: {}",
-                         modifiers,
-                         cont.keys.keys().map(|x| format!("{}", x)).collect::<String>(),
-                         cont.desc),
+        controls_actions.push(
+            (format!("{}{}", modifiers, cont.keys.keys().map(|x| format!("{}", x)).collect::<String>()),
+            cont.desc));
+    }
+
+    let max_control = controls_actions.iter().map(|(c, _)| c.chars().count() as u16).max().unwrap();
+
+    let text = "Controls:";
+    ext::put_text((11 + max_control - text.chars().count() as u16, 9), text, (255, 255, 255), (0, 0, 0));
+
+
+    for (i, (c, a)) in controls_actions.iter().enumerate() {
+        ext::put_text((10 + max_control - c.chars().count() as u16, 11 + i as u16),
+                     &format!("{}: {}", c, a),
                      (255, 255, 255), (0, 0, 0));
     }
+
+
 }
 
 fn draw_game_over(msg: RestartMessage, _size: (u16, u16)) {
