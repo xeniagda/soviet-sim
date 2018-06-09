@@ -2,6 +2,9 @@
 
 #[macro_use]
 extern crate lazy_static;
+extern crate textwrap;
+
+use textwrap::Wrapper;
 
 mod ext;
 mod key;
@@ -327,6 +330,9 @@ fn draw_inventory(inv: AtInventory, ww: &mut WorldWrapper, size: (u16, u16)) {
         None
     };
 
+    let width = size.0 / 2 - INVENTORY_INDENT - 4;
+    let wrapper = Wrapper::new(width as usize);
+
     let mut scroll_move: i16 = 0;
 
     let mut y = 2;
@@ -345,29 +351,11 @@ fn draw_inventory(inv: AtInventory, ww: &mut WorldWrapper, size: (u16, u16)) {
                     (0, 0, 0))
                 );
             let desc = recipe.out.get_desc();
-            let mut desc_words = desc.split(" ");
 
-            y += 1;
-            let mut x = 2;
-
-            while let Some(word) = desc_words.next() {
-                if x + word.len() as u16 + size.0 / 2 >= size.0 - INVENTORY_INDENT - 1 {
-                    x = 2;
-                    y += 1;
-                }
-                drawn = drawn.or(draw_crafting_str((x, y), word, (150, 150, 255), (0, 0, 0)));
-                x += word.len() as u16 + 1;
-            }
-            for (needed, amount) in recipe.needed.iter() {
+            let lines = wrapper.wrap_iter(&desc);
+            for line in lines {
                 y += 1;
-                drawn = drawn.or(draw_crafting_shape((3, y), &needed.get_shape()));
-                drawn = drawn.or(
-                    draw_crafting_str(
-                              (4, y),
-                              &format!("x{}", amount),
-                              (255, 255, 255),
-                              (0, 0, 0)
-                          ));
+                drawn = drawn.or(draw_crafting_str((2, y as u16), &*line, (150, 150, 255), (0, 0, 0)));
             }
             match drawn {
                 Some(false) => scroll_move = -1,
