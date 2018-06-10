@@ -357,6 +357,17 @@ fn draw_inventory(inv: AtInventory, ww: &mut WorldWrapper, size: (u16, u16)) {
                 y += 1;
                 drawn = drawn.or(draw_crafting_str((2, y as u16), &*line, (150, 150, 255), (0, 0, 0)));
             }
+            for (needed, amount) in recipe.needed.iter() {
+                y += 1;
+                drawn = drawn.or(draw_crafting_shape((3, y), &needed.get_shape()));
+                drawn = drawn.or(
+                    draw_crafting_str(
+                              (4, y),
+                              &format!("x{}", amount),
+                              (255, 255, 255),
+                              (0, 0, 0)
+                          ));
+            }
             match drawn {
                 Some(false) => scroll_move = -1,
                 Some(true)  => scroll_move = 1,
