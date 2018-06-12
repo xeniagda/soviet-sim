@@ -102,7 +102,8 @@ impl Entity for Bomb {
             for x in -(draw_radius as i64)..=(draw_radius as i64) {
                 for y in -(draw_radius as i64)..=(draw_radius as i64) {
                     if x * x + y * y < (draw_radius * draw_radius) as i64 {
-                        erase((x as u16 + self.pos.0 - scroll.0 as u16, y as u16 + self.pos.1 - scroll.1 as u16));
+                        let pos = (x as u16 + self.pos.0 - scroll.0 as u16, y as u16 + self.pos.1 - scroll.1 as u16);
+                        put_char(pos, &Shape::new('#', (255, 128, 0), (255, 255, 255)));
                     }
                 }
             }
