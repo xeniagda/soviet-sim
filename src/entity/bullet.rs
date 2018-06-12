@@ -78,6 +78,20 @@ impl Entity for Bullet {
                 world.blocks[pos.0 as usize][pos.1 as usize] = block::GROUND.clone();
                 world.entities.remove(&en_id);
                 return true;
+            } else {
+                let id = world.blocks.get(pos.0 as usize)
+                    .and_then(|x| x.get(pos.1 as usize))
+                    .map(|x| x.get_id())
+                    .unwrap_or(0);
+
+                let blkf = block::BLOCK_FUNCS.lock().unwrap();
+
+                match blkf.get(id) {
+                    Some(f) => {
+                        f(world, en_id);
+                    }
+                    None => {}
+                }
             }
             for k in world.entities.clone().keys() {
                 if k != &en_id && world.entities.get(k).map(|x| x.get_pos()) == Some(pos) {
