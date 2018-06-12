@@ -6,7 +6,7 @@ use std::sync::Mutex;
 extern {
     fn u_put_char(x: u16, y: u16, ch: usize, fr: u8, fg: u8, fb: u8, br: u8, bg: u8, bb: u8);
     fn u_clear();
-    #[allow(dead_code)]
+    #[allow(unused)]
     fn u_log(msg: c_char);
     fn u_rand() -> f64;
 }
@@ -17,14 +17,15 @@ pub fn rand() -> f64 {
     unsafe { u_rand() }
 }
 
-#[cfg(debug)]
+#[cfg(debug_assertions)]
 pub fn log(x: &str) {
     unsafe {
         x.chars().for_each(|c| u_log(c as c_char));
         u_log(10 as c_char); // Newline
     }
 }
-#[cfg(not(debug))]
+
+#[cfg(not(debug_assertions))]
 pub fn log(_x: &str) {
 }
 
