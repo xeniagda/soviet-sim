@@ -143,8 +143,6 @@ impl Entity for Josef {
         if SHOW_PATH_FINDING {
             let mut pos = self.get_pos();
 
-            log(&format!("Path: {:?}", self.path));
-
             for dir in self.path.iter() {
                 let (dx, dy) = dir.to_vec();
                 pos = (pos.0 + dx as u16, pos.1 + dy as u16);

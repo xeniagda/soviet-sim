@@ -43,8 +43,6 @@ pub trait Entity {
 
 
         if let Some((pos, dir)) = new_pos_and_dir {
-            // log(&format!("Moved to {:?} in {:?}", pos, dir));
-
             let passable = world.blocks.get(pos.0 as usize)
                         .and_then(|x| x.get(pos.1 as usize))
                         .map(|x| x.is_passable())
@@ -57,8 +55,6 @@ pub trait Entity {
                     .unwrap_or(0);
 
                 let blkf = block::BLOCK_FUNCS.lock().unwrap();
-
-                // log(&format!("Id: {}", id));
 
                 match blkf.get(id) {
                     Some(f) => {

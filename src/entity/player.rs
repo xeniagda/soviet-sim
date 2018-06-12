@@ -45,10 +45,7 @@ impl Player {
                 return;
             }
 
-            if entity_positions
-                .any(|x| x == place_pos)
-            {
-                log("entity on tile");
+            if entity_positions.any(|x| x == place_pos) {
                 return;
             }
 

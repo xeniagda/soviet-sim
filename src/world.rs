@@ -193,7 +193,6 @@ impl World {
                         .collect();
 
                     self.break_dir(dir);
-                    log(&format!("Path: {:?}", self.auto_mine));
                 }
             }
             Action::Place(dir)  => {

@@ -388,7 +388,6 @@ fn draw_inventory(inv: AtInventory, ww: &mut WorldWrapper, size: (u16, u16)) {
         } else {
             i.scroll = i.scroll.saturating_add(scroll_move as u16);
         }
-        ext::log(&format!("Scroll: {}", i.scroll));
     }
 }
 
@@ -419,7 +418,6 @@ pub fn key_down(key_code: u8) {
             if let Ok(mut game) = GAME.try_lock() {
                 match game.state {
                     GameState::Playing(ref mut rouge) => {
-
                         if let Some(ref action) = controls::parse_control(&key, &rouge.keys_down) {
                             ext::log(&format!("Action: {:?}", action));
                             if let controls::Action::ToggleInventory = action {
@@ -469,34 +467,27 @@ pub fn key_up(key_code: u8) {
     let mut start: Option<Difficulty> = None;
     let mut next_state: Option<GameState> = None;
 
-    match key::parse_key(key_code) {
-        Some(key) => {
-            // log(&format!("Released key: {} -> {:?}", key_code, key));
-
-            if let Ok(mut game) = GAME.try_lock() {
-                match game.state {
-                    GameState::Playing(ref mut rouge) => {
-                        rouge.keys_down.remove(&key);
+    if let Some(key) = key::parse_key(key_code) {
+        if let Ok(mut game) = GAME.try_lock() {
+            match game.state {
+                GameState::Playing(ref mut rouge) => {
+                    rouge.keys_down.remove(&key);
+                }
+                GameState::Menu(ref mut difficulty) => {
+                    match key {
+                        key::Key::Arrow(MoveDir::Right) => { *difficulty = difficulty.harder() }
+                        key::Key::Arrow(MoveDir::Left)  => { *difficulty = difficulty.easier() }
+                        key::Key::Enter => { start = Some(*difficulty); }
+                        _ => {}
                     }
-                    GameState::Menu(ref mut difficulty) => {
-                        match key {
-                            key::Key::Arrow(MoveDir::Right) => { *difficulty = difficulty.harder() }
-                            key::Key::Arrow(MoveDir::Left)  => { *difficulty = difficulty.easier() }
-                            key::Key::Enter => { start = Some(*difficulty); }
-                            _ => {}
-                        }
-                    }
-                    GameState::GameOver(difficulty, _) => {
-                        match key {
-                            key::Key::Enter => { next_state = Some(GameState::Menu(difficulty)); }
-                            _ => {}
-                        }
+                }
+                GameState::GameOver(difficulty, _) => {
+                    match key {
+                        key::Key::Enter => { next_state = Some(GameState::Menu(difficulty)); }
+                        _ => {}
                     }
                 }
             }
-        }
-        None => {
-            // log(&format!("Released key: {}", key_code));
         }
     }
     if let Some(next_state) = next_state {

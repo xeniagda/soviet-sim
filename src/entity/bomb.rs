@@ -24,7 +24,6 @@ impl Bomb {
     }
 
     fn boom(world: &mut World, en_id: u64) where Self: Sized {
-        log("boom");
         let (x, y) =
             if let Some(EntityWrapper::WBomb(ref mut this)) = world.entities.get_mut(&en_id) {
                 this.pos
