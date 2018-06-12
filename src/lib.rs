@@ -76,6 +76,7 @@ lazy_static! {
 
 #[no_mangle]
 pub fn start(width: u16, height: u16) {
+    ext::log("Started");
     // Set panic hook
     set_hook(Box::new(|info| {
         ext::log(&format!("FATAL ERROR:"));
