@@ -30,7 +30,7 @@ use std::panic::set_hook;
 
 const TITLE: &str = "☭☭☭ COMMUNISM SIMULATOR ☭☭☭";
 const INVENTORY_TITLE: &str = "☭☭☭ INVENTORY ☭☭☭";
-const INVENTORY_INVENTORY: &str = "Your inventory";
+const INVENTORY_INVENTORY: &str = "Your Inventory";
 const INVENTORY_CRAFTING: &str = "Crafting";
 const INVENTORY_INDENT: u16 = 3;
 
@@ -85,12 +85,12 @@ pub fn start(width: u16, height: u16) {
         } else if let Some(payload) = info.payload().downcast_ref::<String>() {
             ext::log(&format!("    Payload: {:?}", payload));
         } else {
-            ext::log(&format!("    Payload: unknown"));
+            ext::log(&format!("    Payload: <unknown>"));
         }
         if let Some(location) = info.location() {
             ext::log(&format!("    At: {:?}", location));
         } else {
-            ext::log(&format!("    At: unknown"));
+            ext::log(&format!("    At: <unknown>"));
         }
     }));
 
@@ -227,7 +227,7 @@ fn draw_game_over(msg: RestartMessage, _size: (u16, u16)) {
 
     let (text, col) = match msg {
         RestartMessage::Died => (&"u ded lol!", (255, 0, 0)),
-        RestartMessage::Won  => (&"gj", (0, 255, 0)),
+        RestartMessage::Won  => (&"gj u won", (0, 255, 0)),
     };
 
     ext::put_text((0, 0), text, col, (0, 0, 0));
