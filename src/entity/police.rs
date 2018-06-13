@@ -122,7 +122,7 @@ impl Entity for Police {
                             dirs.remove(fidx as usize);
 
                             let (dx, dy) = dir.to_vec();
-                            let new_pos = (pos.0.wrapping_sub(dx as u16), pos.1.wrapping_sub(dy as u16));
+                            let new_pos = (pos.0.wrapping_add(dx as u16), pos.1.wrapping_add(dy as u16));
 
                             let mut new_path = path.clone();
                             new_path.push(dir);
