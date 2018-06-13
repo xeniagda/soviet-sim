@@ -109,8 +109,9 @@ impl Entity for Police {
             'outer: for _ in 0..100 {
                 if let Some((ref pos, ref path)) = paths.clone().into_iter()
                     .min_by_key(|&(ref pos, ref path)| {
-                        let delta = (pos.0 - player_pos.0, pos.1 - player_pos.1);
-                        delta.0 * delta.0 + delta.1 * delta.1 + path.len() as u16 * 2
+                        let (dx, dy) = (pos.0.wrapping_sub(player_pos.0), pos.1.wrapping_sub(player_pos.1));
+                        let (dx_sq, dy_sq) = (dx.saturating_mul(dx), dy.saturating_mul(dy));
+                        dx_sq.saturating_add(dy_sq).saturating_add(path.len() as u16 * 2)
                     }) {
                         paths.remove_item(&(*pos, path.clone()));
 
@@ -121,7 +122,7 @@ impl Entity for Police {
                             dirs.remove(fidx as usize);
 
                             let (dx, dy) = dir.to_vec();
-                            let new_pos = (pos.0 + dx as u16, pos.1 + dy as u16);
+                            let new_pos = (pos.0.wrapping_sub(dx as u16), pos.1.wrapping_sub(dy as u16));
 
                             let mut new_path = path.clone();
                             new_path.push(dir);
@@ -146,8 +147,9 @@ impl Entity for Police {
                                 paths.push((new_pos, new_path.clone()));
                                 visited.push(new_pos);
 
-                                let delta = (pos.0 - player_pos.0, pos.1 - player_pos.1);
-                                let score = delta.0 * delta.0 + delta.1 * delta.1 + path.len() as u16 * 2;
+                                let (dx, dy) = (pos.0.wrapping_sub(player_pos.0), pos.1.wrapping_sub(player_pos.1));
+                                let (dx_sq, dy_sq) = (dx.saturating_mul(dx), dy.saturating_mul(dy));
+                                let score = dx_sq.saturating_add(dy_sq).saturating_add(path.len() as u16 * 2);
                                 if score < best_score {
                                     best_path = Some(new_path);
                                     best_score = score;

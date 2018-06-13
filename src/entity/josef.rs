@@ -99,9 +99,10 @@ impl Entity for Josef {
         }
 
         if let Some(my_pos) = my_pos {
-            let heur = |(x, y)| {
-                let (dx, dy) = (x - player_pos.0, y - player_pos.1);
-                let dist = (dx * dx + dy * dy) as i32;
+            let heur = |(x, y): (u16, u16,)| {
+                let (dx, dy) = (x.wrapping_sub(player_pos.0), y.wrapping_sub(player_pos.1));
+                let (dx_sq, dy_sq) = (dx.saturating_mul(dx), dy.saturating_mul(dy));
+                let dist = dx_sq.saturating_add(dy_sq) as i32;
                 if dist > PLAYER_SAFE_DIST * PLAYER_SAFE_DIST {
                     Some(-dist)
                 } else {

@@ -35,8 +35,8 @@ pub trait Entity {
         let mut new_pos_and_dir: Option<((u16, u16), (i8, i8))> = None;
 
         if let Some(en) = world.entities.get_mut(&en_id) {
-            en.get_pos_mut().0 += dx as u16;
-            en.get_pos_mut().1 += dy as u16;
+            en.get_pos_mut().0 = en.get_pos_mut().0.wrapping_add(dx as u16);
+            en.get_pos_mut().1 = en.get_pos_mut().1.wrapping_add(dy as u16);
 
             new_pos_and_dir = Some((en.get_pos().clone(), (dx, dy)));
         }
@@ -64,8 +64,8 @@ pub trait Entity {
                 }
             } else {
                 if let Some(en) = world.entities.get_mut(&en_id) {
-                    en.get_pos_mut().0 -= dir.0 as u16;
-                    en.get_pos_mut().1 -= dir.1 as u16;
+                    en.get_pos_mut().0 = en.get_pos_mut().0.wrapping_sub(dx as u16);
+                    en.get_pos_mut().1 = en.get_pos_mut().1.wrapping_sub(dy as u16);
                 }
                 return false;
             }

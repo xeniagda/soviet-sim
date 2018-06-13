@@ -261,7 +261,7 @@ impl World {
             let pl_pos = player.get_pos();
             let (dx, dy) = break_dir.to_vec();
 
-            new_pos = (pl_pos.0 + dx as u16, pl_pos.1 + dy as u16);
+            new_pos = (pl_pos.0.wrapping_add(dx as u16), pl_pos.1.wrapping_add(dy as u16));
         } else {
             return;
         }
@@ -373,7 +373,7 @@ impl World {
 
                 let dirv = dir.to_vec();
 
-                let (nx, ny) = (x + dirv.0 as usize, y + dirv.1 as usize);
+                let (nx, ny) = (x.wrapping_add(dirv.0 as usize), y.wrapping_add(dirv.1 as usize));
 
                 let block_at = self.blocks.get(nx).and_then(|x| x.get(ny));
                 if block_at == Some(&block::WALL) || block_at == Some(&block::WALL){
