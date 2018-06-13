@@ -35,6 +35,9 @@ lazy_static! {
 }
 
 pub fn flip() {
+    #[cfg(debug_assertions)]
+    put_text((0, 0), "DEBUG!", (128, 158, 73), (0, 0, 0));
+
     if let Ok(mut screen) = SCREEN.lock() {
         if let Ok(unflipped) = UNFLIPPED.lock() {
             for (x, col) in unflipped.iter().enumerate() {
