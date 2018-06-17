@@ -30,6 +30,17 @@ impl World {
             action_sender: action_sender,
         }
     }
+
+    pub fn tick(&mut self) {
+        for level in &mut self.other_levels.iter_mut() {
+            level.tick();
+        }
+        self.active_level.tick();
+
+        while let Ok(f) = self.callback_recv.try_recv() {
+            f.0(self);
+        }
+    }
 }
 
 impl Deref for World {
