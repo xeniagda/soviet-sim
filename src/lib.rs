@@ -405,7 +405,7 @@ pub fn init_game(difficulty: Difficulty) {
             at_inventory: None,
         };
 
-        rouge.world.generate(WORLD_SIZE.0, WORLD_SIZE.1);;
+        rouge.world.generate(WORLD_SIZE.0, WORLD_SIZE.1, GenerationSettings::default());
 
         rouge.world.draw(game.size);
 

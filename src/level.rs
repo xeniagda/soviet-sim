@@ -342,7 +342,7 @@ impl Level {
             );
     }
 
-    pub fn generate(&mut self, width: usize, height: usize) {
+    pub fn generate(&mut self, width: usize, height: usize, settings: GenerationSettings) {
         log("Generating!");
 
         self.entities = HashMap::new();
@@ -351,7 +351,7 @@ impl Level {
         for x in 0..width {
             self.blocks.push(vec![]);
             for _ in 0..height {
-                if rand() > 0.1 {
+                if rand() > settings.wall_prob {
                     self.blocks[x].push(block::WALL.clone());
                 } else {
                     self.blocks[x].push(block::STONE.clone());
@@ -360,8 +360,8 @@ impl Level {
         }
 
         let mut placed = vec![];
-        for _ in 0..10 * width * height {
-            if rand() < 0.01 || placed.is_empty() {
+        for _ in 0..(settings.amount_of_walls * width as f64 * height as f64) as usize {
+            if rand() < settings.new_pos_prob || placed.is_empty() {
                 let x = (rand() * width as f64) as usize;
                 let y = (rand() * height as f64) as usize;
                 self.blocks[x][y] = block::GROUND.clone();
@@ -370,7 +370,7 @@ impl Level {
                 let idx = (rand() * placed.len() as f64) as usize;
                 let (x, y, mut dir) = placed[idx];
 
-                if rand() < 0.05 {
+                if rand() < settings.new_dir_prob {
                     dir = random_dir();
                 }
 
@@ -499,5 +499,23 @@ impl Level {
         }
 
         best_path.map(|x| (x.1).0).unwrap_or(vec![])
+    }
+}
+
+pub struct GenerationSettings {
+    wall_prob: f64,
+    amount_of_walls: f64,
+    new_pos_prob: f64,
+    new_dir_prob: f64,
+}
+
+impl Default for GenerationSettings {
+    fn default() -> GenerationSettings {
+        GenerationSettings {
+            wall_prob: 0.1,
+            amount_of_walls: 10.0,
+            new_pos_prob: 0.01,
+            new_dir_prob: 0.05,
+        }
     }
 }
