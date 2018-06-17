@@ -44,11 +44,11 @@ impl World {
 
     pub fn generate(&mut self) {
         let mut start_level = self.new_level();
-        start_level.generate(GenerationSettings::default());
+        start_level.generate(GenerationSettings::default_for_difficulty(self.difficulty));
         self.active_level = start_level;
 
         let mut other_level = self.new_level();
-        other_level.generate(GenerationSettings { amount_of_walls: 1., ..GenerationSettings::default() });
+        other_level.generate(GenerationSettings { amount_of_walls: 1., ..GenerationSettings::default_for_difficulty(self.difficulty) });
 
         self.other_levels.push(other_level);
     }

@@ -395,28 +395,15 @@ impl Level {
             }
         }
 
-        let idx = (rand() * placed.len() as f64) as usize;
-        let (x, y, _) = placed[idx];
-        placed.remove(idx);
-        self.add_entity(
-            EntityWrapper::WPlayer(
-                Player::new((x as u16, y as u16), self.difficulty.get_start_health())
-                )
-            );
-
-        let idx = (rand() * placed.len() as f64) as usize;
-        let (x, y, _) = placed[idx];
-        placed.remove(idx);
-        self.add_entity(
-            EntityWrapper::WJosef(
-                Josef::new(
-                    (x as u16, y as u16),
-                    self.difficulty.get_josef_police_rate(),
-                    self.difficulty.get_josef_speed(),
-                    self.difficulty.get_josef_health()
-                    )
-            ));
-
+        for mut en in settings.entities.into_iter() {
+            let idx = (rand() * placed.len() as f64) as usize;
+            let (x, y, _) = placed[idx];
+            placed.remove(idx);
+            *en.get_pos_mut() = (x as u16, y as u16);
+            self.add_entity(
+                en
+                );
+        }
         log("Done!");
     }
 
@@ -522,10 +509,11 @@ pub struct GenerationSettings {
     pub amount_of_walls: f64,
     pub new_pos_prob: f64,
     pub new_dir_prob: f64,
+    pub entities: Vec<EntityWrapper>,
 }
 
-impl Default for GenerationSettings {
-    fn default() -> GenerationSettings {
+impl GenerationSettings {
+    pub fn default_for_difficulty(diff: Difficulty) -> GenerationSettings {
         GenerationSettings {
             width: 180,
             height: 111,
@@ -537,6 +525,19 @@ impl Default for GenerationSettings {
             amount_of_walls: 10.0,
             new_pos_prob: 0.01,
             new_dir_prob: 0.05,
+            entities: vec![
+                EntityWrapper::WPlayer(
+                    Player::new((0, 0), diff.get_start_health())
+                ),
+                EntityWrapper::WJosef(
+                    Josef::new(
+                        (0, 0),
+                        diff.get_josef_police_rate(),
+                        diff.get_josef_speed(),
+                        diff.get_josef_health()
+                    )
+                ),
+            ]
         }
     }
 }
