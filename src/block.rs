@@ -128,18 +128,17 @@ lazy_static! {
                 level.send_callback(Box::new(
                     |world: &mut World| {
                         world.set_active(0);
-                        let mut tries = 0;
                         let (w, h) = (world.blocks.len(), world.blocks[0].len());
                         'outer: loop {
-                            tries += 1;
                             let x = (rand() * w as f64) as usize;
                             let y = (rand() * h as f64) as usize;
 
                             let is_stairs = world.blocks.get(x as usize)
                                 .and_then(|a| a.get(y as usize))
-                                .map(|a| a == &*STAIRS);
+                                .map(|a| a == &*STAIRS)
+                                .unwrap_or(false);
 
-                            if is_stairs == Some(true) {
+                            if is_stairs {
                                 for dir in &DIRECTIONS {
                                     let (x, y) = dir.move_vec((x as u16, y as u16));
                                     let (x, y) = (x as usize, y as usize);
@@ -148,7 +147,6 @@ lazy_static! {
                                         .and_then(|a| a.get(y as usize))
                                         .map(|a| a.is_passable())
                                         .unwrap_or(false);
-
 
                                     if passable {
                                         if let Some(player_id) = world.get_player_id() {
@@ -160,23 +158,6 @@ lazy_static! {
                                             break 'outer;
                                         }
                                     }
-                                }
-                            } else if is_stairs == Some(false) && tries > 10000 {
-                                world.blocks[x][y] = STAIRS.clone();
-                                let dir = &DIRECTIONS[(rand() * 4.) as usize];
-
-                                let (x, y) = dir.move_vec((x as u16, y as u16));
-                                let (x, y) = (x as usize, y as usize);
-
-                                world.blocks[x][y] = GROUND.clone();
-
-                                if let Some(player_id) = world.get_player_id() {
-                                    if let Some(enw) = world.entities.get_mut(&player_id) {
-                                        *(enw.get_pos_mut()) = (x as u16, y as u16);
-                                        break 'outer;
-                                    }
-                                } else {
-                                    break 'outer;
                                 }
                             }
                         }

@@ -417,11 +417,11 @@ impl Level {
         }
     }
 
-    // Find a path using a cost and heuristics function.
-    // Cost: Takes a block and returns the cost of passing that block. If None is returned, the
-    // block is considered not passable. Positive here is considered bad.
-    // Heuristics: Takes a level and position and gives back a heuristics of going to that
-    // position. If None, that position is return. Positive here is considered good.
+    /// Find a path using a cost and heuristics function.
+    /// Cost: Takes a block and returns the cost of passing that block. If None is returned, the
+    /// block is considered not passable. Positive here is considered bad.
+    /// Heuristics: Takes a level and position and gives back a heuristics of going to that
+    /// position. If None, that position is return. Positive here is considered good.
     pub fn find_path(
         &self,
         from: (u16, u16),
@@ -513,8 +513,17 @@ pub struct GenerationSettings {
 }
 
 impl GenerationSettings {
-    pub fn default_for_difficulty(diff: Difficulty, include_player: bool) -> GenerationSettings {
-        let mut entities = vec! [
+    pub fn default_for_difficulty(diff: Difficulty, include_player: bool, include_josef: bool) -> GenerationSettings {
+        let mut entities = vec![];
+        if include_player {
+            entities.push(
+                EntityWrapper::WPlayer(
+                    Player::new((0, 0), diff.get_start_health())
+                )
+            );
+        }
+        if include_josef {
+            entities.push(
                 EntityWrapper::WJosef(
                     Josef::new(
                         (0, 0),
@@ -523,12 +532,6 @@ impl GenerationSettings {
                         diff.get_josef_health()
                     )
                 )
-            ];
-        if include_player {
-            entities.push(
-                EntityWrapper::WPlayer(
-                    Player::new((0, 0), diff.get_start_health())
-                ),
             );
         }
         GenerationSettings {
