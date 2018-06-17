@@ -287,7 +287,7 @@ impl Level {
                 .get_mut(new_pos.0 as usize)
                 .and_then(|x| x.get_mut(new_pos.1 as usize))
             {
-                if block_at.is_breakable() {
+                if block_at.is_breakable() == block::Breakability::Breakable {
                     // Break block
                     mem::replace(block_at, block::GROUND.clone())
                 } else {
@@ -401,7 +401,7 @@ impl Level {
                 let (nx, ny) = (x.wrapping_add(dirv.0 as usize), y.wrapping_add(dirv.1 as usize));
 
                 let block_at = self.blocks.get(nx).and_then(|x| x.get(ny));
-                if block_at.map(|x| x.breakable).unwrap_or(false) {
+                if block_at.map(|x| x.breakable == block::Breakability::Breakable).unwrap_or(false) {
                     self.blocks[nx][ny] = block::GROUND.clone();
                     placed.push((nx, ny, dir));
                 }

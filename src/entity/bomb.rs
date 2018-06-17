@@ -1,6 +1,7 @@
 use level::Level;
 use shape::Shape;
 use ext::*;
+use block;
 
 use super::{Entity, EntityWrapper};
 
@@ -35,8 +36,39 @@ impl Bomb {
         for (i, entity) in level.entities.clone() {
             let (x_, y_) = entity.get_pos();
             let (dx, dy) = (x - x_, y - y_);
-            if dx * dx + dy * dy < BOMB_RADIUS * BOMB_RADIUS {
-                entity.get_hurt_fn()(level, i, 5);
+            let dist_sq = dx * dx + dy * dy;
+            if dist_sq < BOMB_RADIUS * BOMB_RADIUS {
+                entity.get_hurt_fn()(level, i, (BOMB_RADIUS + 1) / (dist_sq / (BOMB_RADIUS + 1) + 1));
+            }
+        }
+
+        for dx in -(BOMB_RADIUS as i16) .. BOMB_RADIUS as i16 + 1 {
+            for dy in -(BOMB_RADIUS as i16) .. BOMB_RADIUS as i16 + 1 {
+                let dist_sq = (dx * dx + dy * dy) as u16;
+                if dist_sq < BOMB_RADIUS * BOMB_RADIUS {
+                    let (x_, y_) = ((x.wrapping_add(dx as u16)) as usize, (y.wrapping_add(dy as u16)) as usize);
+                    let breakability = level.blocks.get(x_ as usize).and_then(|a| a.get(y_ as usize))
+                            .map(|blk| blk.is_breakable())
+                            .unwrap_or(block::Breakability::NotBreakable);
+
+                    match breakability {
+                        block::Breakability::NotBreakable => {}
+                        block::Breakability::ByBomb | block::Breakability::Breakable => {
+                            let mut needed = BOMB_RADIUS as f64 / dist_sq as f64 * 0.3;
+                            if breakability == block::Breakability::ByBomb {
+                                needed = needed * 2.;
+                            }
+                            if rand() < needed {
+                                if let Some(blk) = level.blocks
+                                        .get_mut(x_ as usize)
+                                        .and_then(|a| a.get_mut(y_ as usize))
+                                {
+                                    *blk = block::GROUND.clone();
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

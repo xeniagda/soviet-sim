@@ -19,7 +19,7 @@ pub struct Block {
     pub shape: Shape,
     pub id: usize,
     pub passable: bool,
-    pub breakable: bool
+    pub breakable: Breakability
 }
 
 impl PartialEq for Block {
@@ -30,7 +30,7 @@ impl PartialEq for Block {
 impl Eq for Block {}
 
 impl Block {
-    fn new(shape: Shape, name: String, desc: String, passable: bool, breakable: bool, on_walk: fn(&mut Level, u64))
+    fn new(shape: Shape, name: String, desc: String, passable: bool, breakable: Breakability, on_walk: fn(&mut Level, u64))
         -> Block
     {
         let mut blkf = BLOCK_FUNCS.lock().unwrap();
@@ -56,7 +56,14 @@ impl Block {
     pub fn is_passable(&self) -> bool { self.passable }
 
     #[inline]
-    pub fn is_breakable(&self) -> bool { self.breakable }
+    pub fn is_breakable(&self) -> Breakability { self.breakable }
+}
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Breakability {
+    NotBreakable,
+    ByBomb,
+    Breakable
 }
 
 lazy_static! {
@@ -65,7 +72,7 @@ lazy_static! {
         "Ground".into(),
         "Passive ground".into(),
         true,
-        false,
+        Breakability::NotBreakable,
         |_, _| {}
         );
 
@@ -74,7 +81,7 @@ lazy_static! {
         "Wall".into(),
         "An wall".into(),
         false,
-        true,
+        Breakability::Breakable,
         |_, _| {}
         );
 
@@ -83,7 +90,7 @@ lazy_static! {
         "Stone".into(),
         "A stone".into(),
         false,
-        true,
+        Breakability::Breakable,
         |_, _| {}
         );
 
@@ -92,7 +99,7 @@ lazy_static! {
         "Mover".into(),
         "Moves anything that walks on it randomly to somewhere on the map".into(),
         true,
-        true,
+        Breakability::Breakable,
         |level, id| {
             let pos;
             loop {
@@ -122,7 +129,7 @@ lazy_static! {
         "Stairs".into(),
         "Moves you to the next/previous floor".into(),
         true,
-        true,
+        Breakability::ByBomb,
         |level, id| {
             if let Some(EntityWrapper::WPlayer(_)) = level.entities.get(&id) {
                 level.send_callback(Box::new(
@@ -171,7 +178,7 @@ lazy_static! {
         "COMMUNISM".into(),
         "Heals you".into(),
         true,
-        true,
+        Breakability::Breakable,
         |level, id| {
             if let Some(EntityWrapper::WPlayer(player)) = level.entities.get_mut(&id) {
                 player.hunger += 1;
