@@ -6,6 +6,19 @@ extern crate textwrap;
 
 use textwrap::Wrapper;
 
+// From https://stackoverflow.com/a/27582993/1753929
+macro_rules! hashmap(
+    { $($key:expr => $value:expr),+, } => {
+        {
+            let mut m = ::std::collections::HashMap::new();
+            $(
+                m.insert($key, $value);
+            )+
+            m
+        }
+    };
+);
+
 mod ext;
 mod key;
 mod level;
@@ -403,7 +416,7 @@ pub fn init_game(difficulty: Difficulty) {
             at_inventory: None,
         };
 
-        rouge.world.generate(GenerationSettings::default());
+        rouge.world.generate();
 
         rouge.world.draw(game.size);
 

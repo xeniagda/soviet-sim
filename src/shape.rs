@@ -1,6 +1,6 @@
 use ext::put_char;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Shape {
     pub ch: char,
     pub col: (u8, u8, u8),

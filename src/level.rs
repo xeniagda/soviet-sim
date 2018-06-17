@@ -1,7 +1,7 @@
 use std::i32;
 
 use ext::*;
-use world::Callback;
+use world::{World, Callback};
 use controls::Action;
 use block;
 use entity;
@@ -13,7 +13,7 @@ use move_dir::{MoveDir, random_dir, DIRECTIONS};
 
 use std::collections::HashMap;
 use std::mem;
-use std::sync::mpsc::Sender;
+use std::sync::mpsc::{Sender, SendError};
 
 pub const HOTBAR_HEIGHT: u16 = 5;
 pub const SCROLL_FOLLOW_DIST: i16 = 10;
@@ -30,7 +30,7 @@ pub struct Level {
     pub auto_walk: Vec<MoveDir>,
     pub auto_mine: Vec<MoveDir>,
     action_sender: Sender<MetaAction>,
-    callback_sender: Sender<Callback>,
+    pub callback_sender: Sender<Callback>,
     pub scroll: (i16, i16),
 }
 
@@ -351,10 +351,14 @@ impl Level {
         for x in 0..settings.width {
             self.blocks.push(vec![]);
             for _ in 0..settings.height {
-                if rand() > settings.wall_prob {
-                    self.blocks[x].push(block::WALL.clone());
-                } else {
-                    self.blocks[x].push(block::STONE.clone());
+                let block_num = rand();
+                let mut max_prob: f64 = settings.block_probs.values().sum();
+                for (block, prob) in settings.block_probs.iter() {
+                    if block_num < prob / max_prob {
+                        self.blocks[x].push(block.clone());
+                        break;
+                    }
+                    max_prob -= prob;
                 }
             }
         }
@@ -379,7 +383,7 @@ impl Level {
                 let (nx, ny) = (x.wrapping_add(dirv.0 as usize), y.wrapping_add(dirv.1 as usize));
 
                 let block_at = self.blocks.get(nx).and_then(|x| x.get(ny));
-                if block_at == Some(&block::WALL) || block_at == Some(&block::WALL){
+                if block_at.map(|x| x.breakable).unwrap_or(false) {
                     self.blocks[nx][ny] = block::GROUND.clone();
                     placed.push((nx, ny, dir));
                 }
@@ -500,15 +504,19 @@ impl Level {
 
         best_path.map(|x| (x.1).0).unwrap_or(vec![])
     }
+
+    pub fn send_callback(&self, callback: Box<Fn(&mut World)>) -> Result<(), SendError<Callback>> {
+        self.callback_sender.send(Callback(callback))
+    }
 }
 
 pub struct GenerationSettings {
-    width: usize,
-    height: usize,
-    wall_prob: f64,
-    amount_of_walls: f64,
-    new_pos_prob: f64,
-    new_dir_prob: f64,
+    pub width: usize,
+    pub height: usize,
+    pub block_probs: HashMap<block::Block, f64>,
+    pub amount_of_walls: f64,
+    pub new_pos_prob: f64,
+    pub new_dir_prob: f64,
 }
 
 impl Default for GenerationSettings {
@@ -516,7 +524,11 @@ impl Default for GenerationSettings {
         GenerationSettings {
             width: 180,
             height: 111,
-            wall_prob: 0.1,
+            block_probs: hashmap!{
+                block::WALL.clone()  => 0.95,
+                block::STONE.clone()   => 0.1,
+                block::STAIRS.clone() => 0.05,
+            },
             amount_of_walls: 10.0,
             new_pos_prob: 0.01,
             new_dir_prob: 0.05,

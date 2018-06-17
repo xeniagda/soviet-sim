@@ -1,3 +1,4 @@
+use std::mem::replace;
 use level::Level;
 use shape::Shape;
 use ext::*;
@@ -10,14 +11,14 @@ lazy_static! {
         = Mutex::new(vec![|_, _| {}]);
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash)]
 pub struct Block {
     pub name: String,
     pub desc: String,
-    shape: Shape,
-    id: usize,
-    passable: bool,
-    breakable: bool
+    pub shape: Shape,
+    pub id: usize,
+    pub passable: bool,
+    pub breakable: bool
 }
 
 impl PartialEq for Block {
@@ -111,6 +112,24 @@ lazy_static! {
                 let epos = en.get_pos_mut();
                 epos.0 = pos.0;
                 epos.1 = pos.1;
+            }
+        }
+        );
+
+    pub static ref STAIRS: Block = Block::new(
+        Shape::new('>', (255, 240, 30), (0, 0, 0)),
+        "Stairs".into(),
+        "Moves you to the next/previous floor".into(),
+        true,
+        true,
+        |level, id| {
+            if let Some(EntityWrapper::WPlayer(_)) = level.entities.get(&id) {
+                level.send_callback(Box::new(
+                    |ref mut world| {
+                        let next_active = world.other_levels.remove(0);
+                        let old_active = replace(&mut world.active_level, next_active);
+                        world.other_levels.push(old_active);
+                    })).expect("Can't send!");
             }
         }
         );

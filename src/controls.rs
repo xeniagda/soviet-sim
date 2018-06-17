@@ -3,19 +3,6 @@ use key::Key;
 
 use std::collections::{HashSet, HashMap};
 
-// From https://stackoverflow.com/a/27582993/1753929
-macro_rules! hashmap(
-    { $($key:expr => $value:expr),+, } => {
-        {
-            let mut m = ::std::collections::HashMap::new();
-            $(
-                m.insert($key, $value);
-            )+
-            m
-        }
-    };
-    { $x:tt } => { hashmap{ $x, } };
-);
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Control<'a> {

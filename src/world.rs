@@ -2,16 +2,16 @@ use std::sync::mpsc::{Sender, Receiver, channel};
 use std::ops::{Deref, DerefMut};
 
 use difficulty::Difficulty;
-use level::{Level, MetaAction};
+use level::{Level, MetaAction, GenerationSettings};
 
-pub struct Callback(Box<Fn(&mut World)>);
+pub struct Callback(pub Box<Fn(&mut World)>);
 
 unsafe impl Send for Callback {}
 
 pub struct World {
-    active_level: Level,
-    difficulty: Difficulty,
-    other_levels: Vec<Level>,
+    pub active_level: Level,
+    pub difficulty: Difficulty,
+    pub other_levels: Vec<Level>,
     callback_send: Sender<Callback>,
     callback_recv: Receiver<Callback>,
     action_sender: Sender<MetaAction>
@@ -42,6 +42,20 @@ impl World {
         }
     }
 
+    pub fn generate(&mut self) {
+        let mut start_level = self.new_level();
+        start_level.generate(GenerationSettings::default());
+        self.active_level = start_level;
+
+        let mut other_level = self.new_level();
+        other_level.generate(GenerationSettings { amount_of_walls: 1., ..GenerationSettings::default() });
+
+        self.other_levels.push(other_level);
+    }
+
+    fn new_level(&self) -> Level {
+        Level::empty(self.difficulty, self.action_sender.clone(), self.callback_send.clone())
+    }
 }
 
 impl Deref for World {
