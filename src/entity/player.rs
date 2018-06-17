@@ -1,4 +1,4 @@
-use world::{World, HOTBAR_HEIGHT, MetaAction};
+use level::{Level, HOTBAR_HEIGHT, MetaAction};
 use shape::Shape;
 use ext::*;
 use crafting::Recipe;
@@ -30,15 +30,15 @@ impl Player {
         }
     }
 
-    pub fn place(world: &mut World, dir: MoveDir, en_id: u64) where Self: Sized {
-        let mut entity_positions = world.entities.clone().into_iter().map(|(_, x)| x.get_pos());
+    pub fn place(level: &mut Level, dir: MoveDir, en_id: u64) where Self: Sized {
+        let mut entity_positions = level.entities.clone().into_iter().map(|(_, x)| x.get_pos());
 
         let mut to_place: Option<(InventoryItem, (u16, u16))> = None;
 
-        if let Some(EntityWrapper::WPlayer(ref mut this)) = world.entities.get_mut(&en_id) {
+        if let Some(EntityWrapper::WPlayer(ref mut this)) = level.entities.get_mut(&en_id) {
             let place_pos = (this.pos.0 + dir.to_vec().0 as u16, this.pos.1 + dir.to_vec().1 as u16);
 
-            if world.blocks
+            if level.blocks
                 .get(place_pos.0 as usize)
                     .and_then(|x| x.get(place_pos.1 as usize)) != Some(&block::GROUND)
             {
@@ -64,9 +64,9 @@ impl Player {
         }
 
         if let Some((to_place, (x, y))) = to_place {
-            if !to_place.place_pos(world, (x, y), dir) {
+            if !to_place.place_pos(level, (x, y), dir) {
                 // Give back
-                if let Some(EntityWrapper::WPlayer(ref mut this)) = world.entities.get_mut(&en_id) {
+                if let Some(EntityWrapper::WPlayer(ref mut this)) = level.entities.get_mut(&en_id) {
                     this.pick_up(to_place);
                 }
             }
@@ -126,9 +126,9 @@ impl Entity for Player {
     fn get_shape(&self) -> Shape { Shape { ch: '@', col: (0, 255, 0), bg: (0, 0, 0) } }
     fn get_name(&self) -> String { "Player".into() }
 
-    fn hurt(world: &mut World, en_id: u64, amount: u16) where Self: Sized {
+    fn hurt(level: &mut Level, en_id: u64, amount: u16) where Self: Sized {
         let mut action_restart = None;
-        if let Some(EntityWrapper::WPlayer(ref mut this)) = world.entities.get_mut(&en_id) {
+        if let Some(EntityWrapper::WPlayer(ref mut this)) = level.entities.get_mut(&en_id) {
             if this.hunger <= amount {
                 action_restart = Some(true);
             } else {
@@ -139,12 +139,12 @@ impl Entity for Player {
 
         if let Some(restart) = action_restart {
             if restart {
-                world.do_metaaction(MetaAction::Die);
+                level.do_metaaction(MetaAction::Die);
             }
         }
     }
 
-    fn pre_draw(&self, _world: &World, size: &(u16, u16), _scroll: &(i16, i16)) {
+    fn pre_draw(&self, _level: &Level, size: &(u16, u16), _scroll: &(i16, i16)) {
         if self.hunger > HOTBAR_HEIGHT * COMMUNISM_WIDTH {
             put_char((0, size.1 - HOTBAR_HEIGHT as u16), &Shape::new('☭', (180, 0, 0), (0, 0, 0)));
             let x = format!("x{}", self.hunger);

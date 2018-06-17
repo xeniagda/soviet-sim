@@ -1,4 +1,4 @@
-use world::World;
+use level::Level;
 use shape::Shape;
 use ext::*;
 
@@ -23,20 +23,20 @@ impl Bomb {
         }
     }
 
-    fn boom(world: &mut World, en_id: u64) where Self: Sized {
+    fn boom(level: &mut Level, en_id: u64) where Self: Sized {
         let (x, y) =
-            if let Some(EntityWrapper::WBomb(ref mut this)) = world.entities.get_mut(&en_id) {
+            if let Some(EntityWrapper::WBomb(ref mut this)) = level.entities.get_mut(&en_id) {
                 this.pos
             } else {
                 return;
             };
 
-        world.entities.remove(&en_id);
-        for (i, entity) in world.entities.clone() {
+        level.entities.remove(&en_id);
+        for (i, entity) in level.entities.clone() {
             let (x_, y_) = entity.get_pos();
             let (dx, dy) = (x - x_, y - y_);
             if dx * dx + dy * dy < BOMB_RADIUS * BOMB_RADIUS {
-                entity.get_hurt_fn()(world, i, 5);
+                entity.get_hurt_fn()(level, i, 5);
             }
         }
     }
@@ -71,9 +71,9 @@ impl Entity for Bomb {
 
     fn get_name(&self) -> String { "Bomb".into() }
 
-    fn tick(world: &mut World, en_id: u64) where Self: Sized {
+    fn tick(level: &mut Level, en_id: u64) where Self: Sized {
         let mut boom = false;
-        if let Some(EntityWrapper::WBomb(ref mut this)) = world.entities.get_mut(&en_id) {
+        if let Some(EntityWrapper::WBomb(ref mut this)) = level.entities.get_mut(&en_id) {
             if this.countdown >= this.explode_time {
                 boom = true;
             } else {
@@ -81,21 +81,21 @@ impl Entity for Bomb {
             }
         }
         if boom {
-            Bomb::boom(world, en_id);
+            Bomb::boom(level, en_id);
         }
     }
 
-    fn on_collision(world: &mut World, me_id: u64, _other_id: u64) -> bool
+    fn on_collision(level: &mut Level, me_id: u64, _other_id: u64) -> bool
         where Self: Sized {
 
-        if let Some(EntityWrapper::WBomb(this)) = world.entities.get_mut(&me_id) {
+        if let Some(EntityWrapper::WBomb(this)) = level.entities.get_mut(&me_id) {
             this.countdown = this.explode_time - BOMB_RADIUS + 1;
         }
 
         true
     }
 
-    fn pre_draw(&self, _world: &World, _size: &(u16, u16), scroll: &(i16, i16)) {
+    fn pre_draw(&self, _level: &Level, _size: &(u16, u16), scroll: &(i16, i16)) {
         if self.countdown > self.explode_time - BOMB_RADIUS {
             let draw_radius = BOMB_RADIUS + self.countdown - self.explode_time;
             for x in -(draw_radius as i64)..=(draw_radius as i64) {

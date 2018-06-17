@@ -8,7 +8,7 @@ use textwrap::Wrapper;
 
 mod ext;
 mod key;
-mod world;
+mod level;
 mod controls;
 mod block;
 mod entity;
@@ -18,7 +18,7 @@ mod crafting;
 mod inventory;
 mod move_dir;
 
-use world::*;
+use level::*;
 use difficulty::Difficulty;
 use shape::Shape;
 use move_dir::MoveDir;
@@ -42,7 +42,7 @@ struct Game {
 }
 
 enum GameState {
-    Playing(WorldWrapper),
+    Playing(LevelWrapper),
     Menu(Difficulty),
     GameOver(Difficulty, RestartMessage),
 }
@@ -52,8 +52,8 @@ enum RestartMessage {
     Died, Won
 }
 
-struct WorldWrapper {
-    world: World,
+struct LevelWrapper {
+    level: Level,
     action_receiver: Receiver<MetaAction>,
     keys_down: HashSet<key::Key>,
     at_inventory: Option<AtInventory>
@@ -109,14 +109,14 @@ pub fn tick() {
         let size = game.size;
         match game.state {
             GameState::Playing(ref mut rouge) => {
-                diff = rouge.world.difficulty;
+                diff = rouge.level.difficulty;
                 if let Some(inv) = rouge.at_inventory {
-                    rouge.world.draw(size);
+                    rouge.level.draw(size);
                     draw_inventory(inv, rouge, size);
                 } else {
-                    rouge.world.tick();
-                    rouge.world.update_scroll(size);
-                    rouge.world.draw(size);
+                    rouge.level.tick();
+                    rouge.level.update_scroll(size);
+                    rouge.level.draw(size);
                 }
 
                 while let Ok(action) = rouge.action_receiver.try_recv() {
@@ -235,7 +235,7 @@ fn draw_game_over(msg: RestartMessage, _size: (u16, u16)) {
 
 }
 
-fn draw_inventory(inv: AtInventory, ww: &mut WorldWrapper, size: (u16, u16)) {
+fn draw_inventory(inv: AtInventory, ww: &mut LevelWrapper, size: (u16, u16)) {
     // Border
 
     // Top
@@ -245,23 +245,23 @@ fn draw_inventory(inv: AtInventory, ww: &mut WorldWrapper, size: (u16, u16)) {
     }
     // Bottom
     for i in INVENTORY_INDENT..size.0-INVENTORY_INDENT {
-        ext::put_char((i as u16, size.1 - INVENTORY_INDENT - world::HOTBAR_HEIGHT - 1), &Shape::new('=', (255, 255, 255), (0, 0, 0)));
-        ext::erase((i as u16, size.1 - INVENTORY_INDENT - world::HOTBAR_HEIGHT));
+        ext::put_char((i as u16, size.1 - INVENTORY_INDENT - level::HOTBAR_HEIGHT - 1), &Shape::new('=', (255, 255, 255), (0, 0, 0)));
+        ext::erase((i as u16, size.1 - INVENTORY_INDENT - level::HOTBAR_HEIGHT));
     }
     // Left
-    for i in INVENTORY_INDENT..size.1 - INVENTORY_INDENT - world::HOTBAR_HEIGHT {
+    for i in INVENTORY_INDENT..size.1 - INVENTORY_INDENT - level::HOTBAR_HEIGHT {
         ext::put_char((INVENTORY_INDENT, i as u16), &Shape::new('|', (255, 255, 255), (0, 0, 0)));
         ext::erase((INVENTORY_INDENT - 1, i as u16));
     }
     // Right
-    for i in INVENTORY_INDENT..size.1 - INVENTORY_INDENT - world::HOTBAR_HEIGHT {
+    for i in INVENTORY_INDENT..size.1 - INVENTORY_INDENT - level::HOTBAR_HEIGHT {
         ext::put_char((size.0 - INVENTORY_INDENT - 1, i as u16), &Shape::new('|', (255, 255, 255), (0, 0, 0)));
         ext::erase((size.0 - INVENTORY_INDENT, i as u16));
     }
 
     // Clear inside
     for x in INVENTORY_INDENT+1..size.0-INVENTORY_INDENT-1 {
-        for y in INVENTORY_INDENT+1..size.1 - INVENTORY_INDENT - world::HOTBAR_HEIGHT-1 {
+        for y in INVENTORY_INDENT+1..size.1 - INVENTORY_INDENT - level::HOTBAR_HEIGHT-1 {
             ext::erase((x, y))
         }
     }
@@ -273,7 +273,7 @@ fn draw_inventory(inv: AtInventory, ww: &mut WorldWrapper, size: (u16, u16)) {
         (255, 255, 0), (255, 0, 0));
 
     // Draw bar
-    for i in INVENTORY_INDENT+1..size.1 - INVENTORY_INDENT - world::HOTBAR_HEIGHT-1 {
+    for i in INVENTORY_INDENT+1..size.1 - INVENTORY_INDENT - level::HOTBAR_HEIGHT-1 {
         ext::put_char((size.0 / 2, i), &Shape::new('|', (255, 255, 255), (0, 0, 0)));
     }
 
@@ -291,7 +291,7 @@ fn draw_inventory(inv: AtInventory, ww: &mut WorldWrapper, size: (u16, u16)) {
 
     // Draw inventory
     if let Some(entity::EntityWrapper::WPlayer(ref player)) =
-        ww.world.get_player_id().and_then(|x| ww.world.entities.get(&x)) {
+        ww.level.get_player_id().and_then(|x| ww.level.entities.get(&x)) {
         for (i, (item, count)) in player.inventory.iter().enumerate() {
             ext::put_char(
                 (INVENTORY_INDENT + 2, INVENTORY_INDENT + i as u16 + 2),
@@ -312,7 +312,7 @@ fn draw_inventory(inv: AtInventory, ww: &mut WorldWrapper, size: (u16, u16)) {
         if pos_.1 <= INVENTORY_INDENT + 1 {
             return Some(false);
         }
-        if pos_.1 >= size.1 - INVENTORY_INDENT - world::HOTBAR_HEIGHT - 1 {
+        if pos_.1 >= size.1 - INVENTORY_INDENT - level::HOTBAR_HEIGHT - 1 {
             return Some(true);
         }
         ext::put_text(pos_, text, fg, bg);
@@ -324,7 +324,7 @@ fn draw_inventory(inv: AtInventory, ww: &mut WorldWrapper, size: (u16, u16)) {
         if pos_.1 <= INVENTORY_INDENT + 1 {
             return Some(false);
         }
-        if pos_.1 >= size.1 - INVENTORY_INDENT - world::HOTBAR_HEIGHT - 1 {
+        if pos_.1 >= size.1 - INVENTORY_INDENT - level::HOTBAR_HEIGHT - 1 {
             return Some(true);
         }
         ext::put_char(pos_, sh);
@@ -396,16 +396,16 @@ pub fn init_game(difficulty: Difficulty) {
     if let Ok(mut game) = GAME.try_lock() {
         let (send, recv) = channel::<MetaAction>();
 
-        let mut rouge = WorldWrapper {
-            world: World::empty(difficulty, send),
+        let mut rouge = LevelWrapper {
+            level: Level::empty(difficulty, send),
             action_receiver: recv,
             keys_down: HashSet::new(),
             at_inventory: None,
         };
 
-        rouge.world.generate(WORLD_SIZE.0, WORLD_SIZE.1);;
+        rouge.level.generate(WORLD_SIZE.0, WORLD_SIZE.1);;
 
-        rouge.world.draw(game.size);
+        rouge.level.draw(game.size);
 
         game.state = GameState::Playing(rouge);
     }
@@ -429,7 +429,7 @@ pub fn key_down(key_code: u8) {
                                 }
                             }
                             if rouge.at_inventory.is_none() {
-                                rouge.world.do_action(&action);
+                                rouge.level.do_action(&action);
                             } else if let Some(ref mut inv) = rouge.at_inventory {
                                 match action {
                                     controls::Action::Move(MoveDir::Up) if inv.selected_recipe > 0 => {
@@ -441,7 +441,7 @@ pub fn key_down(key_code: u8) {
                                     controls::Action::Select => {
                                         let curr_recipe = &crafting::RECIPES[inv.selected_recipe];
                                         if let Some(entity::EntityWrapper::WPlayer(player)) =
-                                            rouge.world.get_player_id().and_then(|x| rouge.world.entities.get_mut(&x)) {
+                                            rouge.level.get_player_id().and_then(|x| rouge.level.entities.get_mut(&x)) {
                                             player.craft(curr_recipe);
                                         }
                                     }
@@ -507,7 +507,7 @@ pub fn redraw() {
         ext::clear();
         match game.state {
             GameState::Playing(ref rouge) => {
-                rouge.world.draw(game.size);
+                rouge.level.draw(game.size);
             }
             _ => { }
         }

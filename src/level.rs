@@ -22,7 +22,7 @@ pub enum MetaAction {
     Die, Win
 }
 
-pub struct World {
+pub struct Level {
     pub blocks: Vec<Vec<block::Block>>,
     pub entities: HashMap<u64, entity::EntityWrapper>,
     pub difficulty: Difficulty,
@@ -33,9 +33,9 @@ pub struct World {
 }
 
 
-impl World {
-    pub fn empty(difficulty: Difficulty, action_sender: Sender<MetaAction>) -> World {
-        World {
+impl Level {
+    pub fn empty(difficulty: Difficulty, action_sender: Sender<MetaAction>) -> Level {
+        Level {
             blocks: vec![],
             entities: HashMap::new(),
             difficulty: difficulty,
@@ -299,7 +299,7 @@ impl World {
     }
 
     pub fn draw(&self, size: (u16, u16)) {
-        // Draw world
+        // Draw level
         for x in 0..size.0 {
             for y in 0..size.1 - HOTBAR_HEIGHT {
                 if let (Some(x_), Some(y_)) =
@@ -421,7 +421,7 @@ impl World {
     // Find a path using a cost and heuristics function.
     // Cost: Takes a block and returns the cost of passing that block. If None is returned, the
     // block is considered not passable. Positive here is considered bad.
-    // Heuristics: Takes a world and position and gives back a heuristics of going to that
+    // Heuristics: Takes a level and position and gives back a heuristics of going to that
     // position. If None, that position is return. Positive here is considered good.
     pub fn find_path(
         &self,

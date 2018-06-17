@@ -1,4 +1,4 @@
-use world::World;
+use level::Level;
 use shape::Shape;
 use ext::*;
 use block;
@@ -41,14 +41,14 @@ impl Entity for Police {
     fn get_shape(&self) -> Shape { Shape { ch: 'T', col: (255, 0, 0), bg: (0, 0, 0) } }
     fn get_name(&self) -> String { "Police".into() }
 
-    fn hurt(world: &mut World, en_id: u64, _amount: u16) {
+    fn hurt(level: &mut Level, en_id: u64, _amount: u16) {
         let mut drops: Vec<(u16, u16)> = Vec::new();
 
-        if let Some(en) = world.entities.get(&en_id) {
+        if let Some(en) = level.entities.get(&en_id) {
             drops.push(en.get_pos());
         }
 
-        world.entities.remove(&en_id);
+        level.entities.remove(&en_id);
 
         let mut i = 0;
         loop {
@@ -56,24 +56,24 @@ impl Entity for Police {
 
             let idx = (rand() * drops.len() as f64) as usize;
             let (x, y) = drops[idx];
-            if inventory::InventoryItem::Block(block::COMMUNISM.clone()).place_pos(world, (x, y), MoveDir::Up) {
+            if inventory::InventoryItem::Block(block::COMMUNISM.clone()).place_pos(level, (x, y), MoveDir::Up) {
                 for dir in &DIRECTIONS {
                     drops.push(dir.move_vec((x, y)));
                 }
                 i += 1;
             }
 
-            if i >= world.difficulty.get_communism_drop_rate() as usize ||
-                rand() < 1. / world.difficulty.get_communism_drop_rate() {
+            if i >= level.difficulty.get_communism_drop_rate() as usize ||
+                rand() < 1. / level.difficulty.get_communism_drop_rate() {
                 break;
             }
         }
 
     }
 
-    fn tick(world: &mut World, en_id: u64) where Self: Sized {
+    fn tick(level: &mut Level, en_id: u64) where Self: Sized {
         let should_walk = {
-            if let Some(&mut EntityWrapper::WPolice(ref mut this)) = world.entities.get_mut(&en_id) {
+            if let Some(&mut EntityWrapper::WPolice(ref mut this)) = level.entities.get_mut(&en_id) {
                 if this.walk_countdown == 0 {
                     this.walk_countdown = this.walk_speed;
                     true
@@ -88,8 +88,8 @@ impl Entity for Police {
 
         if should_walk {
             let (player_pos, my_pos);
-            if let Some(player) = world.get_player_id().and_then(|x| world.entities.get(&x)) {
-                if let Some(this) = world.entities.get(&en_id) {
+            if let Some(player) = level.get_player_id().and_then(|x| level.entities.get(&x)) {
+                if let Some(this) = level.entities.get(&en_id) {
                     player_pos = player.get_pos();
                     my_pos = this.get_pos();
                 } else {
@@ -135,12 +135,12 @@ impl Entity for Police {
                                 break 'outer;
                             }
 
-                            let passable_block = world.blocks.get(new_pos.0 as usize)
+                            let passable_block = level.blocks.get(new_pos.0 as usize)
                                 .and_then(|x| x.get(new_pos.1 as usize))
                                 .map(|x| x.is_passable())
                                 .unwrap_or(false);
                             let passable_entity =
-                                !world.entities.values()
+                                !level.entities.values()
                                 .any(|x| x.get_pos() == new_pos);
 
                             if passable_block && passable_entity {
@@ -162,9 +162,9 @@ impl Entity for Police {
             }
 
             if let Some(best_path) = best_path.clone() {
-                Police::move_dir(world, en_id, best_path[0]);
+                Police::move_dir(level, en_id, best_path[0]);
             }
-            if let Some(&mut EntityWrapper::WPolice(ref mut this)) = world.entities.get_mut(&en_id) {
+            if let Some(&mut EntityWrapper::WPolice(ref mut this)) = level.entities.get_mut(&en_id) {
                 this.path = best_path.unwrap_or(vec![]);
                 this.visited = visited;
             }
@@ -173,16 +173,16 @@ impl Entity for Police {
 
     }
 
-    fn on_collision(world: &mut World, me_id: u64, other_id: u64) -> bool
+    fn on_collision(level: &mut Level, me_id: u64, other_id: u64) -> bool
         where Self: Sized {
 
-        if let Some(EntityWrapper::WPolice(ref mut me)) = world.entities.get_mut(&me_id) {
+        if let Some(EntityWrapper::WPolice(ref mut me)) = level.entities.get_mut(&me_id) {
             if me.hurt_countdown == 0 {
                 me.hurt_countdown = me.hurt_speed;
-                if let Some(en) = world.entities.get(&other_id) {
+                if let Some(en) = level.entities.get(&other_id) {
                     match en {
                         EntityWrapper::WPlayer(_) => {
-                            en.get_hurt_fn()(world, other_id, 1);
+                            en.get_hurt_fn()(level, other_id, 1);
                         }
                         _ => {}
                     }
@@ -195,7 +195,7 @@ impl Entity for Police {
         false
     }
 
-    fn pre_draw(&self, _world: &World, _size: &(u16, u16), scroll: &(i16, i16)) {
+    fn pre_draw(&self, _level: &Level, _size: &(u16, u16), scroll: &(i16, i16)) {
         if SHOW_PATH_FINDING {
             let mut pos = self.get_pos();
 

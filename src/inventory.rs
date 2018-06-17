@@ -1,5 +1,5 @@
 use block::{Block, GROUND};
-use world::World;
+use level::Level;
 use entity::{EntityWrapper, Bomb, Bullet};
 use shape::Shape;
 use move_dir::MoveDir;
@@ -18,11 +18,11 @@ pub enum InventoryItem {
 }
 
 impl InventoryItem {
-    pub fn place_pos(&self, world: &mut World, pos: (u16, u16), dir: MoveDir) -> bool {
+    pub fn place_pos(&self, level: &mut Level, pos: (u16, u16), dir: MoveDir) -> bool {
         match self {
             InventoryItem::Block(ref block) => {
                 if let Some(last) =
-                    world.blocks.get_mut(pos.0 as usize).and_then(|x| x.get_mut(pos.1 as usize)) {
+                    level.blocks.get_mut(pos.0 as usize).and_then(|x| x.get_mut(pos.1 as usize)) {
 
                     if *last == GROUND.clone() {
                         *last = block.clone();
@@ -31,11 +31,11 @@ impl InventoryItem {
                 }
             }
             InventoryItem::Bomb => {
-                world.add_entity(EntityWrapper::WBomb(Bomb::new(pos, 300)));
+                level.add_entity(EntityWrapper::WBomb(Bomb::new(pos, 300)));
                 return true;
             }
             InventoryItem::Bullet => {
-                world.add_entity(EntityWrapper::WBullet(Bullet::new(pos, dir)));
+                level.add_entity(EntityWrapper::WBullet(Bullet::new(pos, dir)));
                 return true;
             }
             InventoryItem::SuperBoots(_, _) | InventoryItem::Pickaxe(_, _) => {}

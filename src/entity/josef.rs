@@ -1,4 +1,4 @@
-use world::{World, MetaAction};
+use level::{Level, MetaAction};
 use shape::Shape;
 use ext::*;
 use move_dir::MoveDir;
@@ -41,10 +41,10 @@ impl Entity for Josef {
     fn get_name(&self) -> String { "Josef".into() }
 
 
-    fn hurt(world: &mut World, en_id: u64, amount: u16) where Self: Sized {
-        if let Some(EntityWrapper::WJosef(ref mut this)) = world.entities.get_mut(&en_id) {
+    fn hurt(level: &mut Level, en_id: u64, amount: u16) where Self: Sized {
+        if let Some(EntityWrapper::WJosef(ref mut this)) = level.entities.get_mut(&en_id) {
             if this.health < amount {
-                world.do_metaaction(MetaAction::Win);
+                level.do_metaaction(MetaAction::Win);
             }
             else {
                 this.health -= amount;
@@ -53,11 +53,11 @@ impl Entity for Josef {
         }
     }
 
-    fn tick(world: &mut World, en_id: u64) where Self: Sized {
+    fn tick(level: &mut Level, en_id: u64) where Self: Sized {
 
         // Place police
         let mut pos_to_place = None;
-        if let Some(EntityWrapper::WJosef(ref mut this)) = world.entities.get_mut(&en_id) {
+        if let Some(EntityWrapper::WJosef(ref mut this)) = level.entities.get_mut(&en_id) {
             if this.police_countdown == 0 {
                 pos_to_place = Some(this.pos);
                 this.police_countdown = this.police_speed;
@@ -66,16 +66,16 @@ impl Entity for Josef {
             }
         }
         if let Some(to_place) = pos_to_place {
-            world.add_entity(
+            level.add_entity(
                 EntityWrapper::WPolice(
-                    Police::new(to_place, world.difficulty.get_police_speed(), world.difficulty.get_police_hurt_rate())
+                    Police::new(to_place, level.difficulty.get_police_speed(), level.difficulty.get_police_hurt_rate())
                     )
                 );
         }
 
         let player_pos =
             if let Some(EntityWrapper::WPlayer(ref player)) =
-                world.get_player_id().and_then(|x| world.entities.get(&x))
+                level.get_player_id().and_then(|x| level.entities.get(&x))
             {
                 player.pos
             } else {
@@ -85,7 +85,7 @@ impl Entity for Josef {
         let mut to_move = None;
         let mut my_pos = None;
 
-        if let Some(EntityWrapper::WJosef(ref mut this)) = world.entities.get_mut(&en_id) {
+        if let Some(EntityWrapper::WJosef(ref mut this)) = level.entities.get_mut(&en_id) {
             if this.path.len() > 1 {
                 if this.walk_countdown == 0 {
                     to_move = Some(this.path.remove(0));
@@ -110,7 +110,7 @@ impl Entity for Josef {
                 }
             };
 
-            let path = world.find_path(
+            let path = level.find_path(
                 my_pos,
                 |block, _|
                     if block.is_passable()
@@ -119,28 +119,28 @@ impl Entity for Josef {
                 heur,
                 1000);
 
-            if let Some(EntityWrapper::WJosef(ref mut this)) = world.entities.get_mut(&en_id) {
+            if let Some(EntityWrapper::WJosef(ref mut this)) = level.entities.get_mut(&en_id) {
                 this.path = path;
             }
         }
 
 
         if let Some(to_move) = to_move {
-            if !Josef::move_dir(world, en_id, to_move) || rand() < 0.25 {
-                if let Some(EntityWrapper::WJosef(ref mut this)) = world.entities.get_mut(&en_id) {
+            if !Josef::move_dir(level, en_id, to_move) || rand() < 0.25 {
+                if let Some(EntityWrapper::WJosef(ref mut this)) = level.entities.get_mut(&en_id) {
                     this.path = vec![];
                 }
             }
         }
     }
 
-    fn on_collision(_world: &mut World, _me_id: u64, _other_id: u64) -> bool
+    fn on_collision(_level: &mut Level, _me_id: u64, _other_id: u64) -> bool
         where Self: Sized {
 
         false
     }
 
-    fn pre_draw(&self, _world: &World, _size: &(u16, u16), scroll: &(i16, i16)) {
+    fn pre_draw(&self, _level: &Level, _size: &(u16, u16), scroll: &(i16, i16)) {
         if SHOW_PATH_FINDING {
             let mut pos = self.get_pos();
 

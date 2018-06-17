@@ -1,4 +1,4 @@
-use world::World;
+use level::Level;
 use shape::Shape;
 use move_dir::MoveDir;
 use inventory::InventoryItem;
@@ -35,32 +35,32 @@ impl Entity for Bullet {
 
     fn get_name(&self) -> String { "Bullet".into() }
 
-    fn tick(world: &mut World, en_id: u64) where Self: Sized {
+    fn tick(level: &mut Level, en_id: u64) where Self: Sized {
         let dir =
-            if let Some(EntityWrapper::WBullet(ref mut this)) = world.entities.get_mut(&en_id) {
+            if let Some(EntityWrapper::WBullet(ref mut this)) = level.entities.get_mut(&en_id) {
                 this.dir
             } else {
                 return;
             };
 
         let move_fn =
-            if let Some(enw) = world.entities.get_mut(&en_id) {
+            if let Some(enw) = level.entities.get_mut(&en_id) {
                 enw.get_move_fn()
             } else {
                 return;
             };
 
-        move_fn(world, en_id, dir);
+        move_fn(level, en_id, dir);
     }
 
-    fn move_dir(world: &mut World, en_id: u64, dir: MoveDir) -> bool
+    fn move_dir(level: &mut Level, en_id: u64, dir: MoveDir) -> bool
         where Self: Sized {
 
         let (dx, dy) = dir.to_vec();
 
         let mut new_pos_and_dir: Option<((u16, u16), (i8, i8))> = None;
 
-        if let Some(en) = world.entities.get_mut(&en_id) {
+        if let Some(en) = level.entities.get_mut(&en_id) {
             en.get_pos_mut().0 += dx as u16;
             en.get_pos_mut().1 += dy as u16;
 
@@ -69,17 +69,17 @@ impl Entity for Bullet {
 
 
         if let Some((pos, dir)) = new_pos_and_dir {
-            let passable = world.blocks.get(pos.0 as usize)
+            let passable = level.blocks.get(pos.0 as usize)
                         .and_then(|x| x.get(pos.1 as usize))
                         .map(|x| x.is_passable())
                         .unwrap_or(true);
 
             if !passable {
-                world.blocks[pos.0 as usize][pos.1 as usize] = block::GROUND.clone();
-                world.entities.remove(&en_id);
+                level.blocks[pos.0 as usize][pos.1 as usize] = block::GROUND.clone();
+                level.entities.remove(&en_id);
                 return true;
             } else {
-                let id = world.blocks.get(pos.0 as usize)
+                let id = level.blocks.get(pos.0 as usize)
                     .and_then(|x| x.get(pos.1 as usize))
                     .map(|x| x.get_id())
                     .unwrap_or(0);
@@ -88,19 +88,19 @@ impl Entity for Bullet {
 
                 match blkf.get(id) {
                     Some(f) => {
-                        f(world, en_id);
+                        f(level, en_id);
                     }
                     None => {}
                 }
             }
-            for k in world.entities.clone().keys() {
-                if k != &en_id && world.entities.get(k).map(|x| x.get_pos()) == Some(pos) {
+            for k in level.entities.clone().keys() {
+                if k != &en_id && level.entities.get(k).map(|x| x.get_pos()) == Some(pos) {
                     let mut collided = false;
 
-                    let f = world.entities.get(k).unwrap().get_collision_fn();
+                    let f = level.entities.get(k).unwrap().get_collision_fn();
 
-                    if !f(world, *k, en_id) {
-                        if let Some(en) = world.entities.get_mut(&en_id) {
+                    if !f(level, *k, en_id) {
+                        if let Some(en) = level.entities.get_mut(&en_id) {
                             en.get_pos_mut().0 -= dir.0 as u16;
                             en.get_pos_mut().1 -= dir.1 as u16;
                             collided = true;
@@ -108,9 +108,9 @@ impl Entity for Bullet {
                     }
 
 
-                    if let Some(f) = world.entities.get(&en_id).map(|x| x.get_collision_fn()) {
-                        if !f(world, en_id, *k) {
-                            if let Some(en) = world.entities.get_mut(&en_id) {
+                    if let Some(f) = level.entities.get(&en_id).map(|x| x.get_collision_fn()) {
+                        if !f(level, en_id, *k) {
+                            if let Some(en) = level.entities.get_mut(&en_id) {
                                 if !collided {
                                     en.get_pos_mut().0 -= dir.0 as u16;
                                     en.get_pos_mut().1 -= dir.1 as u16;
@@ -128,10 +128,10 @@ impl Entity for Bullet {
         true
     }
 
-    fn on_collision(world: &mut World, me_id: u64, other_id: u64) -> bool
+    fn on_collision(level: &mut Level, me_id: u64, other_id: u64) -> bool
         where Self: Sized {
 
-        if let Some(enw) = world.entities.get_mut(&other_id) {
+        if let Some(enw) = level.entities.get_mut(&other_id) {
             match enw {
                 EntityWrapper::WPlayer(ref mut pl) => {
                     pl.pick_up(InventoryItem::Bullet);
@@ -139,12 +139,12 @@ impl Entity for Bullet {
                 EntityWrapper::WBomb(_) => {
                 }
                 _ => {
-                    enw.get_hurt_fn()(world, other_id, 1);
+                    enw.get_hurt_fn()(level, other_id, 1);
                 }
             }
         }
 
-        world.entities.remove(&me_id);
+        level.entities.remove(&me_id);
 
         false
     }

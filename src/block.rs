@@ -1,4 +1,4 @@
-use world::World;
+use level::Level;
 use shape::Shape;
 use ext::*;
 use entity::*;
@@ -6,7 +6,7 @@ use entity::*;
 use std::sync::Mutex;
 
 lazy_static! {
-    pub static ref BLOCK_FUNCS: Mutex<Vec<fn(&mut World, u64)>>
+    pub static ref BLOCK_FUNCS: Mutex<Vec<fn(&mut Level, u64)>>
         = Mutex::new(vec![|_, _| {}]);
 }
 
@@ -28,7 +28,7 @@ impl PartialEq for Block {
 impl Eq for Block {}
 
 impl Block {
-    fn new(shape: Shape, name: String, desc: String, passable: bool, breakable: bool, on_walk: fn(&mut World, u64))
+    fn new(shape: Shape, name: String, desc: String, passable: bool, breakable: bool, on_walk: fn(&mut Level, u64))
         -> Block
     {
         let mut blkf = BLOCK_FUNCS.lock().unwrap();
@@ -91,13 +91,13 @@ lazy_static! {
         "Moves anything that walks on it randomly to somewhere on the map".into(),
         true,
         true,
-        |world, id| {
+        |level, id| {
             let pos;
             loop {
-                let x = (rand() * world.blocks.len() as f64) as usize;
-                let y = (rand() * world.blocks[0].len() as f64) as usize;
+                let x = (rand() * level.blocks.len() as f64) as usize;
+                let y = (rand() * level.blocks[0].len() as f64) as usize;
 
-                let passable = world.blocks.get(x as usize)
+                let passable = level.blocks.get(x as usize)
                     .and_then(|a| a.get(y as usize))
                     .map(|a| a.is_passable())
                     .unwrap_or(false);
@@ -107,7 +107,7 @@ lazy_static! {
                     break;
                 }
             }
-            if let Some(en) = world.entities.get_mut(&id) {
+            if let Some(en) = level.entities.get_mut(&id) {
                 let epos = en.get_pos_mut();
                 epos.0 = pos.0;
                 epos.1 = pos.1;
@@ -121,10 +121,10 @@ lazy_static! {
         "Heals you".into(),
         true,
         true,
-        |world, id| {
-            if let Some(EntityWrapper::WPlayer(player)) = world.entities.get_mut(&id) {
+        |level, id| {
+            if let Some(EntityWrapper::WPlayer(player)) = level.entities.get_mut(&id) {
                 player.hunger += 1;
-                world.blocks[player.pos.0 as usize][player.pos.1 as usize] = GROUND.clone();
+                level.blocks[player.pos.0 as usize][player.pos.1 as usize] = GROUND.clone();
             }
         }
         );
