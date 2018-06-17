@@ -348,18 +348,23 @@ impl Level {
         self.entities = HashMap::new();
         self.blocks = vec![];
 
+        let total: f64 = settings.block_probs.values().sum();
+
         for x in 0..settings.width {
             self.blocks.push(vec![]);
             for _ in 0..settings.height {
-                let block_num = rand();
-                let mut max_prob: f64 = settings.block_probs.values().sum();
-                for (block, prob) in settings.block_probs.iter() {
-                    if block_num < prob / max_prob {
-                        self.blocks[x].push(block.clone());
+                let block_num = rand() * total;
+
+                let mut upto = 0.;
+
+                for (blk, prob) in settings.block_probs.iter() {
+                    upto += *prob;
+                    if upto >= block_num {
+                        self.blocks[x].push(blk.clone());
                         break;
                     }
-                    max_prob -= prob;
                 }
+
             }
         }
 
@@ -525,9 +530,9 @@ impl Default for GenerationSettings {
             width: 180,
             height: 111,
             block_probs: hashmap!{
-                block::WALL.clone()  => 0.95,
-                block::STONE.clone()   => 0.1,
-                block::STAIRS.clone() => 0.05,
+                block::WALL.clone()   => 0.895,
+                block::STONE.clone()  => 0.1,
+                block::STAIRS.clone() => 0.005,
             },
             amount_of_walls: 10.0,
             new_pos_prob: 0.01,
