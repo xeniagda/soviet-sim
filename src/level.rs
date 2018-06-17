@@ -1,6 +1,7 @@
 use std::i32;
 
 use ext::*;
+use world::Callback;
 use controls::Action;
 use block;
 use entity;
@@ -29,12 +30,13 @@ pub struct Level {
     pub auto_walk: Vec<MoveDir>,
     pub auto_mine: Vec<MoveDir>,
     action_sender: Sender<MetaAction>,
+    callback_sender: Sender<Callback>,
     pub scroll: (i16, i16),
 }
 
 
 impl Level {
-    pub fn empty(difficulty: Difficulty, action_sender: Sender<MetaAction>) -> Level {
+    pub fn empty(difficulty: Difficulty, action_sender: Sender<MetaAction>, callback_sender: Sender<Callback>) -> Level {
         Level {
             blocks: vec![],
             entities: HashMap::new(),
@@ -42,6 +44,7 @@ impl Level {
             auto_walk: vec![],
             auto_mine: vec![],
             action_sender: action_sender,
+            callback_sender: callback_sender,
             scroll: (0, 0),
         }
     }
