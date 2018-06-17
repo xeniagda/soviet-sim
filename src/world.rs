@@ -2,6 +2,7 @@ use std::mem::replace;
 use std::sync::mpsc::{Sender, Receiver, channel};
 use std::ops::{Deref, DerefMut};
 
+use block;
 use difficulty::Difficulty;
 use level::{Level, MetaAction, GenerationSettings};
 
@@ -49,7 +50,18 @@ impl World {
         self.active_level = start_level;
 
         let mut other_level = self.new_level();
-        other_level.generate(GenerationSettings { amount_of_walls: 1., ..GenerationSettings::default_for_difficulty(self.difficulty, false) });
+        other_level.generate(
+            GenerationSettings {
+                amount_of_walls: 1.,
+                width: 15,
+                height: 15,
+                block_probs: hashmap!{
+                    block::WALL.clone()   => 0.5,
+                    block::STONE.clone()  => 0.495,
+                    block::STAIRS.clone() => 0.005,
+                },
+                ..GenerationSettings::default_for_difficulty(self.difficulty, false)
+            });
 
         self.other_levels.push(other_level);
     }
