@@ -342,15 +342,15 @@ impl Level {
             );
     }
 
-    pub fn generate(&mut self, width: usize, height: usize, settings: GenerationSettings) {
+    pub fn generate(&mut self, settings: GenerationSettings) {
         log("Generating!");
 
         self.entities = HashMap::new();
         self.blocks = vec![];
 
-        for x in 0..width {
+        for x in 0..settings.width {
             self.blocks.push(vec![]);
-            for _ in 0..height {
+            for _ in 0..settings.height {
                 if rand() > settings.wall_prob {
                     self.blocks[x].push(block::WALL.clone());
                 } else {
@@ -360,10 +360,10 @@ impl Level {
         }
 
         let mut placed = vec![];
-        for _ in 0..(settings.amount_of_walls * width as f64 * height as f64) as usize {
+        for _ in 0..(settings.amount_of_walls * settings.width as f64 * settings.height as f64) as usize {
             if rand() < settings.new_pos_prob || placed.is_empty() {
-                let x = (rand() * width as f64) as usize;
-                let y = (rand() * height as f64) as usize;
+                let x = (rand() * settings.width as f64) as usize;
+                let y = (rand() * settings.height as f64) as usize;
                 self.blocks[x][y] = block::GROUND.clone();
                 placed.push((x, y, random_dir()));
             } else {
@@ -503,6 +503,8 @@ impl Level {
 }
 
 pub struct GenerationSettings {
+    width: usize,
+    height: usize,
     wall_prob: f64,
     amount_of_walls: f64,
     new_pos_prob: f64,
@@ -512,6 +514,8 @@ pub struct GenerationSettings {
 impl Default for GenerationSettings {
     fn default() -> GenerationSettings {
         GenerationSettings {
+            width: 180,
+            height: 111,
             wall_prob: 0.1,
             amount_of_walls: 10.0,
             new_pos_prob: 0.01,

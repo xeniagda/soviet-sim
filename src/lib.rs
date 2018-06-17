@@ -36,8 +36,6 @@ const INVENTORY_INVENTORY: &str = "Your Inventory";
 const INVENTORY_CRAFTING: &str = "Crafting";
 const INVENTORY_INDENT: u16 = 3;
 
-const WORLD_SIZE: (usize, usize) = (180, 111);
-
 struct Game {
     state: GameState,
     size: (u16, u16),
@@ -405,7 +403,7 @@ pub fn init_game(difficulty: Difficulty) {
             at_inventory: None,
         };
 
-        rouge.world.generate(WORLD_SIZE.0, WORLD_SIZE.1, GenerationSettings::default());
+        rouge.world.generate(GenerationSettings::default());
 
         rouge.world.draw(game.size);
 
