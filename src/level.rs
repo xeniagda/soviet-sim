@@ -513,7 +513,24 @@ pub struct GenerationSettings {
 }
 
 impl GenerationSettings {
-    pub fn default_for_difficulty(diff: Difficulty) -> GenerationSettings {
+    pub fn default_for_difficulty(diff: Difficulty, include_player: bool) -> GenerationSettings {
+        let mut entities = vec! [
+                EntityWrapper::WJosef(
+                    Josef::new(
+                        (0, 0),
+                        diff.get_josef_police_rate(),
+                        diff.get_josef_speed(),
+                        diff.get_josef_health()
+                    )
+                )
+            ];
+        if include_player {
+            entities.push(
+                EntityWrapper::WPlayer(
+                    Player::new((0, 0), diff.get_start_health())
+                ),
+            );
+        }
         GenerationSettings {
             width: 180,
             height: 111,
@@ -525,19 +542,7 @@ impl GenerationSettings {
             amount_of_walls: 10.0,
             new_pos_prob: 0.01,
             new_dir_prob: 0.05,
-            entities: vec![
-                EntityWrapper::WPlayer(
-                    Player::new((0, 0), diff.get_start_health())
-                ),
-                EntityWrapper::WJosef(
-                    Josef::new(
-                        (0, 0),
-                        diff.get_josef_police_rate(),
-                        diff.get_josef_speed(),
-                        diff.get_josef_health()
-                    )
-                ),
-            ]
+            entities: entities
         }
     }
 }

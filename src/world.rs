@@ -1,3 +1,4 @@
+use std::mem::replace;
 use std::sync::mpsc::{Sender, Receiver, channel};
 use std::ops::{Deref, DerefMut};
 
@@ -44,17 +45,29 @@ impl World {
 
     pub fn generate(&mut self) {
         let mut start_level = self.new_level();
-        start_level.generate(GenerationSettings::default_for_difficulty(self.difficulty));
+        start_level.generate(GenerationSettings::default_for_difficulty(self.difficulty, true));
         self.active_level = start_level;
 
         let mut other_level = self.new_level();
-        other_level.generate(GenerationSettings { amount_of_walls: 1., ..GenerationSettings::default_for_difficulty(self.difficulty) });
+        other_level.generate(GenerationSettings { amount_of_walls: 1., ..GenerationSettings::default_for_difficulty(self.difficulty, false) });
 
         self.other_levels.push(other_level);
     }
 
     fn new_level(&self) -> Level {
         Level::empty(self.difficulty, self.action_sender.clone(), self.callback_send.clone())
+    }
+
+    pub fn set_active(&mut self, idx: usize) {
+        let mut next_active = self.other_levels.remove(idx);
+        if let Some(player_id) = self.active_level.get_player_id() {
+            let player = self.active_level.entities.remove(&player_id).unwrap();
+            next_active.add_entity(player);
+        }
+
+        let old_active = replace(&mut self.active_level, next_active);
+
+        self.other_levels.push(old_active);
     }
 }
 

@@ -1,5 +1,5 @@
-use std::mem::replace;
 use level::Level;
+use world::World;
 use shape::Shape;
 use ext::*;
 use entity::*;
@@ -125,10 +125,29 @@ lazy_static! {
         |level, id| {
             if let Some(EntityWrapper::WPlayer(_)) = level.entities.get(&id) {
                 level.send_callback(Box::new(
-                    |ref mut world| {
-                        let next_active = world.other_levels.remove(0);
-                        let old_active = replace(&mut world.active_level, next_active);
-                        world.other_levels.push(old_active);
+                    |world: &mut World| {
+                        world.set_active(0);
+                        let (w, h) = (world.blocks.len(), world.blocks[0].len());
+                        loop {
+                            let x = (rand() * w as f64) as usize;
+                            let y = (rand() * h as f64) as usize;
+
+                            let passable = world.blocks.get(x as usize)
+                                .and_then(|a| a.get(y as usize))
+                                .map(|a| a.is_passable())
+                                .unwrap_or(false);
+
+                            if passable {
+                                if let Some(player_id) = world.get_player_id() {
+                                    if let Some(enw) = world.entities.get_mut(&player_id) {
+                                        *(enw.get_pos_mut()) = (x as u16, y as u16);
+                                        break;
+                                    }
+                                } else {
+                                    break;
+                                }
+                            }
+                        }
                     })).expect("Can't send!");
             }
         }
