@@ -119,33 +119,46 @@ impl Level {
     }
 
     pub fn update_scroll(&mut self, size: (u16, u16)) {
-        if let Some(id) = self.get_player_id() {
-            if let Some(en) = self.entities.get(&id) {
-                if  self.scroll.0 > (en.get_pos().0 as i16) - SCROLL_FOLLOW_DIST {
-                    self.scroll.0 = (en.get_pos().0 as i16) - SCROLL_FOLLOW_DIST;
-                }
-                if  self.scroll.1 > (en.get_pos().1 as i16) - SCROLL_FOLLOW_DIST {
-                    self.scroll.1 = (en.get_pos().1 as i16) - SCROLL_FOLLOW_DIST;
-                }
-                if  self.scroll.0 < (en.get_pos().0 as i16) + SCROLL_FOLLOW_DIST - size.0 as i16 - 1 {
-                    self.scroll.0 = (en.get_pos().0 as i16) + SCROLL_FOLLOW_DIST - size.0 as i16 - 1;
-                }
-                if  self.scroll.1 < (en.get_pos().1 as i16) + SCROLL_FOLLOW_DIST - (size.1 - 1 - HOTBAR_HEIGHT) as i16 {
-                    self.scroll.1 = (en.get_pos().1 as i16) + SCROLL_FOLLOW_DIST - (size.1 - 1 - HOTBAR_HEIGHT) as i16;
+        if size.0 < self.blocks.len() as u16 {
+            if let Some(id) = self.get_player_id() {
+                if let Some(en) = self.entities.get(&id) {
+                    if  self.scroll.0 > (en.get_pos().0 as i16) - SCROLL_FOLLOW_DIST {
+                        self.scroll.0 = (en.get_pos().0 as i16) - SCROLL_FOLLOW_DIST;
+                    }
+                    if  self.scroll.0 < (en.get_pos().0 as i16) + SCROLL_FOLLOW_DIST - size.0 as i16 - 1 {
+                        self.scroll.0 = (en.get_pos().0 as i16) + SCROLL_FOLLOW_DIST - size.0 as i16 - 1;
+                    }
                 }
             }
+            if  self.scroll.0 < 0 {
+                self.scroll.0 = 0;
+            }
+            if  self.scroll.0 > self.blocks.len() as i16 - size.0 as i16 {
+                self.scroll.0 = self.blocks.len() as i16 - size.0 as i16;
+            }
+        } else {
+            self.scroll.0 = (self.blocks.len() as i16 - size.0 as i16) / 2;
         }
-        if  self.scroll.0 < 0 {
-            self.scroll.0 = 0;
-        }
-        if  self.scroll.1 < 0 {
-            self.scroll.1 = 0;
-        }
-        if  self.scroll.0 > self.blocks.len() as i16 - size.0 as i16 {
-            self.scroll.0 = self.blocks.len() as i16 - size.0 as i16;
-        }
-        if  self.scroll.1 > self.blocks[0].len() as i16 - size.1 as i16 + HOTBAR_HEIGHT as i16 {
-            self.scroll.1 = self.blocks[0].len() as i16 - size.1 as i16 + HOTBAR_HEIGHT as i16;
+
+        if size.1 < self.blocks[0].len() as u16 + HOTBAR_HEIGHT {
+            if let Some(id) = self.get_player_id() {
+                if let Some(en) = self.entities.get(&id) {
+                    if  self.scroll.1 > (en.get_pos().1 as i16) - SCROLL_FOLLOW_DIST {
+                        self.scroll.1 = (en.get_pos().1 as i16) - SCROLL_FOLLOW_DIST;
+                    }
+                    if  self.scroll.1 < (en.get_pos().1 as i16) + SCROLL_FOLLOW_DIST - (size.1 - 1 - HOTBAR_HEIGHT) as i16 {
+                        self.scroll.1 = (en.get_pos().1 as i16) + SCROLL_FOLLOW_DIST - (size.1 - 1 - HOTBAR_HEIGHT) as i16;
+                    }
+                }
+            }
+            if  self.scroll.1 < 0 {
+                self.scroll.1 = 0;
+            }
+            if  self.scroll.1 > self.blocks[0].len() as i16 - size.1 as i16 + HOTBAR_HEIGHT as i16 {
+                self.scroll.1 = self.blocks[0].len() as i16 - size.1 as i16 + HOTBAR_HEIGHT as i16;
+            }
+        } else {
+            self.scroll.1 = (self.blocks[0].len() as i16 + HOTBAR_HEIGHT as i16 - size.1 as i16) / 2;
         }
     }
 

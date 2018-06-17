@@ -57,6 +57,8 @@ impl World {
                     amount_of_walls: 1.,
                     width: 30,
                     height: 30,
+                    new_pos_prob: 0.01,
+                    new_dir_prob: 0.005,
                     block_probs: hashmap!{
                         block::WALL.clone()   => 0.5,
                         block::STONE.clone()  => 0.495,
