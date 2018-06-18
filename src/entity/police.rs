@@ -87,89 +87,56 @@ impl Entity for Police {
         };
 
         if should_walk {
-            let (player_pos, my_pos);
-            if let Some(player) = level.get_player_id().and_then(|x| level.entities.get(&x)) {
-                if let Some(this) = level.entities.get(&en_id) {
-                    player_pos = player.get_pos();
-                    my_pos = this.get_pos();
-                } else {
-                    return;
+            let mut to_move = None;
+            if let Some(EntityWrapper::WPolice(this)) = level.entities.get_mut(&en_id) {
+                if !this.path.is_empty() {
+                    to_move = Some(this.path.remove(0));
                 }
             } else {
                 return;
             }
 
-            let mut visited = vec![ my_pos ];
-            let mut paths: Vec<(_, Vec<MoveDir>)> = vec![ (my_pos, vec![]) ];
-
-            let mut best_path = None;
-            let mut best_score = u16::max_value();
-
-            // Find closest path to player
-            'outer: for _ in 0..100 {
-                if let Some((ref pos, ref path)) = paths.clone().into_iter()
-                    .min_by_key(|&(ref pos, ref path)| {
-                        let (dx, dy) = (pos.0.wrapping_sub(player_pos.0), pos.1.wrapping_sub(player_pos.1));
-                        let (dx_sq, dy_sq) = (dx.saturating_mul(dx), dy.saturating_mul(dy));
-                        dx_sq.saturating_add(dy_sq).saturating_add(path.len() as u16 * 2)
-                    }) {
-                        paths.remove_item(&(*pos, path.clone()));
-
-                        let mut dirs = vec! [MoveDir::Up, MoveDir::Down, MoveDir::Left, MoveDir::Right];
-                        for _ in 0..4 {
-                            let fidx = rand() * dirs.len() as f64;
-                            let dir = dirs[fidx as usize];
-                            dirs.remove(fidx as usize);
-
-                            let (dx, dy) = dir.to_vec();
-                            let new_pos = (pos.0.wrapping_add(dx as u16), pos.1.wrapping_add(dy as u16));
-
-                            let mut new_path = path.clone();
-                            new_path.push(dir);
-
-                            if visited.contains(&new_pos) {
-                                continue;
-                            }
-                            if new_pos == player_pos {
-                                best_path = Some(new_path);
-                                break 'outer;
-                            }
-
-                            let passable_block = level.get_at(new_pos)
-                                .map(|x| x.is_passable())
-                                .unwrap_or(false);
-                            let passable_entity =
-                                !level.entities.values()
-                                .any(|x| x.get_pos() == new_pos);
-
-                            if passable_block && passable_entity {
-                                paths.push((new_pos, new_path.clone()));
-                                visited.push(new_pos);
-
-                                let (dx, dy) = (pos.0.wrapping_sub(player_pos.0), pos.1.wrapping_sub(player_pos.1));
-                                let (dx_sq, dy_sq) = (dx.saturating_mul(dx), dy.saturating_mul(dy));
-                                let score = dx_sq.saturating_add(dy_sq).saturating_add(path.len() as u16 * 2);
-                                if score < best_score {
-                                    best_path = Some(new_path);
-                                    best_score = score;
-                                }
-                            }
-                        }
-                    } else {
-                        break 'outer;
-                    }
+            if let Some(to_move) = to_move {
+                Police::move_dir(level, en_id, to_move);
             }
 
-            if let Some(best_path) = best_path.clone() {
-                Police::move_dir(level, en_id, best_path[0]);
-            }
-            if let Some(&mut EntityWrapper::WPolice(ref mut this)) = level.entities.get_mut(&en_id) {
-                this.path = best_path.unwrap_or(vec![]);
-                this.visited = visited;
+            if to_move == None || rand() < 0.2 {
+                let (player_pos, my_pos);
+                if let Some(EntityWrapper::WPolice(this)) = level.entities.get_mut(&en_id) {
+                    my_pos = this.get_pos();
+                } else {
+                    return;
+                }
+                if let Some(player) = level.get_player_id().and_then(|x| level.entities.get(&x)) {
+                    player_pos = player.get_pos();
+                } else {
+                    return;
+                }
+
+                let heur = |(x, y): (u16, u16,)| {
+                    let (dx, dy) = (x as f64 - player_pos.0 as f64, y as f64 - player_pos.1 as f64);
+
+                    let dist_sq = dx * dx + dy * dy;
+
+                    Some(dist_sq.sqrt())
+                };
+
+                let path = level.find_path(
+                    my_pos,
+                    |block, _|
+                        if block.is_passable()
+                            { Some(1.) }
+                            else { None },
+                    heur,
+                    1000,
+                    true);
+
+                if let Some(EntityWrapper::WPolice(ref mut this)) = level.entities.get_mut(&en_id) {
+                    log(&format!("Path: {:?}", path));
+                    this.path = path;
+                }
             }
         }
-
-
     }
 
     fn on_collision(level: &mut Level, me_id: u64, other_id: u64) -> bool
