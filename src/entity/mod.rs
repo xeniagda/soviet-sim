@@ -30,19 +30,16 @@ pub trait Entity {
     fn move_dir(level: &mut Level, en_id: u64, dir: MoveDir) -> bool
         where Self: Sized {
 
-        let (dx, dy) = dir.to_vec();
-
-        let mut new_pos_and_dir: Option<((u16, u16), (i8, i8))> = None;
+        let mut new_pos: Option<(u16, u16)> = None;
 
         if let Some(en) = level.entities.get_mut(&en_id) {
-            en.get_pos_mut().0 = en.get_pos_mut().0.wrapping_add(dx as u16);
-            en.get_pos_mut().1 = en.get_pos_mut().1.wrapping_add(dy as u16);
+            *en.get_pos_mut() = dir.move_vec(en.get_pos());
 
-            new_pos_and_dir = Some((en.get_pos().clone(), (dx, dy)));
+            new_pos = Some(en.get_pos().clone());
         }
 
 
-        if let Some((pos, dir)) = new_pos_and_dir {
+        if let Some(pos) = new_pos {
             let passable = level.get_at(pos)
                         .map(|x| x.is_passable())
                         .unwrap_or(false);
@@ -62,8 +59,7 @@ pub trait Entity {
                 }
             } else {
                 if let Some(en) = level.entities.get_mut(&en_id) {
-                    en.get_pos_mut().0 = en.get_pos_mut().0.wrapping_sub(dx as u16);
-                    en.get_pos_mut().1 = en.get_pos_mut().1.wrapping_sub(dy as u16);
+                    *en.get_pos_mut() = dir.rotate_180().move_vec(en.get_pos());
                 }
                 return false;
             }
@@ -75,8 +71,7 @@ pub trait Entity {
 
                     if !f(level, *k, en_id) {
                         if let Some(en) = level.entities.get_mut(&en_id) {
-                            en.get_pos_mut().0 = en.get_pos().0.saturating_sub(dir.0 as u16);
-                            en.get_pos_mut().1 = en.get_pos().1.saturating_sub(dir.1 as u16);
+                            *en.get_pos_mut() = dir.rotate_180().move_vec(en.get_pos());
                             collided = true;
                         }
                     }
@@ -86,8 +81,7 @@ pub trait Entity {
                         if !f(level, en_id, *k) {
                             if let Some(en) = level.entities.get_mut(&en_id) {
                                 if !collided {
-                                    en.get_pos_mut().0 -= dir.0 as u16;
-                                    en.get_pos_mut().1 -= dir.1 as u16;
+                                    *en.get_pos_mut() = dir.rotate_180().move_vec(en.get_pos());
                                 }
                                 collided = true;
                             }
