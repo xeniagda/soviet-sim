@@ -43,14 +43,12 @@ pub trait Entity {
 
 
         if let Some((pos, dir)) = new_pos_and_dir {
-            let passable = level.blocks.get(pos.0 as usize)
-                        .and_then(|x| x.get(pos.1 as usize))
+            let passable = level.get_at(pos)
                         .map(|x| x.is_passable())
                         .unwrap_or(false);
 
             if passable {
-                let id = level.blocks.get(pos.0 as usize)
-                    .and_then(|x| x.get(pos.1 as usize))
+                let id = level.get_at(pos)
                     .map(|x| x.get_id())
                     .unwrap_or(0);
 

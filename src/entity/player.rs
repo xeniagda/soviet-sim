@@ -39,7 +39,7 @@ impl Player {
             let place_pos = (this.pos.0 + dir.to_vec().0 as u16, this.pos.1 + dir.to_vec().1 as u16);
 
             if level.blocks
-                .get(place_pos.0 as usize)
+                    .get(place_pos.0 as usize)
                     .and_then(|x| x.get(place_pos.1 as usize)) != Some(&block::GROUND)
             {
                 return;

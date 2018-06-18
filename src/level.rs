@@ -291,11 +291,7 @@ impl Level {
             return;
         }
 
-        let block_pickup =
-            if let Some(block_at) = self.blocks
-                .get_mut(new_pos.0 as usize)
-                .and_then(|x| x.get_mut(new_pos.1 as usize))
-            {
+        let block_pickup = if let Some(block_at) = self.get_at_mut(new_pos) {
                 if block_at.is_breakable() == block::Breakability::Breakable {
                     // Break block
                     mem::replace(block_at, block::GROUND.clone())
@@ -330,7 +326,7 @@ impl Level {
                 if let (Some(x_), Some(y_)) =
                     ((x as i16).checked_add(self.scroll.0), (y as i16).checked_add(self.scroll.1))
                 {
-                    if let Some(block) = self.blocks.get(x_ as usize).and_then(|col| col.get(y_ as usize)) {
+                    if let Some(block) = self.get_at((x_ as u16, y_ as u16)) {
                         block.get_shape().draw((x, y));
                     } else {
                         put_char((x as u16, y as u16), &Shape::empty());
@@ -429,12 +425,12 @@ impl Level {
             }
         }
 
-        let mut placed = vec![];
+        let mut placed: Vec<(u16, u16, MoveDir)> = vec![];
         for _ in 0..(settings.amount_of_walls * settings.width as f64 * settings.height as f64) as usize {
             if rand() < settings.new_pos_prob || placed.is_empty() {
-                let x = (rand() * settings.width as f64) as usize;
-                let y = (rand() * settings.height as f64) as usize;
-                self.blocks[x][y] = block::GROUND.clone();
+                let x = (rand() * settings.width as f64) as u16;
+                let y = (rand() * settings.height as f64) as u16;
+                self.blocks[x as usize][y as usize] = block::GROUND.clone();
                 placed.push((x, y, random_dir()));
             } else {
                 let idx = (rand() * placed.len() as f64) as usize;
@@ -446,11 +442,11 @@ impl Level {
 
                 let dirv = dir.to_vec();
 
-                let (nx, ny) = (x.wrapping_add(dirv.0 as usize), y.wrapping_add(dirv.1 as usize));
+                let (nx, ny) = (x.wrapping_add(dirv.0 as u16), y.wrapping_add(dirv.1 as u16));
 
-                let block_at = self.blocks.get(nx).and_then(|x| x.get(ny));
+                let block_at = self.get_at((nx, ny));
                 if block_at.map(|x| x.breakable == block::Breakability::Breakable).unwrap_or(false) {
-                    self.blocks[nx][ny] = block::GROUND.clone();
+                    self.blocks[nx as usize][ny as usize] = block::GROUND.clone();
                     placed.push((nx, ny, dir));
                 }
             }
@@ -476,6 +472,14 @@ impl Level {
                 break;
             }
         }
+    }
+
+    pub fn get_at(&self, pos: (u16, u16)) -> Option<&block::Block> {
+        self.blocks.get(pos.0 as usize).and_then(|col| col.get(pos.1 as usize))
+    }
+
+    pub fn get_at_mut(&mut self, pos: (u16, u16)) -> Option<&mut block::Block> {
+        self.blocks.get_mut(pos.0 as usize).and_then(|col| col.get_mut(pos.1 as usize))
     }
 
     /// Find a path using a cost and heuristics function.
@@ -526,7 +530,7 @@ impl Level {
             for dir in &DIRECTIONS {
                 let moved = dir.move_vec(curr);
 
-                let block = self.blocks.get(moved.0 as usize).and_then(|a| a.get(moved.1 as usize));
+                let block = self.get_at(moved);
                 if block.is_none() { continue; }
 
                 let block = block.unwrap();

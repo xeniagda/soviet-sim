@@ -69,20 +69,14 @@ impl Entity for Bullet {
 
 
         if let Some((pos, dir)) = new_pos_and_dir {
-            let passable = level.blocks.get(pos.0 as usize)
-                        .and_then(|x| x.get(pos.1 as usize))
-                        .map(|x| x.is_passable())
-                        .unwrap_or(true);
+            let passable = level.get_at(pos).map(|x| x.is_passable()).unwrap_or(true);
 
             if !passable {
                 level.blocks[pos.0 as usize][pos.1 as usize] = block::GROUND.clone();
                 level.entities.remove(&en_id);
                 return true;
             } else {
-                let id = level.blocks.get(pos.0 as usize)
-                    .and_then(|x| x.get(pos.1 as usize))
-                    .map(|x| x.get_id())
-                    .unwrap_or(0);
+                let id = level.get_at(pos).map(|x| x.get_id()).unwrap_or(0);
 
                 let blkf = block::BLOCK_FUNCS.lock().unwrap();
 

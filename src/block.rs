@@ -103,11 +103,10 @@ lazy_static! {
         |level, id| {
             let pos;
             loop {
-                let x = (rand() * level.blocks.len() as f64) as usize;
-                let y = (rand() * level.blocks[0].len() as f64) as usize;
+                let x = (rand() * level.blocks.len() as f64) as u16;
+                let y = (rand() * level.blocks[0].len() as f64) as u16;
 
-                let passable = level.blocks.get(x as usize)
-                    .and_then(|a| a.get(y as usize))
+                let passable = level.get_at((x, y))
                     .map(|a| a.is_passable())
                     .unwrap_or(false);
 
@@ -137,21 +136,18 @@ lazy_static! {
                         world.set_active(0);
                         let (w, h) = (world.blocks.len(), world.blocks[0].len());
                         'outer: loop {
-                            let x = (rand() * w as f64) as usize;
-                            let y = (rand() * h as f64) as usize;
+                            let x = (rand() * w as f64) as u16;
+                            let y = (rand() * h as f64) as u16;
 
-                            let is_stairs = world.blocks.get(x as usize)
-                                .and_then(|a| a.get(y as usize))
+                            let is_stairs = world.get_at((x, y))
                                 .map(|a| a == &*STAIRS)
                                 .unwrap_or(false);
 
                             if is_stairs {
                                 for dir in &DIRECTIONS {
-                                    let (x, y) = dir.move_vec((x as u16, y as u16));
-                                    let (x, y) = (x as usize, y as usize);
+                                    let (x, y) = dir.move_vec((x, y));
 
-                                    let passable = world.blocks.get(x as usize)
-                                        .and_then(|a| a.get(y as usize))
+                                    let passable = world.get_at((x, y))
                                         .map(|a| a.is_passable())
                                         .unwrap_or(false);
 

@@ -46,8 +46,8 @@ impl Bomb {
             for dy in -(BOMB_RADIUS as i16) .. BOMB_RADIUS as i16 + 1 {
                 let dist_sq = (dx * dx + dy * dy) as u16;
                 if dist_sq < BOMB_RADIUS * BOMB_RADIUS {
-                    let (x_, y_) = ((x.wrapping_add(dx as u16)) as usize, (y.wrapping_add(dy as u16)) as usize);
-                    let breakability = level.blocks.get(x_ as usize).and_then(|a| a.get(y_ as usize))
+                    let (x_, y_) = (x.wrapping_add(dx as u16), y.wrapping_add(dy as u16));
+                    let breakability = level.get_at((x_, y_))
                             .map(|blk| blk.is_breakable())
                             .unwrap_or(block::Breakability::NotBreakable);
 
@@ -59,10 +59,7 @@ impl Bomb {
                                 needed = needed * 2.;
                             }
                             if rand() < needed {
-                                if let Some(blk) = level.blocks
-                                        .get_mut(x_ as usize)
-                                        .and_then(|a| a.get_mut(y_ as usize))
-                                {
+                                if let Some(blk) = level.get_at_mut((x_, y_)) {
                                     *blk = block::GROUND.clone();
                                 }
                             }

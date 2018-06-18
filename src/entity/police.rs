@@ -135,8 +135,7 @@ impl Entity for Police {
                                 break 'outer;
                             }
 
-                            let passable_block = level.blocks.get(new_pos.0 as usize)
-                                .and_then(|x| x.get(new_pos.1 as usize))
+                            let passable_block = level.get_at(new_pos)
                                 .map(|x| x.is_passable())
                                 .unwrap_or(false);
                             let passable_entity =
