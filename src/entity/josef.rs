@@ -1,4 +1,5 @@
 use level::{Level, MetaAction};
+use block::Block;
 use shape::Shape;
 use ext::*;
 use move_dir::MoveDir;
@@ -107,20 +108,28 @@ impl Entity for Josef {
 
         if should_move {
             if let Some(my_pos) = my_pos {
-                let heur = |(x, y): (u16, u16,)| {
+                let heur = |(x, y): (u16, u16)| {
                     let (dx, dy) = (x as f64 - player_pos.0 as f64, y as f64 - player_pos.1 as f64);
 
                     let dist_sq = dx * dx + dy * dy;
 
-                    Some(500. - dist_sq.sqrt())
+                    if dx == 0. || dy == 0. {
+                        Some(500.)
+                    } else {
+                        Some(500. - dist_sq.sqrt())
+                    }
+                };
+                let cost = |block: Block, pos| {
+                    if block.is_passable() {
+                        heur(pos)
+                    } else {
+                        None
+                    }
                 };
 
                 let path = level.find_path(
                     my_pos,
-                    |block, _|
-                        if block.is_passable()
-                            { Some(1.) }
-                            else { None },
+                    cost,
                     heur,
                     10000,
                     true);
