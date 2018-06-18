@@ -126,6 +126,7 @@ impl World {
             let player = self.active_level.entities.remove(&player_id).unwrap();
             next_active.add_entity(player);
         }
+        next_active.on_activated();
 
         let old_active = replace(&mut self.active_level, next_active);
 

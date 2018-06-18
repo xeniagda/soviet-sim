@@ -32,6 +32,7 @@ pub struct Level {
     action_sender: Sender<MetaAction>,
     pub callback_sender: Sender<Callback>,
     pub scroll: (i16, i16),
+    ticks_since_active: u64
 }
 
 
@@ -46,10 +47,16 @@ impl Level {
             action_sender: action_sender,
             callback_sender: callback_sender,
             scroll: (0, 0),
+            ticks_since_active: 0
         }
     }
 
+    pub fn on_activated(&mut self) {
+        self.ticks_since_active = 0;
+    }
+
     pub fn tick(&mut self) {
+        self.ticks_since_active += 1;
         for k in self.entities.clone().keys() {
             if let Some(f) = self.entities.get(k).map(|x| x.get_tick_fn()) {
                 f(self, *k);
@@ -353,6 +360,45 @@ impl Level {
                 }
             }
             );
+
+        // Apply filter
+        if let Some((pl_x, pl_y)) = self.get_player_id()
+            .and_then(|id| self.entities.get(&id)).map(|pl| pl.get_pos())
+        {
+            if let (Some(screen_x), Some(screen_y)) =
+                ((pl_x as i16).checked_sub(self.scroll.0), (pl_y as i16).checked_sub(self.scroll.1))
+            {
+                for x in 0..size.0 {
+                    for y in 0..size.1 {
+                        if let Some(shp) = get_shape((x, y)) {
+                            let (dx, dy) = (x as i16 - screen_x as i16, y as i16 - screen_y as i16);
+                            let dist_sq = (dx * dx + dy * dy) as f64;
+
+                            let norm_dist_sq = dist_sq as f64 / (size.0 * size.0 + size.1 * size.1) as f64;
+                            let norm_dist = norm_dist_sq.sqrt();
+
+                            let decay = (self.ticks_since_active * self.ticks_since_active + 1) as f64 / 300.;
+
+                            let fade_mul = 1. - norm_dist / decay;
+
+                            let fade_mul = fade_mul.max(0.).min(1.);
+
+                            let fg = ((shp.col.0 as f64 * fade_mul) as u8,
+                                      (shp.col.1 as f64 * fade_mul) as u8,
+                                      (shp.col.2 as f64 * fade_mul) as u8,
+                                     );
+                            let bg = ((shp.bg.0 as f64 * fade_mul) as u8,
+                                      (shp.bg.1 as f64 * fade_mul) as u8,
+                                      (shp.bg.2 as f64 * fade_mul) as u8,
+                                     );
+
+                            let new_shape = Shape { ch: shp.ch, col: fg, bg: bg };
+                            put_char((x, y), &new_shape);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     pub fn generate(&mut self, settings: GenerationSettings) {

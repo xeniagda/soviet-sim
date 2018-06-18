@@ -81,6 +81,15 @@ pub fn put_text(pos: (u16, u16), text: &str, fg: (u8, u8, u8), bg: (u8, u8, u8))
     }
 }
 
+pub fn get_shape(pos: (u16, u16)) -> Option<Shape> {
+    match UNFLIPPED.try_lock() {
+        Ok(screen) => {
+            screen.get(pos.0 as usize).and_then(|a| a.get(pos.1 as usize)).map(|x| *x)
+        }
+        _ => None
+    }
+}
+
 pub fn recolor(pos: (u16, u16), fg: (u8, u8, u8), bg: (u8, u8, u8)) {
     match SCREEN.try_lock() {
         Ok(mut screen) => {
