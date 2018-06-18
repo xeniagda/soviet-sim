@@ -199,17 +199,15 @@ impl Level {
                 if let Some(EntityWrapper::WPlayer(p)) = self.get_player_id().and_then(|id| self.entities.get(&id)) {
                     let start_pos = dir.move_vec(p.pos);
 
-                    let heur = |(x, y)| {
-                        let (dx, dy) = (x as i32 - start_pos.0 as i32, y as i32 - start_pos.1 as i32);
-                        let score = (dx * dx + dy * dy) as f64;
-                        Some(-score / 3.)
+                    let heur = |_| {
+                        Some(rand())
                     };
                     self.auto_mine = self.find_path(
                         start_pos,
                         |block, _|
                             if block.is_passable()
                                 { None }
-                                else { Some(1.) },
+                                else { Some(-1.) },
                         heur,
                         1000,
                         true)
