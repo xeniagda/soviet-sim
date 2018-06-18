@@ -77,8 +77,8 @@ pub trait Entity {
 
                     if !f(level, *k, en_id) {
                         if let Some(en) = level.entities.get_mut(&en_id) {
-                            en.get_pos_mut().0 -= dir.0 as u16;
-                            en.get_pos_mut().1 -= dir.1 as u16;
+                            en.get_pos_mut().0 = en.get_pos().0.saturating_sub(dir.0 as u16);
+                            en.get_pos_mut().1 = en.get_pos().1.saturating_sub(dir.1 as u16);
                             collided = true;
                         }
                     }

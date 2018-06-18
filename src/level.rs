@@ -1,4 +1,4 @@
-use std::i32;
+use std::f64;
 
 use ext::*;
 use world::{World, Callback};
@@ -201,17 +201,18 @@ impl Level {
 
                     let heur = |(x, y)| {
                         let (dx, dy) = (x as i32 - start_pos.0 as i32, y as i32 - start_pos.1 as i32);
-                        let score = dx * dx + dy * dy;
-                        Some(-score / 3)
+                        let score = (dx * dx + dy * dy) as f64;
+                        Some(-score / 3.)
                     };
                     self.auto_mine = self.find_path(
                         start_pos,
                         |block, _|
                             if block.is_passable()
                                 { None }
-                                else { Some(-3) },
+                                else { Some(1.) },
                         heur,
-                        1000)
+                        1000,
+                        true)
                         .into_iter()
                         .collect();
 
@@ -242,21 +243,22 @@ impl Level {
                     let pos = p.pos;
                     let heur = |(x, y)| {
                         let score = match dir {
-                            MoveDir::Left =>  pos.0 as i32 - x as i32,
-                            MoveDir::Right => x as i32 - pos.0 as i32,
-                            MoveDir::Up =>    pos.1 as i32 - y as i32,
-                            MoveDir::Down =>  y as i32 - pos.1 as i32,
+                            MoveDir::Left =>  pos.0 as f64 - x as f64,
+                            MoveDir::Right => x as f64 - pos.0 as f64,
+                            MoveDir::Up =>    pos.1 as f64 - y as f64,
+                            MoveDir::Down =>  y as f64 - pos.1 as f64,
                         };
-                        Some(score * 3)
+                        Some(-score * 3.)
                     };
                     self.auto_walk = self.find_path(
                         pos,
                         |block, _|
                             if block.is_passable()
-                                { Some(1) }
+                                { Some(1.) }
                                 else { None },
                         heur,
-                        1000)
+                        1000,
+                        true)
                         .into_iter()
                         .take(20)
                         .collect();
@@ -371,8 +373,8 @@ impl Level {
                 for x in 0..size.0 {
                     for y in 0..size.1 {
                         if let Some(shp) = get_shape((x, y)) {
-                            let (dx, dy) = (x as i16 - screen_x as i16, y as i16 - screen_y as i16);
-                            let dist_sq = (dx * dx + dy * dy) as f64;
+                            let (dx, dy) = (x as f64 - screen_x as f64, y as f64 - screen_y as f64);
+                            let dist_sq = dx * dx + dy * dy;
 
                             let norm_dist_sq = dist_sq as f64 / (size.0 * size.0 + size.1 * size.1) as f64;
                             let norm_dist = norm_dist_sq.sqrt();
@@ -478,82 +480,140 @@ impl Level {
 
     /// Find a path using a cost and heuristics function.
     /// Cost: Takes a block and returns the cost of passing that block. If None is returned, the
-    /// block is considered not passable. Positive here is considered bad.
+    /// block is considered not passable. Large here is considered bad.
     /// Heuristics: Takes a level and position and gives back a heuristics of going to that
-    /// position. If None, that position is return. Positive here is considered good.
+    /// position. If None, that position is the goal. Large here is considered dab.
     pub fn find_path(
         &self,
         from: (u16, u16),
-        cost: impl Fn(block::Block, (u16, u16)) -> Option<i32>,
-        heuristics: impl Fn((u16, u16)) -> Option<i32>,
+        cost: impl Fn(block::Block, (u16, u16)) -> Option<f64>,
+        heuristics: impl Fn((u16, u16)) -> Option<f64>,
         steps: u16,
+        allow_incomplete: bool
         ) ->
         Vec<MoveDir>
     {
-
-        let mut paths: Vec<((i32, i32), Vec<MoveDir>, (u16, u16))> = vec![((0, 0), vec![], from)];
         let mut visited: Vec<(u16, u16)> = vec![];
-        let mut best_path: Option<((i32, i32), (Vec<MoveDir>, (u16, u16)))> = None;
+        let mut to_visit: Vec<(u16, u16)> = vec![from]; // The last value has the lowest cost_heur
 
-        for _ in 0..steps {
-            if paths.len() == 0 {
-                break;
+        let mut camefrom: HashMap<(u16, u16), MoveDir> = HashMap::new();
+        let mut costs: HashMap<(u16, u16), f64> = HashMap::new();
+        costs.insert(from, 0.);
+
+        let mut costs_heur: HashMap<(u16, u16), Option<f64>> = HashMap::new();
+        costs_heur.insert(from, heuristics(from));
+
+        let mut count = 0;
+
+        let mut min_heur: Option<((u16, u16), f64)> = None;
+
+        while !to_visit.is_empty() && count < steps {
+            let curr = to_visit.pop().unwrap();
+            visited.push(curr);
+
+            if costs_heur.get(&curr) == Some(&None) {
+                // Reconstruct path
+
+                let mut curr = curr;
+                let mut total = vec![];
+                while let Some(dir) = camefrom.get(&curr) {
+                    total.insert(0, *dir);
+                    curr = dir.rotate_180().move_vec(curr);
+                }
+                return total;
             }
 
-            if let Some(((last_cost, _), from, pos)) = paths.pop() {
-                for direction in &DIRECTIONS {
-                    let new_pos = direction.move_vec(pos);
+            for dir in &DIRECTIONS {
+                let moved = dir.move_vec(curr);
 
-                    if visited.contains(&new_pos) {
-                        continue;
-                    }
-                    visited.push(new_pos);
+                let block = self.blocks.get(moved.0 as usize).and_then(|a| a.get(moved.1 as usize));
+                if block.is_none() { continue; }
 
-                    // Check for entities
-                    if self.entities.values().any(|en| en.get_pos() == new_pos) {
-                        continue;
-                    }
+                let block = block.unwrap();
 
-                    if let Some(block) = self.blocks.get(pos.0 as usize).and_then(|c| c.get(pos.1 as usize)) {
-                        if let Some(cost) = cost(block.clone(), new_pos) {
-                            let new_cost = last_cost + cost;
-                            let mut new_from = from.clone();
-                            new_from.push(*direction);
+                if visited.contains(&moved) { continue; }
 
-                            // Check cost
+                let curr_cost = cost(block.clone(), moved);
+                if curr_cost.is_none() {
+                    continue;
+                }
+                let tot_cost = curr_cost.unwrap() + *costs.get(&curr).unwrap_or(&f64::MAX);
 
-                            let heur =
-                                if let Some(heur) = heuristics(new_pos) { heur }
-                                else { return new_from; };
+                if &tot_cost >= costs.get(&moved).unwrap_or(&f64::MAX) { continue; }
 
+                camefrom.insert(moved, *dir);
 
-                            let total_cost = heur - new_cost;
+                costs.insert(moved, tot_cost);
 
-                            for i in 0..paths.len() + 1 {
-                                if paths.get(i).map(|x| (x.0).1).unwrap_or(i32::MAX) > total_cost {
-                                    paths.insert(i, ((new_cost, total_cost), new_from.clone(), new_pos));
-                                    break;
-                                }
+                let heur = heuristics(moved);
+                if let Some(heur) = heur {
+                    match min_heur {
+                        Some((_pos, m_heur)) => {
+                            if m_heur > heur {
+                                min_heur = Some((moved, heur));
                             }
-
-
-                            let best_cost =
-                                if let Some(((_, best_cost), _)) = best_path {
-                                    best_cost
-                                } else {
-                                    0
-                                };
-
-                            if total_cost > best_cost {
-                                best_path = Some(((new_cost, total_cost), (new_from, new_pos)));
-                            }
+                        }
+                        None => {
+                            min_heur = Some((moved, heur));
                         }
                     }
                 }
+
+                costs_heur.insert(moved, heur.map(|x| x + tot_cost));
+
+                if !to_visit.contains(&moved) {
+
+                    let moved_hcost = costs_heur.get(&moved).unwrap_or(&Some(f64::MAX));
+
+                    if moved_hcost.is_none() {
+                        to_visit.push(moved);
+                        continue;
+                    }
+
+                    let moved_hcost = moved_hcost.unwrap();
+
+                    let mut inserted = false;
+                    for i in 0..to_visit.len() {
+                        match costs_heur.get(&to_visit[i]).unwrap_or(&Some(f64::MAX)) {
+                            Some(x) => {
+                                if x < &moved_hcost {
+                                    to_visit.insert(i, moved);
+                                    inserted = true;
+                                    break;
+                                }
+                            }
+                            None => {
+                                to_visit.insert(i, moved);
+                                inserted = true;
+                                break;
+                            }
+                        }
+                    }
+                    if !inserted {
+                        to_visit.push(moved);
+                    }
+                }
             }
+
+            count += 1;
         }
 
-        best_path.map(|x| (x.1).0).unwrap_or(vec![])
+        if allow_incomplete {
+            // Find the best path and reconstruct
+
+            if let Some(mut curr) = min_heur.map(|x| x.0) {
+                let mut total = vec![];
+                while let Some(dir) = camefrom.get(&curr) {
+                    total.insert(0, *dir);
+                    curr = dir.rotate_180().move_vec(curr);
+                }
+                total
+            } else {
+                vec![]
+            }
+        } else {
+            vec![]
+        }
     }
 
     pub fn send_callback(&self, callback: Box<Fn(&mut World)>) -> Result<(), SendError<Callback>> {

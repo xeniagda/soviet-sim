@@ -82,11 +82,11 @@ impl World {
                     let heur = |(x_, y_): (u16, u16,)| {
                         let (dx, dy) = (x_.wrapping_sub(x as u16), y_.wrapping_sub(y as u16));
                         let (dx_sq, dy_sq) = (dx.saturating_mul(dx), dy.saturating_mul(dy));
-                        let dist = dx_sq.saturating_add(dy_sq) as i32;
-                        if dist == 0 {
+                        let dist_sq = dx_sq.saturating_add(dy_sq) as f64;
+                        if dist_sq == 0. {
                             None
                         } else {
-                            Some(-dist * 3)
+                            Some(dist_sq.sqrt())
                         }
                     };
 
@@ -94,10 +94,11 @@ impl World {
                         josef_pos,
                         |block, _|
                             if block.is_passable()
-                                { Some(1) }
+                                { Some(1.) }
                                 else { None },
                         heur,
-                        1000);
+                        1000,
+                        false);
 
                     if !path.is_empty() {
                         any_stair_good = true;

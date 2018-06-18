@@ -6,7 +6,6 @@ use move_dir::MoveDir;
 use super::{Entity, EntityWrapper, Police};
 
 const SHOW_PATH_FINDING: bool = false;
-const PLAYER_SAFE_DIST: i32 = 50;
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct Josef {
@@ -83,52 +82,52 @@ impl Entity for Josef {
             };
 
         let mut to_move = None;
-        let mut my_pos = None;
+        let mut should_move = false;
 
         if let Some(EntityWrapper::WJosef(ref mut this)) = level.entities.get_mut(&en_id) {
-            if this.path.len() > 1 {
-                if this.walk_countdown == 0 {
+            if this.walk_countdown == 0 {
+                if this.path.len() > 0 {
                     to_move = Some(this.path.remove(0));
                     this.walk_countdown = this.walk_speed;
-                } else {
-                    this.walk_countdown -= 1;
                 }
+                should_move = true;
             } else {
-                my_pos = Some(this.pos);
+                this.walk_countdown -= 1;
             }
         }
-
-        if let Some(my_pos) = my_pos {
-            let heur = |(x, y): (u16, u16,)| {
-                let (dx, dy) = (x.wrapping_sub(player_pos.0), y.wrapping_sub(player_pos.1));
-                let (dx_sq, dy_sq) = (dx.saturating_mul(dx), dy.saturating_mul(dy));
-                let dist = dx_sq.saturating_add(dy_sq) as i32;
-                if dist > PLAYER_SAFE_DIST * PLAYER_SAFE_DIST {
-                    Some(-dist)
-                } else {
-                    Some(dist * 3)
-                }
-            };
-
-            let path = level.find_path(
-                my_pos,
-                |block, _|
-                    if block.is_passable()
-                        { Some(1) }
-                        else { None },
-                heur,
-                1000);
-
-            if let Some(EntityWrapper::WJosef(ref mut this)) = level.entities.get_mut(&en_id) {
-                this.path = path;
-            }
-        }
-
 
         if let Some(to_move) = to_move {
-            if !Josef::move_dir(level, en_id, to_move) || rand() < 0.25 {
+            Josef::move_dir(level, en_id, to_move);
+        }
+
+        let mut my_pos = None;
+        if let Some(EntityWrapper::WJosef(ref mut this)) = level.entities.get_mut(&en_id) {
+            my_pos = Some(this.pos);
+        }
+
+        if should_move {
+            if let Some(my_pos) = my_pos {
+                let heur = |(x, y): (u16, u16,)| {
+                    let (dx, dy) = (x as f64 - player_pos.0 as f64, y as f64 - player_pos.1 as f64);
+
+                    let dist_sq = dx * dx + dy * dy;
+
+                    Some(500. - dist_sq.sqrt())
+                };
+
+                let path = level.find_path(
+                    my_pos,
+                    |block, _|
+                        if block.is_passable()
+                            { Some(1.) }
+                            else { None },
+                    heur,
+                    10000,
+                    true);
+
                 if let Some(EntityWrapper::WJosef(ref mut this)) = level.entities.get_mut(&en_id) {
-                    this.path = vec![];
+                    log(&format!("Path: {:?}", path));
+                    this.path = path;
                 }
             }
         }
@@ -146,9 +145,11 @@ impl Entity for Josef {
 
             for dir in self.path.iter() {
                 let (dx, dy) = dir.to_vec();
-                pos = (pos.0 + dx as u16, pos.1 + dy as u16);
+                pos = (pos.0.wrapping_add(dx as u16), pos.1.wrapping_add(dy as u16));
 
-                recolor((pos.0 - scroll.0 as u16, pos.1 - scroll.1 as u16), (255, 0, 0), (0, 0, 0));
+                if let (Some(x), Some(y)) = (pos.0.checked_sub(scroll.0 as u16), pos.1.checked_sub(scroll.1 as u16)) {
+                    recolor((x, y), (255, 0, 0), (0, 0, 0));
+                }
             }
         }
     }
