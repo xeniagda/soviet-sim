@@ -340,10 +340,6 @@ impl Level {
             }
         }
 
-        // Draw entities
-        self.entities.iter()
-            .for_each(|(_, x)| x.pre_draw(self, &size, &self.scroll));
-
         self.entities.iter()
             .for_each(|(_, en)| {
                 let (x, y) = en.get_pos();
@@ -373,11 +369,11 @@ impl Level {
                             let norm_dist_sq = dist_sq as f64 / (size.0 * size.0 + size.1 * size.1) as f64;
                             let norm_dist = norm_dist_sq.sqrt();
 
-                            let decay = (self.ticks_since_active * self.ticks_since_active + 1) as f64 / 300.;
+                            let decay = (self.ticks_since_active * self.ticks_since_active + 1) as f64 / 600.;
 
                             let fade_mul = 1. - norm_dist / decay;
 
-                            let fade_mul = fade_mul.max(0.).min(1.);
+                            let fade_mul = fade_mul.max(0.).sqrt().sqrt().sqrt().min(1.);
 
                             let fg = ((shp.col.0 as f64 * fade_mul) as u8,
                                       (shp.col.1 as f64 * fade_mul) as u8,
@@ -395,6 +391,10 @@ impl Level {
                 }
             }
         }
+        // Draw entities
+        self.entities.iter()
+            .for_each(|(_, x)| x.pre_draw(self, &size, &self.scroll));
+
     }
 
     pub fn generate(&mut self, settings: GenerationSettings) {
