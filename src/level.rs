@@ -527,7 +527,12 @@ impl Level {
                 return total;
             }
 
-            for dir in &DIRECTIONS {
+            let mut dirs = DIRECTIONS.to_vec();
+            for i in 0..4 {
+                let idx = (rand() * (4. - i as f64)) as usize;
+                let dir = dirs[idx];
+                dirs.swap(idx, 3 - i);
+
                 let moved = dir.move_vec(curr);
 
                 let block = self.get_at(moved);
@@ -545,7 +550,7 @@ impl Level {
 
                 if &tot_cost >= costs.get(&moved).unwrap_or(&f64::MAX) { continue; }
 
-                camefrom.insert(moved, *dir);
+                camefrom.insert(moved, dir);
 
                 costs.insert(moved, tot_cost);
 
