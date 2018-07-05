@@ -6,7 +6,7 @@ use block;
 use entity::EntityWrapper;
 use difficulty::Difficulty;
 use level::{Level, MetaAction};
-use generator::{LevelGenerator, SpaceGenerator, PathsGenerator, Generator};
+use generator::{LevelGenerator, SpaceGenerator, PathsGenerator, CellularGenerator, Generator};
 
 
 pub struct Callback(pub Box<Fn(&mut World)>);
@@ -49,7 +49,16 @@ impl World {
 
     pub fn generate(&mut self) {
         let mut start_level = self.new_level();
-        let gen = LevelGenerator::default_for_difficulty(self.difficulty, true, false);
+        let gen = LevelGenerator {
+            space: SpaceGenerator::Cellular(CellularGenerator {
+                remove_prec: 0.5,
+                wall_block: block::WALL.clone(),
+                s2_iters: 1,
+                s3_iters: 1,
+            }),
+            ..LevelGenerator::default_for_difficulty(self.difficulty, true, false)
+        };
+
         gen.generate(180, 111, &mut start_level);
         self.active_level = start_level;
 

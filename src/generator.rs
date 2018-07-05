@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 
 use block;
+use block::Block;
 use difficulty::Difficulty;
 use level::Level;
 use entity::{EntityWrapper, Player, Josef};
 use ext::*;
 use move_dir::{random_dir, MoveDir};
+
 
 pub struct LevelGenerator {
     pub block_probs: HashMap<block::Block, f64>,
@@ -14,13 +16,21 @@ pub struct LevelGenerator {
 }
 
 pub enum SpaceGenerator {
-    Paths(PathsGenerator)
+    Paths(PathsGenerator),
+    Cellular(CellularGenerator),
 }
 
 pub struct PathsGenerator {
     pub amount_of_walls: f64,
     pub new_pos_prob: f64,
     pub new_dir_prob: f64,
+}
+
+pub struct CellularGenerator {
+    pub remove_prec: f64,
+    pub wall_block: Block,
+    pub s2_iters: usize,
+    pub s3_iters: usize,
 }
 
 pub trait Generator {
@@ -122,6 +132,7 @@ impl Generator for SpaceGenerator {
     fn generate(&self, width: usize, height: usize, lvl: &mut Level) {
         match self {
             SpaceGenerator::Paths(gen) => gen.generate(width, height, lvl),
+            SpaceGenerator::Cellular(gen) => gen.generate(width, height, lvl),
         }
     }
 }
@@ -157,6 +168,68 @@ impl Generator for PathsGenerator {
                     placed.push((nx, ny, dir));
                 }
             }
+        }
+
+    }
+
+}
+impl Generator for CellularGenerator {
+    fn generate(&self, _width: usize, _height: usize, lvl: &mut Level) {
+        let width = lvl.blocks.len();
+        let height = lvl.blocks.get(0).map(|x| x.len()).unwrap_or(0);
+
+        // Stage 1: Remove a precentage of the existing blocks
+        for x in 0..width {
+            for y in 0..height {
+                if rand() < self.remove_prec {
+                    lvl.blocks[x][y] = block::GROUND.clone();
+                }
+            }
+        }
+
+        // Stage 2: Do iterations of the B5678/S45678 and B5678/S5678
+
+        for i in 0..self.s2_iters + self.s3_iters {
+            let mut new_blocks = lvl.blocks.clone();
+
+            let is_s3 = i >= self.s2_iters;
+
+            for x in 0..width {
+                for y in 0..height {
+                    let mut neighbors = 0;
+                    let alive = lvl.blocks[x][y] != block::GROUND.clone();
+                    for dx in -1..=1 {
+                        for dy in -1..=1 {
+                            let rx = (x as isize) + dx;
+                            let ry = (y as isize) + dy;
+
+                            let rx = if rx < 0 { 0 } else { rx as usize };
+                            let ry = if ry < 0 { 0 } else { ry as usize };
+
+                            let rx = if rx > width  - 1 { width  - 1 } else { rx as usize };
+                            let ry = if ry > height - 1 { height - 1 } else { ry as usize };
+
+                            if lvl.blocks[rx][ry] != block::GROUND.clone() {
+                                neighbors += 1;
+                            }
+                        }
+                    }
+
+                    if !alive && neighbors > 4 {
+                        new_blocks[x][y] = self.wall_block.clone();
+                    }
+                    if is_s3 {
+                        if alive && neighbors < 4 {
+                            new_blocks[x][y] = block::GROUND.clone();
+                        }
+                    } else {
+                        if alive && neighbors < 5 {
+                            new_blocks[x][y] = block::GROUND.clone();
+                        }
+                    }
+                }
+            }
+            lvl.blocks = new_blocks;
         }
 
     }
