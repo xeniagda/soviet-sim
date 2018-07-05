@@ -31,6 +31,7 @@ mod difficulty;
 mod crafting;
 mod inventory;
 mod move_dir;
+mod generator;
 
 use level::*;
 use world::World;

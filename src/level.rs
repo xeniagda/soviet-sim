@@ -5,11 +5,11 @@ use world::{World, Callback};
 use controls::Action;
 use block;
 use entity;
-use entity::{EntityWrapper, Player, Josef};
+use entity::{EntityWrapper, Player};
 use shape::Shape;
 use difficulty::Difficulty;
 use inventory::InventoryItem;
-use move_dir::{MoveDir, random_dir, DIRECTIONS};
+use move_dir::{MoveDir, DIRECTIONS};
 
 use std::collections::HashMap;
 use std::mem;
@@ -397,70 +397,6 @@ impl Level {
 
     }
 
-    pub fn generate(&mut self, settings: GenerationSettings) {
-        log("Generating!");
-
-        self.entities = HashMap::new();
-        self.blocks = vec![];
-
-        let total: f64 = settings.block_probs.values().sum();
-
-        for x in 0..settings.width {
-            self.blocks.push(vec![]);
-            for _ in 0..settings.height {
-                let block_num = rand() * total;
-
-                let mut upto = 0.;
-
-                for (blk, prob) in settings.block_probs.iter() {
-                    upto += *prob;
-                    if upto >= block_num {
-                        self.blocks[x].push(blk.clone());
-                        break;
-                    }
-                }
-
-            }
-        }
-
-        let mut placed: Vec<(u16, u16, MoveDir)> = vec![];
-        for _ in 0..(settings.amount_of_walls * settings.width as f64 * settings.height as f64) as usize {
-            if rand() < settings.new_pos_prob || placed.is_empty() {
-                let x = (rand() * settings.width as f64) as u16;
-                let y = (rand() * settings.height as f64) as u16;
-                self.blocks[x as usize][y as usize] = block::GROUND.clone();
-                placed.push((x, y, random_dir()));
-            } else {
-                let idx = (rand() * placed.len() as f64) as usize;
-                let (x, y, mut dir) = placed[idx];
-
-                if rand() < settings.new_dir_prob {
-                    dir = random_dir();
-                }
-
-                let dirv = dir.to_vec();
-
-                let (nx, ny) = (x.wrapping_add(dirv.0 as u16), y.wrapping_add(dirv.1 as u16));
-
-                let block_at = self.get_at((nx, ny));
-                if block_at.map(|x| x.breakable == block::Breakability::Breakable).unwrap_or(false) {
-                    self.blocks[nx as usize][ny as usize] = block::GROUND.clone();
-                    placed.push((nx, ny, dir));
-                }
-            }
-        }
-
-        for mut en in settings.entities.into_iter() {
-            let idx = (rand() * placed.len() as f64) as usize;
-            let (x, y, _) = placed[idx];
-            placed.remove(idx);
-            *en.get_pos_mut() = (x as u16, y as u16);
-            self.add_entity(
-                en
-                );
-        }
-        log("Done!");
-    }
 
     pub fn add_entity(&mut self, entity: EntityWrapper) {
         loop {
@@ -628,50 +564,4 @@ impl Level {
     }
 }
 
-pub struct GenerationSettings {
-    pub width: usize,
-    pub height: usize,
-    pub block_probs: HashMap<block::Block, f64>,
-    pub amount_of_walls: f64,
-    pub new_pos_prob: f64,
-    pub new_dir_prob: f64,
-    pub entities: Vec<EntityWrapper>,
-}
 
-impl GenerationSettings {
-    pub fn default_for_difficulty(diff: Difficulty, include_player: bool, include_josef: bool) -> GenerationSettings {
-        let mut entities = vec![];
-        if include_player {
-            entities.push(
-                EntityWrapper::WPlayer(
-                    Player::new((0, 0), diff.get_start_health())
-                )
-            );
-        }
-        if include_josef {
-            entities.push(
-                EntityWrapper::WJosef(
-                    Josef::new(
-                        (0, 0),
-                        diff.get_josef_police_rate(),
-                        diff.get_josef_speed(),
-                        diff.get_josef_health()
-                    )
-                )
-            );
-        }
-        GenerationSettings {
-            width: 180,
-            height: 111,
-            block_probs: hashmap!{
-                block::WALL.clone()   => 0.895,
-                block::STONE.clone()  => 0.1,
-                block::STAIRS.clone() => 0.005,
-            },
-            amount_of_walls: 10.0,
-            new_pos_prob: 0.01,
-            new_dir_prob: 0.05,
-            entities: entities
-        }
-    }
-}
