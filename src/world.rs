@@ -6,7 +6,8 @@ use block;
 use entity::EntityWrapper;
 use difficulty::Difficulty;
 use level::{Level, MetaAction};
-use generator::Generator;
+use generator::{LevelGenerator, SpaceGenerator, PathsGenerator, Generator};
+
 
 pub struct Callback(pub Box<Fn(&mut World)>);
 
@@ -48,27 +49,27 @@ impl World {
 
     pub fn generate(&mut self) {
         let mut start_level = self.new_level();
-        let gen = Generator::default_for_difficulty(self.difficulty, true, false);
-        gen.generate(&mut start_level);
+        let gen = LevelGenerator::default_for_difficulty(self.difficulty, true, false);
+        gen.generate(180, 111, &mut start_level);
         self.active_level = start_level;
 
-        let other_gen = Generator {
-                amount_of_walls: 1.,
-                width: 30,
-                height: 30,
-                new_pos_prob: 0.01,
-                new_dir_prob: 0.005,
+        let other_gen = LevelGenerator {
+                space: SpaceGenerator::Paths(PathsGenerator{
+                    amount_of_walls: 1.,
+                    new_pos_prob: 0.01,
+                    new_dir_prob: 0.005,
+                }),
                 block_probs: hashmap!{
                     block::WALL.clone()   => 0.5,
                     block::STONE.clone()  => 0.495,
                     block::STAIRS.clone() => 0.005,
                 },
-                ..Generator::default_for_difficulty(self.difficulty, false, true)
+                ..LevelGenerator::default_for_difficulty(self.difficulty, false, true)
             };
 
         loop {
             let mut other_level = self.new_level();
-            other_gen.generate(&mut other_level);
+            other_gen.generate(30, 30, &mut other_level);
             // Verify level: there exists a stair that Josef can reach
 
             // Find Josef

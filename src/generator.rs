@@ -7,18 +7,28 @@ use entity::{EntityWrapper, Player, Josef};
 use ext::*;
 use move_dir::{random_dir, MoveDir};
 
-pub struct Generator {
-    pub width: usize,
-    pub height: usize,
+pub struct LevelGenerator {
     pub block_probs: HashMap<block::Block, f64>,
+    pub entities: Vec<EntityWrapper>,
+    pub space: SpaceGenerator,
+}
+
+pub enum SpaceGenerator {
+    Paths(PathsGenerator)
+}
+
+pub struct PathsGenerator {
     pub amount_of_walls: f64,
     pub new_pos_prob: f64,
     pub new_dir_prob: f64,
-    pub entities: Vec<EntityWrapper>,
 }
 
-impl Generator {
-    pub fn default_for_difficulty(diff: Difficulty, include_player: bool, include_josef: bool) -> Generator {
+pub trait Generator {
+    fn generate(&self, _width: usize, _height: usize, _level: &mut Level);
+}
+
+impl LevelGenerator {
+    pub fn default_for_difficulty(diff: Difficulty, include_player: bool, include_josef: bool) -> LevelGenerator {
         let mut entities = vec![];
         if include_player {
             entities.push(
@@ -39,22 +49,24 @@ impl Generator {
                 )
             );
         }
-        Generator {
-            width: 180,
-            height: 111,
+        LevelGenerator {
             block_probs: hashmap!{
                 block::WALL.clone()   => 0.895,
                 block::STONE.clone()  => 0.1,
                 block::STAIRS.clone() => 0.005,
             },
-            amount_of_walls: 10.0,
-            new_pos_prob: 0.01,
-            new_dir_prob: 0.05,
-            entities: entities
+            entities: entities,
+            space: SpaceGenerator::Paths(PathsGenerator {
+                amount_of_walls: 10.0,
+                new_pos_prob: 0.01,
+                new_dir_prob: 0.05,
+            }),
         }
     }
+}
 
-    pub fn generate(&self, lvl: &mut Level) {
+impl Generator for LevelGenerator {
+    fn generate(&self, width: usize, height: usize, lvl: &mut Level) {
         log("Generating!");
 
         lvl.entities = HashMap::new();
@@ -62,9 +74,9 @@ impl Generator {
 
         let total: f64 = self.block_probs.values().sum();
 
-        for x in 0..self.width {
+        for x in 0..width {
             lvl.blocks.push(vec![]);
-            for _ in 0..self.height {
+            for _ in 0..height {
                 let block_num = rand() * total;
 
                 let mut upto = 0.;
@@ -80,11 +92,51 @@ impl Generator {
             }
         }
 
+        self.space.generate(width, height, lvl);
+
+        let mut space: Vec<(u16, u16)> = vec![];
+        for x in 0..width {
+            for y in 0..height {
+                if lvl.blocks[x][y] == *block::GROUND {
+                    space.push((x as u16, y as u16));
+                }
+            }
+        }
+
+        for en in self.entities.iter() {
+            let mut en = en.clone();
+            let idx = (rand() * space.len() as f64) as usize;
+            let (x, y) = space.remove(idx);
+            *en.get_pos_mut() = (x as u16, y as u16);
+            lvl.add_entity(
+                en
+                );
+        }
+
+
+        log("Done!");
+    }
+}
+
+impl Generator for SpaceGenerator {
+    fn generate(&self, width: usize, height: usize, lvl: &mut Level) {
+        match self {
+            SpaceGenerator::Paths(gen) => gen.generate(width, height, lvl),
+        }
+    }
+}
+
+impl Generator for PathsGenerator {
+    fn generate(&self, _width: usize, _height: usize, lvl: &mut Level) {
         let mut placed: Vec<(u16, u16, MoveDir)> = vec![];
-        for _ in 0..(self.amount_of_walls * self.width as f64 * self.height as f64) as usize {
+
+        let width = lvl.blocks.len();
+        let height = lvl.blocks.get(0).map(|x| x.len()).unwrap_or(0);
+
+        for _ in 0..(self.amount_of_walls * width as f64 * height as f64) as usize {
             if rand() < self.new_pos_prob || placed.is_empty() {
-                let x = (rand() * self.width as f64) as u16;
-                let y = (rand() * self.height as f64) as u16;
+                let x = (rand() * width as f64) as u16;
+                let y = (rand() * height as f64) as u16;
                 lvl.blocks[x as usize][y as usize] = block::GROUND.clone();
                 placed.push((x, y, random_dir()));
             } else {
@@ -107,16 +159,5 @@ impl Generator {
             }
         }
 
-        for en in self.entities.iter() {
-            let mut en = en.clone();
-            let idx = (rand() * placed.len() as f64) as usize;
-            let (x, y, _) = placed[idx];
-            placed.remove(idx);
-            *en.get_pos_mut() = (x as u16, y as u16);
-            lvl.add_entity(
-                en
-                );
-        }
-        log("Done!");
     }
 }
